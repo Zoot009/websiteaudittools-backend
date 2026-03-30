@@ -1,0 +1,303 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User profiles (synced from Clerk)
+model User {
+  id            String    @id @default(cuid())
+  clerkId       String    @unique // Clerk user ID
+  email         String    @unique
+  tier          UserTier  @default(FREE)
+  auditsUsedThisMonth Int @default(0)
+  lastResetDate DateTime  @default(now())
+  
+  // Relations
+  auditReports  AuditReport[]
+  serviceRequests ServiceRequest[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([clerkId])
+  @@index([email])
+}
+
+enum UserTier {
+  FREE
+  PAID
+}
+
+// Main audit report
+model AuditReport {
+  id            String    @id @default(cuid())
+  jobId         String    @unique // BullMQ job ID
+  
+  // Audit details
+  url           String
+  mode          AuditMode // SINGLE or MULTI
+  pageLimit     Int?      // For MULTI mode
+  pagesAnalyzed Int       @default(0)
+  
+  // Scores (0-100)
+  overallScore  Float
+  technicalScore Float
+  onPageScore   Float
+  performanceScore Float
+  accessibilityScore Float
+  linkScore     Float?
+  structuredDataScore Float?
+  securityScore Float
+  
+  // Status
+  status        AuditStatus @default(PROCESSING)
+  errorMessage  String?
+  
+  // Relations
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pages         SeoPage[]
+  issues        SeoIssue[]
+  recommendations Recommendation[]
+  
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
+  
+  @@index([userId])
+  @@index([jobId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum AuditMode {
+  SINGLE
+  MULTI
+}
+
+enum AuditStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// Individual pages analyzed
+model SeoPage {
+  id            String    @id @default(cuid())
+  url           String
+  title         String?
+  description   String?
+  statusCode    Int
+  loadTime      Float     // milliseconds
+  
+  // Core Web Vitals
+  lcp           Float?    // Largest Contentful Paint
+  fid           Float?    // First Input Delay
+  cls           Float?    // Cumulative Layout Shift
+  
+  // Content metrics
+  wordCount     Int?
+  imageCount    Int?
+  linkCount     Int?
+  h1Count       Int?
+  
+  // Cached crawled data (JSONB for efficient storage and re-analysis)
+  headingsData  Json?     // [{ level: number, text: string }, ...]
+  imagesData    Json?     // [{ src: string, alt: string | null }, ...]
+  linksData     Json?     // [{ href: string, text: string, isInternal: boolean }, ...]
+  
+  // Meta data
+  canonical     String?
+  robots        String?
+  ogImage       String?
+  hasSchemaOrg  Boolean   @default(false)
+  
+  // Local SEO data
+  localSeoData  Json?     // { phone: {...}, address: {...} }
+  
+  // Cache management
+  crawledAt     DateTime  @default(now())
+  
+  // Relations
+  auditReportId String
+  auditReport   AuditReport @relation(fields: [auditReportId], references: [id], onDelete: Cascade)
+  issues        SeoIssue[]
+  
+  createdAt     DateTime  @default(now())
+  
+  @@index([auditReportId])
+  @@index([url])
+  @@index([crawledAt])
+}
+
+// SEO issues found
+model SeoIssue {
+  id            String    @id @default(cuid())
+  
+  // Issue details
+  category      IssueCategory
+  type          String    // e.g., "missing_meta_description"
+  title         String    // Human-readable title
+  description   String    // What's wrong
+  severity      Severity
+  impactScore   Float     // 0-100, how much it affects SEO
+  
+  // Location
+  pageUrl       String?   // Which page has this issue
+  elementSelector String? // CSS selector (e.g., "img[alt='']")
+  lineNumber    Int?      // For HTML issues
+  
+  // Relations
+  auditReportId String
+  auditReport   AuditReport @relation(fields: [auditReportId], references: [id], onDelete: Cascade)
+  pageId        String?
+  page          SeoPage?  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  recommendations Recommendation[]
+  
+  createdAt     DateTime  @default(now())
+  
+  @@index([auditReportId])
+  @@index([category])
+  @@index([severity])
+} 
+
+
+enum IssueCategory {
+  TECHNICAL      // robots.txt, sitemap, SSL, canonical
+  ON_PAGE        // meta tags, headings, content
+  PERFORMANCE    // Core Web Vitals, load speed
+  ACCESSIBILITY  // alt text, ARIA, contrast
+  LINKS          // broken links, internal linking
+  STRUCTURED_DATA // Schema.org, Open Graph
+  SECURITY       // HTTPS, security headers
+}
+
+enum Severity {
+  CRITICAL  // Must fix ASAP
+  HIGH      // Important, affects ranking
+  MEDIUM    // Should fix, minor impact
+  LOW       // Nice to have, minimal impact
+}
+
+// Actionable recommendations with fix steps
+model Recommendation {
+  id            String    @id @default(cuid())
+  
+  // Recommendation details
+  title         String
+  description   String    @db.Text
+  priority      Int       // 1 (highest) to 10 (lowest)
+  estimatedTimeMinutes Int // How long to fix
+  difficulty    Difficulty
+  category      IssueCategory
+  
+  // Relation to fix guide template
+  fixGuideId    String?
+  fixGuide      FixGuide? @relation(fields: [fixGuideId], references: [id])
+  
+  // Relations
+  auditReportId String
+  auditReport   AuditReport @relation(fields: [auditReportId], references: [id], onDelete: Cascade)
+  issueId       String?
+  issue         SeoIssue?  @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  steps         FixStep[]
+  
+  createdAt     DateTime  @default(now())
+  
+  @@index([auditReportId])
+  @@index([priority])
+}
+
+enum Difficulty {
+  BEGINNER      // Anyone can do this
+  INTERMEDIATE  // Requires basic tech knowledge
+  ADVANCED      // Requires developer skills
+}
+
+// Step-by-step instructions for fixing issues
+model FixStep {
+  id              String    @id @default(cuid())
+  stepNumber      Int
+  instruction     String    @db.Text
+  codeExample     String?   @db.Text // Code snippet if applicable
+  toolsNeeded     String[]  // e.g., ["Google Search Console", "Chrome DevTools"]
+  
+  recommendationId String
+  recommendation  Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  
+  @@index([recommendationId])
+  @@unique([recommendationId, stepNumber])
+}
+
+// Reusable fix guide templates (seeded in database)
+model FixGuide {
+  id            String    @id @default(cuid())
+  issueType     String    @unique // e.g., "missing_meta_description"
+  title         String
+  description   String    @db.Text
+  category      IssueCategory
+  difficulty    Difficulty
+  
+  // Template content
+  steps         Json      // Array of step objects
+  bestPractices String[]  @db.Text
+  commonMistakes String[] @db.Text
+  resourceLinks String[]  // URLs to learn more
+  
+  recommendations Recommendation[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([issueType])
+  @@index([category])
+}
+
+// Service requests (when users want you to fix issues)
+model ServiceRequest {
+  id            String    @id @default(cuid())
+  
+  // Request details
+  auditReportId String?
+  description   String    @db.Text
+  issueTypes    String[]  // Which issues they want fixed
+  urgency       Urgency
+  budget        String?   // Optional budget range
+  
+  // Status tracking
+  status        RequestStatus @default(PENDING)
+  notes         String?   @db.Text // Your internal notes
+  
+  // Relations
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum Urgency {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RequestStatus {
+  PENDING       // New request
+  CONTACTED     // You reached out
+  IN_PROGRESS   // Working on it
+  COMPLETED     // Done
+  CANCELLED     // User cancelled
+}
