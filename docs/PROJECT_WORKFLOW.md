@@ -512,10 +512,19 @@ Redis is used as a **fast, in-memory database** that stores:
 
 **Environment Variables**:
 ```bash
+# Option 1: Use REDIS_URL (recommended for cloud Redis)
+REDIS_URL=redis://default:password@host:port/db
+
+# Option 2: Use individual parameters (fallback if REDIS_URL not set)
 REDIS_HOST=localhost      # Where Redis is running
 REDIS_PORT=6379           # Redis port
 REDIS_PASSWORD=optional   # Password if needed
 ```
+
+**How it works**:
+- If `REDIS_URL` is set, the system parses it to extract host, port, password, and database
+- If `REDIS_URL` is not set, it falls back to individual parameters
+- This supports both local development (localhost) and cloud Redis deployments
 
 ---
 
@@ -1233,9 +1242,14 @@ Hello from TypeScript backend!
 Create a `.env` file:
 ```env
 PORT=3000
-REDIS_HOST=localhost
-REDIS_PORT=6379
-# REDIS_PASSWORD=yourpassword  # if needed
+
+# Redis - Option 1: Use REDIS_URL (recommended)
+REDIS_URL=redis://default:password@host:port/db
+
+# Redis - Option 2: Individual parameters (fallback)
+# REDIS_HOST=localhost
+# REDIS_PORT=6379
+# REDIS_PASSWORD=yourpassword
 ```
 
 ### Installation

@@ -1,12 +1,27 @@
 import express from 'express';
+import cors from 'cors';
 import { auditQueue } from './queues/auditQueue.js';
 import { auditWorker } from './workers/auditWorker.js';
+import { linkGraphQueue } from './queues/linkGraphQueue.js';
+import { linkGraphWorker } from './workers/linkGraphWorker.js';
 import { prisma } from '../lib/prisma.js';
 import { getCacheStats } from './services/crawler/crawlCache.js';
+import { captureScreenshots } from './services/screenshots/screenshotService.js';
+import { generateLinkGraph, filterLinkGraphByDepth, exportToDOT, exportToCSV } from './services/linkGraph/linkGraphService.js';
+import { buildSiteContext } from './services/analyzer/siteContextBuilder.js';
+import chatRoutes from './routes/chatRoutes.js';
 import 'dotenv/config';
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 app.use(express.json());
 
@@ -583,6 +598,294 @@ app.get('/api/stats/reports', async (req, res) => {
 });
 
 // ============================================
+// SCREENSHOT ROUTES
+// ============================================
+
+// Capture website screenshots (desktop + mobile)
+app.post('/api/screenshots', async (req, res) => {
+  try {
+    const { url } = req.body;
+    
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+    
+    // Validate URL format
+    try {
+      new URL(url);
+    } catch {
+      return res.status(400).json({ error: 'Invalid URL format' });
+    }
+    
+    console.log(`📸 Capturing screenshots for: ${url}`);
+    
+    const screenshots = await captureScreenshots({ 
+      url,
+      timeout: 15000 
+    });
+    
+    res.json({
+      url,
+      screenshots: {
+        desktop: screenshots.desktop,
+        mobile: screenshots.mobile,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('Screenshot capture failed:', error);
+    res.status(500).json({ 
+      error: 'Failed to capture screenshots', 
+      details: error.message 
+    });
+  }
+});
+
+// ============================================
+// LINK GRAPH ROUTES
+// ============================================
+
+// Get internal link graph for an audit report
+app.get('/api/reports/:reportId/link-graph', async (req, res) => {
+  try {
+    const { reportId } = req.params;
+    const { maxDepth, format = 'json' } = req.query;
+    
+    // Fetch the audit report with all pages
+    const report = await prisma.auditReport.findUnique({
+      where: { id: reportId },
+      include: {
+        pages: true,
+        issues: true,
+      },
+    });
+    
+    if (!report) {
+      return res.status(404).json({ error: 'Audit report not found' });
+    }
+    
+    if (report.status !== 'COMPLETED') {
+      return res.status(400).json({ 
+        error: 'Audit report is not completed yet',
+        status: report.status 
+      });
+    }
+    
+    // Convert database pages to PageData format
+    const pages = report.pages.map(page => ({
+      url: page.url,
+      title: page.title,
+      description: page.description,
+      statusCode: page.statusCode,
+      loadTime: page.loadTime,
+      html: '', // HTML not stored in database for link graph
+      headings: page.headingsData as any,
+      images: page.imagesData as any,
+      links: page.linksData as any,
+      wordCount: page.wordCount || 0,
+      lcp: page.lcp,
+      cls: page.cls,
+      fid: page.fid,
+      canonical: page.canonical,
+      robots: page.robots,
+      ogImage: page.ogImage,
+      hasSchemaOrg: page.hasSchemaOrg,
+    }));
+    
+    // Build site context
+    console.log(`🔗 Building link graph for ${pages.length} pages...`);
+    const siteContext = await buildSiteContext(pages, report.url);
+    
+    // Generate link graph
+    let linkGraph = generateLinkGraph(pages, siteContext);
+    
+    // Mark nodes with issues
+    const pageIssueMap = new Map<string, boolean>();
+    for (const issue of report.issues) {
+      if (issue.pageUrl) {
+        pageIssueMap.set(issue.pageUrl, true);
+      }
+    }
+    
+    linkGraph.nodes = linkGraph.nodes.map(node => ({
+      ...node,
+      hasIssues: pageIssueMap.has(node.url) || false,
+    }));
+    
+    // Filter by depth if requested
+    if (maxDepth) {
+      const depth = parseInt(maxDepth as string);
+      if (!isNaN(depth) && depth > 0) {
+        linkGraph = filterLinkGraphByDepth(linkGraph, depth);
+      }
+    }
+    
+    // Return in requested format
+    if (format === 'dot') {
+      const dotContent = exportToDOT(linkGraph);
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', `attachment; filename="link-graph-${reportId}.dot"`);
+      return res.send(dotContent);
+    }
+    
+    if (format === 'csv') {
+      const csvContent = exportToCSV(linkGraph);
+      return res.json({
+        nodes: csvContent.nodes,
+        edges: csvContent.edges,
+      });
+    }
+    
+    // Default: JSON format
+    res.json(linkGraph);
+    
+  } catch (error: any) {
+    console.error('Failed to generate link graph:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate link graph', 
+      details: error.message 
+    });
+  }
+});
+
+// Queue a link graph crawl job
+app.post('/api/link-graph/crawl', async (req, res) => {
+  try {
+    const { url, depth, options } = req.body;
+
+    // Validate required fields
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    if (!depth || typeof depth !== 'number') {
+      return res.status(400).json({ error: 'Depth is required and must be a number' });
+    }
+
+    // Validate depth range
+    if (depth < 1 || depth > 5) {
+      return res.status(400).json({ 
+        error: 'Depth must be between 1 and 5',
+        provided: depth 
+      });
+    }
+
+    // Validate URL format
+    try {
+      const urlObj = new URL(url);
+      if (!urlObj.protocol.startsWith('http')) {
+        return res.status(400).json({ 
+          error: 'URL must use HTTP or HTTPS protocol',
+          provided: url
+        });
+      }
+    } catch (error) {
+      return res.status(400).json({ 
+        error: 'Invalid URL format',
+        provided: url
+      });
+    }
+
+    // Queue the link graph crawl job
+    const job = await linkGraphQueue.add('link-graph-crawl', {
+      url,
+      depth,
+      options: options || {},
+    });
+
+    res.status(202).json({
+      jobId: job.id,
+      message: 'Link graph crawl job queued successfully',
+      url,
+      depth,
+      statusUrl: `/api/link-graph/jobs/${job.id}`,
+      resultUrl: `/api/link-graph/jobs/${job.id}/result`,
+    });
+
+  } catch (error: any) {
+    console.error('Failed to queue link graph job:', error);
+    res.status(500).json({ 
+      error: 'Failed to queue link graph job', 
+      details: error.message 
+    });
+  }
+});
+
+// Get link graph job status
+app.get('/api/link-graph/jobs/:jobId', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const job = await linkGraphQueue.getJob(jobId);
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    const state = await job.getState();
+    const progress = job.progress;
+
+    res.json({
+      id: job.id,
+      state,
+      progress,
+      data: {
+        url: job.data.url,
+        depth: job.data.depth,
+      },
+      finishedOn: job.finishedOn,
+      processedOn: job.processedOn,
+      failedReason: job.failedReason,
+    });
+  } catch (error: any) {
+    console.error('Failed to get link graph job status:', error);
+    res.status(500).json({ 
+      error: 'Failed to get job status', 
+      details: error.message 
+    });
+  }
+});
+
+// Get link graph job result
+app.get('/api/link-graph/jobs/:jobId/result', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const job = await linkGraphQueue.getJob(jobId);
+
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    const state = await job.getState();
+
+    if (state !== 'completed') {
+      return res.status(400).json({ 
+        error: 'Job not completed yet',
+        state,
+        message: state === 'failed' 
+          ? `Job failed: ${job.failedReason}` 
+          : `Job is currently ${state}. Please check status endpoint.`
+      });
+    }
+
+    // Return the link graph result
+    res.json(job.returnvalue);
+
+  } catch (error: any) {
+    console.error('Failed to get link graph job result:', error);
+    res.status(500).json({ 
+      error: 'Failed to get job result', 
+      details: error.message 
+    });
+  }
+});
+
+// ============================================
+// AI CHAT ROUTES
+// ============================================
+
+app.use('/api', chatRoutes);
+
+// ============================================
 // HEALTH & INFO
 // ============================================
 
@@ -595,6 +898,8 @@ app.get('/', (req, res) => {
       reports: '/api/reports',
       users: '/api/users',
       stats: '/api/stats',
+      screenshots: '/api/screenshots',
+      chat: '/api/reports/:reportId/chat',
     },
   });
 });

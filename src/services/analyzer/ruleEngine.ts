@@ -1,5 +1,5 @@
 import type { PageData } from '../crawler/SiteAuditCrawler';
-import type { SeoIssue, RuleContext, SiteContext, AnalysisResult, CategoryScore, SeoIssueWithFix } from './types';
+import type { SeoIssue, RuleContext, SiteContext, AnalysisResult, CategoryScore, SeoIssueWithFix, PassingCheck } from './types';
 import { ruleRegistry } from './ruleRegistry';
 import { buildSiteContext } from './siteContextBuilder';
 import type { IssueCategory } from '../../generated/prisma/enums';
@@ -17,13 +17,51 @@ export class RuleEngine {
     // Build site context for cross-page analysis
     const siteContext = await buildSiteContext(pages, baseUrl);
     
-    // Collect all issues
+    // Collect all issues and passing checks
     const allIssues: SeoIssue[] = [];
     const issuesWithFixes: SeoIssueWithFix[] = [];
+    const passingChecks: PassingCheck[] = [];
+    
+    // Track which rules passed (no issues) for each page
+    const ruleResultsMap = new Map<string, Set<string>>(); // pageUrl -> Set of rule codes that found issues
     
     // Run rules for each page
     for (const page of pages) {
-      const pageIssues = this.runRulesForPage(page, siteContext);
+      const context: RuleContext = { page, siteContext };
+      const pageIssues: SeoIssue[] = [];
+      const issueRuleCodes = new Set<string>();
+      
+      // Run all rules for this page
+      const rules = ruleRegistry.getAllRules();
+      for (const rule of rules) {
+        try {
+          const ruleIssues = rule.run(context);
+          
+          if (ruleIssues.length > 0) {
+            // Rule found issues
+            pageIssues.push(...ruleIssues);
+            issueRuleCodes.add(rule.code);
+          } else {
+            // Rule passed - no issues found! ✨
+            const passingMessage = rule.getPassingMessage?.(context) || 
+              `${rule.name} check passed`;
+            
+            passingChecks.push({
+              category: rule.category,
+              code: rule.code,
+              title: rule.name,
+              description: passingMessage,
+              pageUrl: page.url,
+              goodPractice: this.getGoodPracticeMessage(rule.code, rule.name),
+            });
+          }
+        } catch (error) {
+          console.error(`Error running rule ${rule.code}:`, error);
+          // Continue with other rules
+        }
+      }
+      
+      ruleResultsMap.set(page.url, issueRuleCodes);
       allIssues.push(...pageIssues);
       
       // Generate recommendations for each issue
@@ -31,7 +69,6 @@ export class RuleEngine {
         const rule = ruleRegistry.getRuleByCode(issue.type.toUpperCase().replace(/-/g, '_'));
         
         if (rule?.getRecommendation) {
-          const context: RuleContext = { page, siteContext };
           const recommendation = rule.getRecommendation(issue, context);
           
           issuesWithFixes.push({
@@ -55,6 +92,7 @@ export class RuleEngine {
     }
     
     console.log(`✅ Rule Engine: Found ${allIssues.length} issues`);
+    console.log(`✨ Rule Engine: Found ${passingChecks.length} passing checks`);
     
     // Calculate scores
     const categoryScores = this.calculateCategoryScores(allIssues);
@@ -68,28 +106,39 @@ export class RuleEngine {
       issuesWithFixes,
       totalIssues: allIssues.length,
       criticalIssues,
+      passingChecks,
+      totalPasses: passingChecks.length,
     };
   }
   
   /**
-   * Run all rules for a single page
+   * Get a positive message explaining why passing this check is good
    */
-  private runRulesForPage(page: PageData, siteContext: SiteContext): SeoIssue[] {
-    const issues: SeoIssue[] = [];
-    const rules = ruleRegistry.getAllRules();
-    const context: RuleContext = { page, siteContext };
+  private getGoodPracticeMessage(ruleCode: string, ruleName: string): string {
+    // Map of rule codes to good practice explanations
+    const goodPractices: Record<string, string> = {
+      'TITLE_MISSING': 'Page has a proper title tag that helps search engines and users understand the content.',
+      'TITLE_TOO_SHORT': 'Title length is appropriate for search engine display.',
+      'TITLE_TOO_LONG': 'Title length is optimized to avoid truncation in search results.',
+      'META_DESCRIPTION_MISSING': 'Page has a meta description to improve search result appearance.',
+      'META_DESCRIPTION_TOO_SHORT': 'Meta description provides adequate detail.',
+      'META_DESCRIPTION_TOO_LONG': 'Meta description length is optimized for search results.',
+      'H1_MISSING': 'Page has a proper H1 heading for structure and SEO.',
+      'H1_MULTIPLE': 'Page uses a single H1 heading following best practices.',
+      'MISSING_VIEWPORT': 'Viewport meta tag is properly configured for mobile devices.',
+      'NO_HTTPS': 'Site is using HTTPS for security and SEO benefits.',
+      'NO_STRUCTURED_DATA': 'Page includes structured data for enhanced search results.',
+      'MISSING_ALT_TEXT': 'All images have descriptive alt text for accessibility.',
+      'PAGE_NON_200_STATUS': 'Page returns a successful 200 status code.',
+      'PAGE_REDIRECTS': 'No unnecessary redirects impacting performance.',
+      'THIN_CONTENT': 'Page has substantial, valuable content.',
+      'SLOW_LOAD_TIME': 'Page loads quickly providing good user experience.',
+      'MISSING_OPEN_GRAPH': 'Open Graph tags are present for social media sharing.',
+      'MISSING_TWITTER_CARDS': 'Twitter Card tags optimize social sharing.',
+    };
     
-    for (const rule of rules) {
-      try {
-        const ruleIssues = rule.run(context);
-        issues.push(...ruleIssues);
-      } catch (error) {
-        console.error(`Error running rule ${rule.code}:`, error);
-        // Continue with other rules
-      }
-    }
-    
-    return issues;
+    return goodPractices[ruleCode] || 
+      `Following best practices for ${ruleName.toLowerCase()}.`;
   }
   
   /**

@@ -143,6 +143,7 @@ async function saveToDatabase(
   recommendations: any[]
 ) {
   // Create audit report with all related data in a transaction
+  // Increase timeout to 15 seconds for large audits with many recommendations
   const auditReport = await prisma.$transaction(async (tx) => {
     // Delete existing report if it exists (handles retries)
     await tx.auditReport.deleteMany({
@@ -166,6 +167,9 @@ async function saveToDatabase(
         linkScore: analysisResult.categoryScores.find((c: any) => c.category === 'LINKS')?.score || null,
         structuredDataScore: analysisResult.categoryScores.find((c: any) => c.category === 'STRUCTURED_DATA')?.score || null,
         securityScore: analysisResult.categoryScores.find((c: any) => c.category === 'SECURITY')?.score || 0,
+        
+        // Passing checks (what's working well) ✨
+        passingChecks: analysisResult.passingChecks || [],
         
         status: 'COMPLETED',
         userId: job.data.userId,
@@ -238,7 +242,8 @@ async function saveToDatabase(
     });
 
     // Create recommendations with proper issue associations
-    for (const rec of recommendations) {
+    // Use Promise.all for parallel creation to speed up the process
+    await Promise.all(recommendations.map(async (rec) => {
       // Try to find matching issue using a composite key
       const searchKey = `${rec.category}_${rec.issueType || rec.type}_${rec.pageUrl || 'global'}`;
       const matchingIssues = issueMap.get(searchKey) || [];
@@ -246,7 +251,7 @@ async function saveToDatabase(
       // Use the first matching issue (or undefined if no match)
       const matchingIssue = matchingIssues.shift();
 
-      await tx.recommendation.create({
+      return tx.recommendation.create({
         data: {
           title: rec.title,
           description: rec.description,
@@ -254,19 +259,13 @@ async function saveToDatabase(
           estimatedTimeMinutes: rec.estimatedTimeMinutes,
           difficulty: rec.difficulty,
           category: rec.category,
-          auditReport: {
-            connect: { id: report.id }
-          },
+          auditReportId: report.id, // Direct field assignment
           // Conditionally connect relations if they exist
           ...(rec.fixGuideId && {
-            fixGuide: {
-              connect: { id: rec.fixGuideId }
-            }
+            fixGuideId: rec.fixGuideId
           }),
           ...(matchingIssue?.id && {
-            issue: {
-              connect: { id: matchingIssue.id }
-            }
+            issueId: matchingIssue.id
           }),
           
           // Create fix steps
@@ -280,9 +279,12 @@ async function saveToDatabase(
           },
         },
       });
-    }
+    }));
 
     return report;
+  }, {
+    maxWait: 20000, // Maximum wait time to start transaction (20s)
+    timeout: 30000,  // Transaction timeout (30s) for large audits
   });
 
   return auditReport;

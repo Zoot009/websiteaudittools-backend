@@ -1,8 +1,22 @@
 # Website Audit Tools - API Documentation
 
 **Base URL:** `http://localhost:3000`  
-**Version:** 1.1.0  
-**Last Updated:** March 26, 2026
+**Version:** 1.3.0  
+**Last Updated:** April 6, 2026
+
+## What's New in v1.3.0
+
+- 🔗 **Link Graph Visualization**: New endpoint to generate internal linking structure as force-directed graph data
+- 📊 **Graph Analytics**: Automatic identification of orphan pages, hub pages, and authority pages
+- 🎨 **Multiple Export Formats**: JSON, DOT (Graphviz), and CSV formats for link graph data
+- 📈 **Site Structure Insights**: BFS depth calculation, inbound/outbound link counts, and detailed metrics
+- 📚 **Complete D3.js Guide**: Comprehensive documentation with working examples for frontend visualization
+
+## What's New in v1.2.0
+
+- ✨ **Passing Checks**: Reports now show both issues AND what's working well! See 27+ positive findings alongside issues
+- 📸 **Screenshot Endpoint**: On-demand desktop & mobile screenshots (base64) via separate API call
+- 🎯 **Better UX**: Complete picture of SEO health with positive reinforcement
 
 ## What's New in v1.1.0
 
@@ -23,9 +37,11 @@
 6. [Pages Endpoints](#pages-endpoints)
 7. [User Management Endpoints](#user-management-endpoints)
 8. [Statistics & Analytics Endpoints](#statistics--analytics-endpoints)
-9. [Health Check](#health-check)
-10. [Error Handling](#error-handling)
-11. [Data Models](#data-models)
+9. [Screenshot Endpoints](#screenshot-endpoints)
+10. [Link Graph Endpoints](#link-graph-endpoints)
+11. [Health Check](#health-check)
+12. [Error Handling](#error-handling)
+13. [Data Models](#data-models)
 
 ---
 
@@ -265,6 +281,24 @@ Retrieve a complete audit report with all related data.
   "status": "COMPLETED",
   "errorMessage": null,
   "userId": "clxxx123456",
+  "passingChecks": [
+    {
+      "category": "SECURITY",
+      "code": "NO_HTTPS",
+      "title": "HTTPS Enabled",
+      "description": "Site is using HTTPS for security and SEO benefits",
+      "pageUrl": "https://example.com",
+      "goodPractice": "HTTPS protects user data and is a ranking factor"
+    },
+    {
+      "category": "ON_PAGE",
+      "code": "TITLE_MISSING",
+      "title": "Title Tag Present",
+      "description": "Page has a proper title tag that helps search engines and users understand the content",
+      "pageUrl": "https://example.com",
+      "goodPractice": "Title tags are essential for SEO and improve click-through rates"
+    }
+  ],
   "createdAt": "2026-03-26T10:30:00.000Z",
   "completedAt": "2026-03-26T10:32:15.000Z",
   "user": {
@@ -1096,9 +1130,357 @@ Delete a user account (cascades to all audit reports).
 
 ---
 
+## Screenshot Endpoints
+
+### 21. Capture Website Screenshots
+
+Capture desktop and mobile screenshots of a website on-demand.
+
+**Endpoint:** `POST /api/screenshots`
+
+**Request Body:**
+```json
+{
+  "url": "https://example.com"
+}
+```
+
+**Request Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| url | string | Yes | Website URL to capture |
+
+**Success Response (200 OK):**
+```json
+{
+  "url": "https://example.com",
+  "screenshots": {
+    "desktop": "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBD...(base64 encoded JPEG)",
+    "mobile": "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBD...(base64 encoded JPEG)"
+  },
+  "timestamp": "2026-04-06T10:30:00.000Z"
+}
+```
+
+**Screenshot Specifications:**
+
+**Desktop View:**
+- Viewport: 1920x1080 (16:9)
+- Format: JPEG (85% quality)
+- Capture: Viewport only (no scrolling)
+- User Agent: Randomized Chrome Desktop
+- Anti-bot: ✅ Full stealth mode enabled
+
+**Mobile View:**
+- Viewport: 375x667 (iPhone 6/7/8)
+- Format: JPEG (85% quality)
+- Capture: Viewport only (no overflow)
+- User Agent: Mobile Safari
+- Touch: Enabled
+- Anti-bot: ✅ Full stealth mode enabled
+
+**Performance:**
+- Duration: 3-5 seconds (parallel capture)
+- Timeout: 20 seconds max
+- Memory: ~1-3MB per screenshot
+
+**Anti-Bot Protection:**
+- Randomized user agents and headers
+- Anti-detection script injection
+- Timezone and locale randomization
+- Realistic browser fingerprinting
+- Bypasses most bot detection systems
+
+**Use Cases:**
+- Lazy load screenshots when user clicks "View Screenshots"
+- Export visual audit reports
+- Before/after comparisons
+- Mobile vs desktop layout verification
+
+**Frontend Example:**
+```javascript
+async function loadScreenshots(url) {
+  const response = await fetch('http://localhost:3000/api/screenshots', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+  
+  const data = await response.json();
+  
+  // Display images
+  desktopImg.src = `data:image/jpeg;base64,${data.screenshots.desktop}`;
+  mobileImg.src = `data:image/jpeg;base64,${data.screenshots.mobile}`;
+}
+```
+
+**Error Responses:**
+```json
+// 400 Bad Request - Missing URL
+{
+  "error": "URL is required"
+}
+
+// 400 Bad Request - Invalid URL
+{
+  "error": "Invalid URL format"
+}
+
+// 500 Internal Server Error
+{
+  "error": "Failed to capture screenshots",
+  "details": "Navigation timeout exceeded"
+}
+```
+
+**Important Notes:**
+- Screenshots are NOT stored in database
+- Each request captures fresh screenshots
+- Does not bypass Cloudflare/advanced bot detection
+- Limited to publicly accessible URLs
+- Consider caching on frontend to reduce API calls
+
+---
+
+## Link Graph Endpoints
+
+### 22. Get Internal Link Graph
+
+Retrieve the internal linking structure of a crawled website as a force-directed graph data structure.
+
+**Endpoint:** `GET /api/reports/:reportId/link-graph`
+
+**URL Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| reportId | string | Yes | The ID of the completed audit report |
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| maxDepth | number | No | - | Filter nodes by maximum depth from homepage (e.g., `3`) |
+| format | string | No | json | Export format: `json`, `dot` (Graphviz), or `csv` |
+
+**Success Response (200 OK - JSON format):**
+```json
+{
+  "nodes": [
+    {
+      "id": "https://example.com/",
+      "label": "Home - Example Website",
+      "url": "https://example.com/",
+      "type": "page",
+      "title": "Home - Example Website",
+      "inboundCount": 0,
+      "outboundCount": 15,
+      "depth": 0,
+      "statusCode": 200,
+      "loadTime": 1250,
+      "wordCount": 850,
+      "hasIssues": false,
+      "isOrphan": false,
+      "isHub": true,
+      "isAuthority": false
+    },
+    {
+      "id": "https://example.com/about",
+      "label": "About Us",
+      "url": "https://example.com/about",
+      "type": "page",
+      "title": "About Us",
+      "inboundCount": 8,
+      "outboundCount": 5,
+      "depth": 1,
+      "statusCode": 200,
+      "loadTime": 980,
+      "wordCount": 1200,
+      "hasIssues": false,
+      "isOrphan": false,
+      "isHub": false,
+      "isAuthority": true
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-0",
+      "source": "https://example.com/",
+      "target": "https://example.com/about",
+      "anchorText": "Learn more about us",
+      "strength": 1
+    }
+  ],
+  "metadata": {
+    "totalPages": 45,
+    "totalLinks": 178,
+    "maxDepth": 4,
+    "orphanPages": 3,
+    "hubPages": 2,
+    "authorityPages": 5,
+    "averageLinksPerPage": 3.9,
+    "generatedAt": "2026-04-06T12:34:56.789Z"
+  }
+}
+```
+
+**Node Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (URL) |
+| label | string | Display label (page title or path) |
+| url | string | Full URL of the page |
+| type | string | Always "page" |
+| title | string \| null | Page title from HTML |
+| inboundCount | number | Number of pages linking to this page |
+| outboundCount | number | Number of links going out from this page |
+| depth | number | Distance from homepage (BFS depth) |
+| statusCode | number | HTTP status code |
+| loadTime | number | Page load time in milliseconds |
+| wordCount | number | Total word count on page |
+| hasIssues | boolean | Whether page has SEO issues |
+| isOrphan | boolean | No inbound links (orphan page) |
+| isHub | boolean | High outbound count (>10 links) |
+| isAuthority | boolean | High inbound count (>5 links) |
+
+**Edge Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique edge identifier |
+| source | string | Source URL |
+| target | string | Target URL |
+| anchorText | string \| undefined | Link anchor text (if available) |
+| strength | number | Edge weight (1 by default) |
+
+**Example Requests:**
+
+```bash
+# Get full link graph (JSON format)
+curl http://localhost:3000/api/reports/cmn7kr6dw002gbcm982rcqau3/link-graph
+
+# Get link graph limited to 3 levels deep
+curl http://localhost:3000/api/reports/cmn7kr6dw002gbcm982rcqau3/link-graph?maxDepth=3
+
+# Export as DOT format (Graphviz)
+curl "http://localhost:3000/api/reports/cmn7kr6dw002gbcm982rcqau3/link-graph?format=dot" > graph.dot
+
+# Export as CSV
+curl "http://localhost:3000/api/reports/cmn7kr6dw002gbcm982rcqau3/link-graph?format=csv"
+```
+
+**DOT Format Response:**
+```dot
+digraph InternalLinks {
+  node [shape=box, style=rounded];
+  rankdir=TB;
+
+  "https://example.com/" [label="Home", fillcolor="orange", style="filled"];
+  "https://example.com/about" [label="About Us", fillcolor="green", style="filled"];
+  
+  "https://example.com/" -> "https://example.com/about";
+}
+```
+
+**CSV Format Response:**
+```json
+{
+  "nodes": "URL,Title,Inbound Links,Outbound Links,Depth,Status Code,Load Time,Word Count,Is Orphan,Is Hub,Is Authority\n\"https://example.com/\",\"Home\",0,15,0,200,1250,850,false,true,false\n...",
+  "edges": "Source URL,Target URL,Anchor Text\n\"https://example.com/\",\"https://example.com/about\",\"Learn more\"\n..."
+}
+```
+
+**Error Responses:**
+```json
+// 404 Not Found - Report doesn't exist
+{
+  "error": "Audit report not found"
+}
+
+// 400 Bad Request - Report not completed
+{
+  "error": "Audit report is not completed yet",
+  "status": "PROCESSING"
+}
+
+// 500 Internal Server Error
+{
+  "error": "Failed to generate link graph",
+  "details": "Invalid page data format"
+}
+```
+
+**Use Cases:**
+- **Visualize site structure**: Create interactive force-directed graphs with D3.js
+- **Identify orphan pages**: Find pages with no inbound links (SEO issue)
+- **Find authority pages**: Discover most-linked-to pages (high value content)
+- **Analyze link depth**: Understand how deep pages are in the site hierarchy
+- **Export for analysis**: Use DOT format for Graphviz or CSV for spreadsheets
+
+**Frontend Visualization:**
+
+See the complete implementation guide in [`LINK_GRAPH_VISUALIZATION.md`](./LINK_GRAPH_VISUALIZATION.md) for:
+- Full D3.js force-directed graph example
+- Interactive controls (zoom, pan, filter)
+- Color-coded nodes (orphans, hubs, authorities)
+- Tooltips with detailed metrics
+- Export to SVG/PNG
+- React integration example
+
+**Quick D3.js Example:**
+```javascript
+// Fetch graph data
+const response = await fetch(`/api/reports/${reportId}/link-graph`);
+const graph = await response.json();
+
+// Create force simulation
+const simulation = d3.forceSimulation(graph.nodes)
+  .force('link', d3.forceLink(graph.edges).id(d => d.id))
+  .force('charge', d3.forceManyBody().strength(-300))
+  .force('center', d3.forceCenter(width / 2, height / 2));
+
+// Render nodes and edges
+const links = svg.selectAll('line')
+  .data(graph.edges)
+  .join('line');
+
+const nodes = svg.selectAll('circle')
+  .data(graph.nodes)
+  .join('circle')
+  .attr('r', d => 5 + d.inboundCount * 2)
+  .attr('fill', d => d.isOrphan ? 'red' : 'blue');
+
+simulation.on('tick', () => {
+  links
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+  
+  nodes
+    .attr('cx', d => d.x)
+    .attr('cy', d => d.y);
+});
+```
+
+**Performance Notes:**
+- Graph generation typically takes 100-500ms for sites with <100 pages
+- For large sites (>500 pages), use `maxDepth` parameter to limit nodes
+- Consider caching graph data on frontend for 5-10 minutes
+- DOT export is useful for server-side rendering with Graphviz
+
+**Important Notes:**
+- Only available for COMPLETED audit reports
+- Multi-page crawls (`mode: "multi"`) produce more useful graphs
+- Single-page audits will have minimal graph structure
+- Orphan pages indicate potential SEO issues (not linked from anywhere)
+- Hub pages (>10 outbound links) may indicate navigation/menu pages
+- Authority pages (>5 inbound links) often represent important content
+
+---
+
 ## Statistics & Analytics Endpoints
 
-### 18. Get Overall Statistics
+### 23. Get Overall Statistics
 
 Retrieve system-wide statistics and analytics.
 
@@ -1175,7 +1557,7 @@ Retrieve system-wide statistics and analytics.
 
 ---
 
-### 19. Get Report Statistics by Date Range
+### 24. Get Report Statistics by Date Range
 
 Retrieve audit reports within a date range.
 
@@ -1217,7 +1599,7 @@ GET /api/stats/reports?startDate=2026-03-01&endDate=2026-03-26
 
 ## Health Check
 
-### 20. API Health Check
+### 24. API Health Check
 
 Verify API is running and get endpoint information.
 
@@ -1227,12 +1609,13 @@ Verify API is running and get endpoint information.
 ```json
 {
   "message": "Website Audit Tools API",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "endpoints": {
     "audits": "/api/audits",
     "reports": "/api/reports",
     "users": "/api/users",
-    "stats": "/api/stats"
+    "stats": "/api/stats",
+    "screenshots": "/api/screenshots"
 
 ### Analysis Issue Types
 
@@ -1295,6 +1678,42 @@ All endpoints follow consistent error response patterns.
 ---
 
 ## Data Models
+
+### Passing Checks (New in v1.2.0)
+
+**PassingCheck Interface:**
+```typescript
+{
+  category: string;        // IssueCategory (TECHNICAL, ON_PAGE, etc.)
+  code: string;           // Rule code that passed (e.g., "TITLE_MISSING")
+  title: string;          // Human-readable name
+  description: string;    // What was checked
+  pageUrl?: string;       // Which page passed
+  goodPractice: string;   // Explanation of why this is good
+}
+```
+
+**Example Passing Checks:**
+- "HTTPS Enabled" - Site uses SSL/TLS encryption
+- "Title Tag Present" - Page has proper title tag
+- "Meta Description Present" - Meta description exists
+- "H1 Heading Present" - Page has exactly one H1
+- "Viewport Configured" - Mobile viewport meta tag is set
+- "Fast Load Time" - Page loads in under 3 seconds
+- "All Images Have Alt Text" - Accessibility compliance
+
+**Benefits:**
+- Shows complete SEO health picture
+- Positive reinforcement for users
+- Educational value (explains WHY things are good)
+- Progress tracking over time
+- Encourages best practices
+
+**Typical Report Breakdown:**
+- 17 issues found (things to fix)
+- 27 passing checks (things working well)
+- Total: 44 rules checked
+- Overall Score: 82/100
 
 ### Score Ranges
 
@@ -1470,9 +1889,46 @@ For more information, see:
 - [SEOPTIMER_COMPARISON.md](./SEOPTIMER_COMPARISON.md) - Feature comparison with SEOptimizer
 - [CLOUDFLARE_BYPASS_GUIDE.md](./CLOUDFLARE_BYPASS_GUIDE.md) - Bot detection bypass strategies
 
-**API Version:** 1.1.0  
-**Last Updated:** March 26, 2026  
-**Total SEO Rules:** 34 (25 core + 9 enhancements)
+**API Version:** 1.2.0  
+**Last Updated:** April 6, 2026  
+**Total SEO Rules:** 44 (all rules check for both passing and failing conditions)
+
+## New Features Detail
+
+### Passing Checks Feature
+
+Every audit now returns both:
+- **Issues** (`issues[]`): What needs to be fixed
+- **Passing Checks** (`passingChecks[]`): What's already working well
+
+**Example Response:**
+```json
+{
+  "overallScore": 82,
+  "totalIssues": 17,
+  "totalPasses": 27,
+  "issues": [...],
+  "passingChecks": [
+    {
+      "category": "SECURITY",
+      "code": "NO_HTTPS",
+      "title": "HTTPS Enabled",
+      "description": "Site is using HTTPS for security and SEO benefits",
+      "goodPractice": "HTTPS protects user data and is a ranking factor"
+    }
+  ]
+}
+```
+
+### Screenshot Endpoint
+
+Separate on-demand endpoint for visual previews:
+- Desktop screenshot (1920x1080)
+- Mobile screenshot (375x667)
+- Base64 JPEG format
+- 2-4 second response time
+- Not stored in database
+- Perfect for lazy loading in UI
 
 ## Rate Limits & Best Practices
 

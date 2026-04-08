@@ -28,6 +28,18 @@ export interface FixRecommendation {
 }
 
 /**
+ * Passing check - represents something done correctly
+ */
+export interface PassingCheck {
+  category: IssueCategory;
+  code: string; // Rule code that passed
+  title: string;
+  description: string;
+  pageUrl?: string;
+  goodPractice: string; // Explanation of what was done right
+}
+
+/**
  * Enhanced issue with fix recommendations
  */
 export interface SeoIssueWithFix extends SeoIssue {
@@ -80,6 +92,9 @@ export interface AuditRule {
   
   // Optional: recommendation generator
   getRecommendation?: (issue: SeoIssue, context: RuleContext) => FixRecommendation;
+  
+  // Optional: positive feedback when rule passes (no issues found)
+  getPassingMessage?: (context: RuleContext) => string;
 }
 
 /**
@@ -99,6 +114,8 @@ export interface AnalysisResult {
   overallScore: number;
   categoryScores: CategoryScore[];
   issues: SeoIssue[];
+  passingChecks: PassingCheck[]; // ✨ NEW: Track what's working well
+  totalPasses: number;
   issuesWithFixes?: SeoIssueWithFix[];
   totalIssues: number;
   criticalIssues: number;

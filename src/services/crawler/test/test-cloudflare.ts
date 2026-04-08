@@ -11,7 +11,7 @@ import {
   waitForCloudflareChallenge,
   createCloudflareBypassContext,
   bypassCloudflare,
-} from './cloudflareBypass.js';
+} from '../cloudflareBypass.js';
 
 async function testCloudflareBypass(url: string) {
   console.log('\n╔════════════════════════════════════════════════╗');

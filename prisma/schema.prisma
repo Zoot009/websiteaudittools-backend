@@ -58,6 +58,9 @@ model AuditReport {
   structuredDataScore Float?
   securityScore Float
   
+  // Positive findings (what's working well)
+  passingChecks Json?     // Array of PassingCheck objects
+  
   // Status
   status        AuditStatus @default(PROCESSING)
   errorMessage  String?

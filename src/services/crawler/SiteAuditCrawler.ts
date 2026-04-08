@@ -1,6 +1,7 @@
 import type { Browser, Page, BrowserContext } from 'playwright';
 import { browserPool } from './BrowserPool';
 import { getSeedUrls } from './sitemapParser';
+import { fetchViaScrapeDo } from './scrapeDoFallback';
 import { cleanUrl, isPageUrl } from './antibot';
 import { extractLocalSeoData } from './localSeoDetection';
 import { 
@@ -16,6 +17,14 @@ import {
 } from './cloudflareBypass';
 // @ts-ignore - JS file for browser execution
 import { extractPageDataFunction, measureWebVitalsFunction } from './extractPageData.js';
+
+/** Thrown when a page actively blocks our crawler (403, Cloudflare ban/CAPTCHA). */
+export class BotBlockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BotBlockedError';
+  }
+}
 
 export interface CrawlerOptions {
   mode: 'single' | 'multi';
@@ -134,9 +143,27 @@ export class SiteAuditCrawler {
 
         console.log(`✅ Crawled: ${currentUrl} (${pages.length}/${maxPages})`);
       } catch (error) {
-        const errorMsg = `Failed to crawl ${currentUrl}: ${error}`;
-        this.errors.push(errorMsg);
-        console.error(`❌ ${errorMsg}`);
+        if (error instanceof BotBlockedError) {
+          console.log(`  🔄 Bot blocked (${error.message}), trying scrape.do fallback...`);
+          try {
+            const pageData = await fetchViaScrapeDo(currentUrl);
+            pages.push(pageData);
+            this.visitedUrls.add(currentUrl);
+            this.lastVisitedUrl = currentUrl;
+            if (options.mode === 'multi') {
+              this.discoverLinks(pageData);
+            }
+            console.log(`✅ Scraped via scrape.do: ${currentUrl} (${pages.length}/${maxPages})`);
+          } catch (fallbackError) {
+            const errorMsg = `Failed to scrape ${currentUrl} via scrape.do: ${fallbackError}`;
+            this.errors.push(errorMsg);
+            console.error(`❌ ${errorMsg}`);
+          }
+        } else {
+          const errorMsg = `Failed to crawl ${currentUrl}: ${error}`;
+          this.errors.push(errorMsg);
+          console.error(`❌ ${errorMsg}`);
+        }
       }
     }
 
@@ -191,7 +218,13 @@ export class SiteAuditCrawler {
         waitUntil: 'domcontentloaded' 
       });
       const loadTime = Date.now() - startTime;
-      console.log(`  ⏱  Load time: ${loadTime}ms | Status: ${response?.status()}`);
+      const statusCode = response?.status() || 0;
+      console.log(`  ⏱  Load time: ${loadTime}ms | Status: ${statusCode}`);
+
+      // Treat 403 as bot-blocking: fall back to scrape.do
+      if (statusCode === 403) {
+        throw new BotBlockedError(`HTTP 403 Forbidden for ${url}`);
+      }
 
       // ** CLOUDFLARE DETECTION & BYPASS **
       const cfDetection = await detectCloudflareChallenge(page);
@@ -209,9 +242,9 @@ export class SiteAuditCrawler {
             console.log(`  ⚠️  Cloudflare challenge did not resolve (page may be incomplete)`);
           }
         } else if (cfDetection.challengeType === 'captcha') {
-          throw new Error('Cloudflare CAPTCHA detected - requires human solving or CAPTCHA service');
+          throw new BotBlockedError('Cloudflare CAPTCHA detected - falling back to scrape.do');
         } else if (cfDetection.challengeType === 'ban') {
-          throw new Error('Access blocked by Cloudflare - IP may be banned');
+          throw new BotBlockedError('Access blocked by Cloudflare - falling back to scrape.do');
         }
       }
 
@@ -249,7 +282,7 @@ export class SiteAuditCrawler {
 
       return {
         url,
-        statusCode: response?.status() || 0,
+        statusCode,
         loadTime,
         ...pageData,
         ...webVitals,

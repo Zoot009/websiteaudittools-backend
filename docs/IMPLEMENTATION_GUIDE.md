@@ -147,10 +147,12 @@ Update your `.env` file:
 # Database
 DATABASE_URL="postgresql://username:password@your-neon-instance.neon.tech/website_audit?sslmode=require"
 
-# Redis (existing)
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
+# Redis - Use either REDIS_URL (recommended for cloud) or individual parameters
+REDIS_URL=redis://default:password@host:port/db  # Cloud Redis (Redis Labs, Upstash, etc.)
+# Or use individual parameters (fallback if REDIS_URL not set):
+# REDIS_HOST=localhost
+# REDIS_PORT=6379
+# REDIS_PASSWORD=
 
 # Clerk Authentication
 CLERK_SECRET_KEY=sk_test_...  # Get from Clerk dashboard
@@ -3221,10 +3223,11 @@ Create `.env.example`:
 # Database
 DATABASE_URL="postgresql://username:password@your-neon-instance.neon.tech/website_audit?sslmode=require"
 
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
+# Redis - Use either REDIS_URL or individual parameters
+REDIS_URL=redis://default:password@host:port/db
+# REDIS_HOST=localhost
+# REDIS_PORT=6379
+# REDIS_PASSWORD=
 
 # Clerk Authentication
 CLERK_SECRET_KEY=sk_...
