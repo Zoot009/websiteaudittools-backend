@@ -43,15 +43,8 @@ export const mobileViewportRule: AuditRule = {
         const hasInitialScale = viewport.includes('initial-scale=1');
         
         if (hasWidthDevice && hasInitialScale) {
-          issues.push({
-            category: 'TECHNICAL',
-            type: 'viewport_correct',
-            title: 'Proper Mobile Viewport Configuration',
-            description: 'Your page specifies a proper viewport tag, allowing it to render correctly across devices.',
-            severity: 'LOW',
-            impactScore: 0,
-            pageUrl: page.url,
-          });
+          // Viewport is properly configured - return empty to trigger passing check
+          return [];
         } else {
           issues.push({
             category: 'TECHNICAL',
@@ -113,16 +106,6 @@ export const robotsTxtRule: AuditRule = {
     
     // Check if robots.txt presence is detected
     if (siteContext.hasRobotsTxt === true) {
-      issues.push({
-        category: 'TECHNICAL',
-        type: 'robots_txt_found',
-        title: 'Robots.txt File Present',
-        description: 'Your website has a robots.txt file, which helps search engine crawlers understand how to crawl your site.',
-        severity: 'LOW',
-        impactScore: 0,
-        pageUrl: siteContext.baseUrl,
-      });
-      
       // Check if current page is blocked
       if (siteContext.robotsDisallowed?.has(page.url)) {
         issues.push({
@@ -135,6 +118,8 @@ export const robotsTxtRule: AuditRule = {
           pageUrl: page.url,
         });
       }
+      // Robots.txt present and no blocking issues - return empty to trigger passing check
+      return [];
     } else if (siteContext.hasRobotsTxt === false) {
       issues.push({
         category: 'TECHNICAL',
@@ -221,16 +206,8 @@ export const xmlSitemapRule: AuditRule = {
       const hasSitemapUrls = siteContext.sitemapUrls && siteContext.sitemapUrls.size > 0;
       
       if (hasSitemapLink || hasSitemapUrls) {
-        const count = hasSitemapUrls ? siteContext.sitemapUrls!.size : 'multiple';
-        issues.push({
-          category: 'TECHNICAL',
-          type: 'sitemap_found',
-          title: 'XML Sitemap Detected',
-          description: `Your website has an XML sitemap with ${count} URLs. Sitemaps help search engines discover and index your pages.`,
-          severity: 'LOW',
-          impactScore: 0,
-          pageUrl: siteContext.baseUrl,
-        });
+        // Sitemap detected - return empty to trigger passing check
+        return [];
       } else {
         // We can't definitively say there's no sitemap without checking common URLs
         issues.push({
@@ -291,15 +268,8 @@ export const faviconRule: AuditRule = {
       const faviconLinks = $('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]');
       
       if (faviconLinks.length > 0) {
-        issues.push({
-          category: 'TECHNICAL',
-          type: 'favicon_present',
-          title: 'Favicon Present',
-          description: 'Your page has a favicon, which improves brand recognition in browser tabs and bookmarks.',
-          severity: 'LOW',
-          impactScore: 0,
-          pageUrl: page.url,
-        });
+        // Favicon found - return empty to trigger passing check
+        return [];
       } else {
         issues.push({
           category: 'TECHNICAL',
@@ -359,15 +329,8 @@ export const http2Rule: AuditRule = {
     const isHttps = page.url.startsWith('https://');
     
     if (isHttps) {
-      issues.push({
-        category: 'PERFORMANCE',
-        type: 'http2_likely',
-        title: 'HTTPS Enabled (HTTP/2 Compatible)',
-        description: 'Your site uses HTTPS, which is required for HTTP/2. HTTP/2 provides performance benefits through multiplexing and header compression.',
-        severity: 'LOW',
-        impactScore: 0,
-        pageUrl: page.url,
-      });
+      // HTTPS enabled - return empty to trigger passing check
+      return [];
     } else {
       issues.push({
         category: 'PERFORMANCE',

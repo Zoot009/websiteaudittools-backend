@@ -1,6 +1,7 @@
 import type { PageData } from '../crawler/SiteAuditCrawler';
 import type { SiteContext } from './types';
 import axios from 'axios';
+import { discoverSitemapPageUrls } from '../crawler/sitemapParser';
 
 /**
  * Build site-wide context for cross-page analysis
@@ -11,6 +12,9 @@ export async function buildSiteContext(pages: PageData[], baseUrl: string): Prom
   const canonicalMap = new Map<string, string[]>();
   const internalLinkGraph = new Map<string, Set<string>>();
   const inboundLinkCount = new Map<string, number>();
+  const robotsDisallowed = new Set<string>();
+  let robotsTxt: string | undefined;
+  let sitemapUrls: Set<string> | undefined;
   
   // Check for robots.txt
   let hasRobotsTxt = false;
@@ -21,9 +25,38 @@ export async function buildSiteContext(pages: PageData[], baseUrl: string): Prom
       validateStatus: (status) => status === 200,
     });
     hasRobotsTxt = response.status === 200 && response.data.length > 0;
+
+    if (hasRobotsTxt) {
+      robotsTxt = String(response.data);
+
+      // Parse simple "Disallow:" rules to support blocked-by-robots checks.
+      for (const rawLine of robotsTxt.split('\n')) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith('#')) continue;
+
+        if (line.toLowerCase().startsWith('disallow:')) {
+          const rawPath = line.split(':').slice(1).join(':').trim();
+          if (!rawPath || rawPath === '/') continue;
+
+          try {
+            const disallowedUrl = new URL(rawPath, baseUrl).href;
+            robotsDisallowed.add(disallowedUrl);
+          } catch {
+            // Ignore malformed disallow paths
+          }
+        }
+      }
+    }
   } catch (error) {
     // robots.txt doesn't exist or is inaccessible
     hasRobotsTxt = false;
+  }
+
+  // Build sitemap context used by technical rules.
+  try {
+    sitemapUrls = await discoverSitemapPageUrls(baseUrl);
+  } catch {
+    sitemapUrls = undefined;
   }
   
   // Build maps for duplicate detection
@@ -87,5 +120,8 @@ export async function buildSiteContext(pages: PageData[], baseUrl: string): Prom
     internalLinkGraph,
     inboundLinkCount,
     hasRobotsTxt,
+    robotsTxt,
+    robotsDisallowed,
+    sitemapUrls,
   };
 }

@@ -21,8 +21,14 @@ export async function getSitemapsFromRobots(domain: string): Promise<string[]> {
     });
 
     for (const line of res.data.split('\n')) {
-      if (line.toLowerCase().startsWith('sitemap:')) {
-        const sm = line.split(':').slice(1).join(':').trim();
+      // Handle whitespace/comments/case variants like "  Sitemap: https://..."
+      const normalizedLine = line.trim();
+      if (!normalizedLine || normalizedLine.startsWith('#')) {
+        continue;
+      }
+
+      if (normalizedLine.toLowerCase().startsWith('sitemap:')) {
+        const sm = normalizedLine.split(':').slice(1).join(':').trim();
         if (sm) sitemaps.push(sm);
       }
     }
@@ -117,4 +123,31 @@ export async function getSeedUrls(baseUrl: string): Promise<string[]> {
 
   console.log(`[SITEMAP] Seeded ${seed.size} URLs from sitemaps`);
   return [...seed];
+}
+
+/**
+ * Discover sitemap page URLs for analyzer context.
+ * Unlike getSeedUrls, this does NOT force-add homepage/base URL.
+ */
+export async function discoverSitemapPageUrls(baseUrl: string): Promise<Set<string>> {
+  const domain = getDomain(baseUrl);
+  const pageUrls = new Set<string>();
+
+  const robotsSitemaps = await getSitemapsFromRobots(domain);
+
+  // Try common sitemap locations when robots.txt has no sitemap entries.
+  if (robotsSitemaps.length === 0) {
+    robotsSitemaps.push(`${domain}/sitemap.xml`);
+    robotsSitemaps.push(`${domain}/sitemap_index.xml`);
+  }
+
+  const visited = new Set<string>();
+  for (const sm of robotsSitemaps) {
+    const urls = await resolveSitemap(sm, visited);
+    urls
+      .filter((u) => isPageUrl(u) && u.startsWith(domain))
+      .forEach((u) => pageUrls.add(u));
+  }
+
+  return pageUrls;
 }

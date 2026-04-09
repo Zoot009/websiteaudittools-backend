@@ -179,16 +179,8 @@ export const headingStructureRule: AuditRule = {
     const levelsUsed = Object.values(counts).filter(count => count > 0).length;
     
     if (levelsUsed >= 3) {
-      issues.push({
-        category: 'ON_PAGE',
-        type: 'heading_structure_good',
-        title: 'Good Heading Structure',
-        description: `Your page uses ${levelsUsed} levels of heading tags (H1-H6) with ${totalHeadings} total headings. This helps organize content and improve SEO.`,
-        severity: 'LOW',
-        impactScore: 0,
-        pageUrl: page.url,
-        elementSelector: JSON.stringify(counts),
-      });
+      // Good heading structure - return empty to trigger passing check
+      return [];
     } else if (totalHeadings === 0) {
       issues.push({
         category: 'ON_PAGE',
@@ -250,15 +242,8 @@ export const wordCountRule: AuditRule = {
     const wordCount = page.wordCount;
     
     if (wordCount >= 500) {
-      issues.push({
-        category: 'ON_PAGE',
-        type: 'word_count_good',
-        title: 'Good Content Length',
-        description: `Your page has ${wordCount} words of textual content, which is sufficient for ranking potential.`,
-        severity: 'LOW',
-        impactScore: 0,
-        pageUrl: page.url,
-      });
+      // Good content length - return empty to trigger passing check
+      return [];
     } else if (wordCount >= 300) {
       issues.push({
         category: 'ON_PAGE',
@@ -353,24 +338,6 @@ export const linkStructureRule: AuditRule = {
       
       const totalLinks = internalLinksFollow + externalLinksFollow + externalLinksNofollow;
       const externalPercentage = totalLinks > 0 ? Math.round(((externalLinksFollow + externalLinksNofollow) / totalLinks) * 100) : 0;
-      
-      // Create info issue about link structure
-      issues.push({
-        category: 'LINKS',
-        type: 'link_structure_analysis',
-        title: 'Link Structure Analysis',
-        description: `Found ${totalLinks} total links: ${internalLinksFollow} internal, ${externalLinksFollow} external (follow), ${externalLinksNofollow} external (nofollow). ${externalPercentage}% are external links.`,
-        severity: 'LOW',
-        impactScore: 0,
-        pageUrl: page.url,
-        elementSelector: JSON.stringify({
-          total: totalLinks,
-          internal: internalLinksFollow,
-          externalFollow: externalLinksFollow,
-          externalNofollow: externalLinksNofollow,
-          externalPercentage,
-        }),
-      });
       
       // Warn if too many external links
       if (externalPercentage > 30 && externalLinksFollow > 10) {
