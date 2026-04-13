@@ -6,10 +6,12 @@ import axios from 'axios';
 import { load } from 'cheerio';
 import type { PageData } from './SiteAuditCrawler.js';
 import { extractLocalSeoData } from './localSeoDetection.js';
+import 'dotenv/config'
 
 export async function fetchViaScrapeDo(url: string): Promise<PageData> {
   const apiKey = process.env.SCRAPE_DO_API_KEY;
   if (!apiKey) {
+    console.log(apiKey)
     throw new Error('SCRAPE_DO_API_KEY environment variable is not set');
   }
 

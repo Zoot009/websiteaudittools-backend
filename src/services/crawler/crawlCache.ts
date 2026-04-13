@@ -1,4 +1,4 @@
-import { prisma } from '../../../lib/prisma.js';
+import { prisma } from '../../lib/prisma.js';
 import type { PageData } from './SiteAuditCrawler.js';
 
 // Cache TTL: 7 days (in milliseconds)

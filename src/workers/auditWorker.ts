@@ -1,16 +1,18 @@
 import { Worker, Job } from 'bullmq';
 import type { AuditJobData } from '../queues/auditQueue.js';
 import { redisConnection } from '../config/redis.js';
-import { SiteAuditCrawler, type PageData } from '../services/crawler/SiteAuditCrawler.js';
 import { SeoAnalyzer } from '../services/analyzer/SeoAnalyzer.js';
-import { RecommendationGenerator } from '../services/recommendations/RecommendatonGenerator.js';
-import { prisma } from '../../lib/prisma.js';
+// TODO: Re-implement recommendations
+// import { RecommendationGenerator } from '../services/recommendations/RecommendatonGenerator.js';
+import { prisma } from '../lib/prisma.js';
+import { SiteAuditCrawler, type PageData } from '../services/crawler/SiteAuditCrawler.js';
 import { 
   shouldRecrawl, 
   loadCachedPageData,
   checkRecrawlNeeded,
   loadCachedPagesData 
 } from '../services/crawler/crawlCache.js';
+import type { TransactionClient } from '../generated/prisma/internal/prismaNamespace.js';
 
 /**
  * Main audit processing function
@@ -86,18 +88,21 @@ async function processAudit(job: Job<AuditJobData>) {
     console.log(`✅ ${forceRecrawl || pagesAnalyzed === pageData.length ? 'Crawled' : 'Loaded'} ${pagesAnalyzed} pages`);
 
     // Step 2: Analyze SEO (20-60% progress)
+    console.log(`🔍 Analyzing ${pageData.length} pages for SEO issues...`);
     const analyzer = new SeoAnalyzer();
     const analysisResult = await analyzer.analyze(pageData, baseUrl);
     
     await job.updateProgress(60);
-    console.log(`✅ Found ${analysisResult.totalIssues} issues`);
+    console.log(`✅ Analysis complete: ${analysisResult.totalIssues} issues found, overall score ${analysisResult.overallScore}/100`);
 
-    // Step 3: Generate recommendations (60-80% progress)
-    const generator = new RecommendationGenerator();
-    const recommendations = await generator.generateRecommendations(analysisResult.issues);
+    // TODO: Step 3: Generate recommendations (60-80% progress)
+    // const generator = new RecommendationGenerator();
+    // const recommendations = await generator.generateRecommendations(analysisResult.issues);
+    
+    const recommendations: any[] = [];
     
     await job.updateProgress(80);
-    console.log(`✅ Generated ${recommendations.length} recommendations`);
+    console.log(`⚠️  Recommendations temporarily disabled - waiting for reimplementation`);
 
     // Step 4: Save everything to database (80-100% progress)
     const auditReport = await saveToDatabase(
@@ -116,16 +121,13 @@ async function processAudit(job: Job<AuditJobData>) {
     return {
       success: true,
       auditReportId: auditReport.id,
-      overallScore: auditReport.overallScore,
+      overallScore: analysisResult.overallScore,
       issuesFound: analysisResult.totalIssues,
       pagesAnalyzed: pagesAnalyzed,
     };
 
   } catch (error: any) {
     console.error(`❌ Audit job ${job.id} failed:`, error);
-    
-    // Save failed audit to database
-    await saveFailedAudit(job, error.message);
     
     throw error; // Re-throw to mark job as failed
   }
@@ -142,9 +144,11 @@ async function saveToDatabase(
   analysisResult: any,
   recommendations: any[]
 ) {
+  console.log('💾 Saving to database with userId:', job.data.userId);
+  
   // Create audit report with all related data in a transaction
   // Increase timeout to 15 seconds for large audits with many recommendations
-  const auditReport = await prisma.$transaction(async (tx) => {
+  const auditReport = await prisma.$transaction(async (tx:TransactionClient) => {
     // Delete existing report if it exists (handles retries)
     await tx.auditReport.deleteMany({
       where: { jobId: job.id as string },

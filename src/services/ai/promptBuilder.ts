@@ -58,6 +58,11 @@ export function buildSystemPrompt(report: AuditReport): string {
     .sort((a, b) => a.priority - b.priority)
     .slice(0, 10);
 
+  // Format recommendations section (only if we have recommendations)
+  const recommendationsSection = recommendations.length > 0 
+    ? `## TOP RECOMMENDATIONS (${recommendations.length} total)\n\n${formatRecommendations(topRecommendations)}\n\n`
+    : '// TODO: Recommendations will appear here once the recommendations system is reimplemented\n\n';
+
   // Build the prompt
   return `You are an expert SEO consultant analyzing a website audit report. Help the user understand their SEO performance and provide actionable advice.
 
@@ -85,11 +90,7 @@ ${highIssues.length > 0 ? `### 🟠 HIGH Priority Issues (${highIssues.length})\
 ${mediumIssues.length > 0 ? `### 🟡 MEDIUM Priority Issues (${mediumIssues.length})\n${formatIssues(mediumIssues.slice(0, 3))}\n` : ''}
 ${lowIssues.length > 0 ? `### 🟢 LOW Priority Issues (${lowIssues.length})\n` : ''}
 
-## TOP RECOMMENDATIONS (${recommendations.length} total)
-
-${formatRecommendations(topRecommendations)}
-
-${passingChecks.length > 0 ? `## ✅ WHAT'S WORKING WELL (${passingChecks.length} passing checks)\n\n${formatPassingChecks(passingChecks.slice(0, 5))}\n` : ''}
+${recommendationsSection}${passingChecks.length > 0 ? `## ✅ WHAT'S WORKING WELL (${passingChecks.length} passing checks)\n\n${formatPassingChecks(passingChecks.slice(0, 5))}\n` : ''}
 
 ## PAGE PERFORMANCE
 
@@ -180,9 +181,11 @@ export function buildCondensedSystemPrompt(report: AuditReport): string {
     .filter(i => i.severity === 'CRITICAL' || i.severity === 'HIGH')
     .slice(0, 15);
   
-  const topRecommendations = report.recommendations
-    .sort((a, b) => a.priority - b.priority)
-    .slice(0, 8);
+  const topRecommendations = report.recommendations.length > 0
+    ? report.recommendations
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, 8)
+    : [];
   
   // Only include worst performing pages
   const worstPages = report.pages

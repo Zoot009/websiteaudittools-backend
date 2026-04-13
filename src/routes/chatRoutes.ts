@@ -5,7 +5,7 @@
  */
 
 import { Router } from 'express';
-import { prisma } from '../../lib/prisma.js';
+import { prisma } from '../lib/prisma.js';
 import { streamChatResponse, sendChatMessage, validateChatMessage, generateSuggestedQuestions, type ChatResponse } from '../services/ai/chatService.js';
 import {
   generateConversationId,
@@ -51,14 +51,15 @@ router.post('/reports/:reportId/chat', async (req, res) => {
         issues: {
           orderBy: { severity: 'asc' },
         },
-        recommendations: {
-          orderBy: { priority: 'asc' },
-          include: {
-            steps: {
-              orderBy: { stepNumber: 'asc' },
-            },
-          },
-        },
+        // TODO: Re-enable when recommendations are reimplemented
+        // recommendations: {
+        //   orderBy: { priority: 'asc' },
+        //   include: {
+        //     steps: {
+        //       orderBy: { stepNumber: 'asc' },
+        //     },
+        //   },
+        // },
       },
     });
     

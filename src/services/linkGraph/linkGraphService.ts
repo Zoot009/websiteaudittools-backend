@@ -1,5 +1,13 @@
 import type { PageData } from '../crawler/SiteAuditCrawler';
-import type { SiteContext } from '../analyzer/types';
+// TODO: Re-enable when analyzer is reimplemented
+// import type { SiteContext } from '../analyzer/types';
+
+// Temporary SiteContext type definition
+export interface SiteContext {
+  pages: any[];
+  baseUrl: string;
+  [key: string]: any;
+}
 
 /**
  * Node in the internal link graph
@@ -205,7 +213,7 @@ export function generateLinkGraph(
   const edges: LinkGraphEdge[] = [];
   let edgeIdCounter = 0;
   
-  internalLinkGraph.forEach((targets, source) => {
+  internalLinkGraph.forEach((targets: Set<string>, source: string) => {
     const sourceAnchors = anchorTexts.get(source);
     
     targets.forEach((target: string) => {

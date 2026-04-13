@@ -57,11 +57,70 @@ export interface PageData {
   ogImage: string | null;
   hasSchemaOrg: boolean;
   
+  // Internationalization
+  langAttr?: string | null;
+  hreflangLinks?: { hreflang: string; href: string }[];
+  charset?: string | null;
+  
+  // Usability
+  flashCount?: number;
+  iframeCount?: number;
+  exposedEmails?: string[];
+  
+  // Performance/Code quality
+  isAMP?: boolean;
+  deprecatedTagsCount?: number;
+  inlineStylesCount?: number;
+  
+  // Social
+  socialLinks?: {
+    facebook: boolean;
+    twitter: boolean;
+    instagram: boolean;
+    linkedin: boolean;
+    youtube: boolean;
+  };
+  hasFacebookPixel?: boolean;
+  ogTags?: { 
+    title?: string; 
+    description?: string; 
+    image?: string; 
+    type?: string; 
+    url?: string; 
+    siteName?: string;
+  };
+  twitterTags?: { 
+    card?: string; 
+    site?: string; 
+    title?: string; 
+    description?: string; 
+    image?: string;
+  };
+  
   // Local SEO
   localSeo?: {
     phone: { found: boolean; number: string | null; source: string | null };
     address: { found: boolean; text: string | null; source: string | null };
   };
+  
+  // Usability - Phase 2
+  viewport?: { hasViewport: boolean; content: string | null };
+  favicon?: { hasFavicon: boolean; url: string | null };
+  smallFontCount?: number;
+  smallTapTargetCount?: number;
+  
+  // Performance - Phase 2
+  pageSizes?: { html: number; css: number; js: number; images: number; total: number };
+  resourceCounts?: { scripts: number; stylesheets: number; images: number; fonts: number };
+  jsErrors?: Array<{ message: string; source: string; line: number }>;
+  imageOptimization?: { unoptimized: number; modernFormats: number };
+  minification?: { unminifiedScripts: number; unminifiedStyles: number };
+  renderMetrics?: { initialSize: number; renderedSize: number; percentage: number };
+  
+  // HTTP Level - Phase 2
+  compression?: 'gzip' | 'br' | 'deflate' | 'none';
+  protocol?: string;
+  isHTTP2?: boolean;
 }
 
 export interface CrawlResult {
@@ -221,6 +280,12 @@ export class SiteAuditCrawler {
       const statusCode = response?.status() || 0;
       console.log(`  ⏱  Load time: ${loadTime}ms | Status: ${statusCode}`);
 
+      // Extract HTTP-level data (Phase 2)
+      const headers = response?.headers() || {};
+      const compression = this.detectCompression(headers);
+      const protocol = response?.request().allHeaders().then(h => h[':protocol']) || 'http/1.1';
+      const isHTTP2 = (await protocol)?.includes('h2') || false;
+
       // Treat 403 as bot-blocking: fall back to scrape.do
       if (statusCode === 403) {
         throw new BotBlockedError(`HTTP 403 Forbidden for ${url}`);
@@ -279,6 +344,7 @@ export class SiteAuditCrawler {
       console.log(`  🖼  Images: ${pageData.images.length}`);
       console.log(`  🔗 Links: ${pageData.links.length} (${pageData.links.filter(l => l.isInternal).length} internal)`);
       console.log(`  ⚡ LCP: ${webVitals.lcp}ms | Schema.org: ${pageData.hasSchemaOrg ? '✓' : '✗'}`);
+      console.log(`  🗜️  Compression: ${compression} | HTTP/2: ${isHTTP2 ? '✓' : '✗'}`);
 
       return {
         url,
@@ -287,6 +353,9 @@ export class SiteAuditCrawler {
         ...pageData,
         ...webVitals,
         localSeo,
+        compression,
+        protocol: await protocol,
+        isHTTP2,
       };
     } finally {
       // Cleanup in reverse order: page -> context -> browser
@@ -310,6 +379,17 @@ export class SiteAuditCrawler {
     } catch {
       return { lcp: null, cls: null, fid: null };
     }
+  }
+
+  /**
+   * Detect compression type from response headers (Phase 2)
+   */
+  private detectCompression(headers: Record<string, string>): 'gzip' | 'br' | 'deflate' | 'none' {
+    const encoding = headers['content-encoding']?.toLowerCase();
+    if (encoding?.includes('br')) return 'br';
+    if (encoding?.includes('gzip')) return 'gzip';
+    if (encoding?.includes('deflate')) return 'deflate';
+    return 'none';
   }
 
   /**

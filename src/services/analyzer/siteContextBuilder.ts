@@ -1,10 +1,11 @@
-import type { PageData } from '../crawler/SiteAuditCrawler';
-import type { SiteContext } from './types';
+import type { PageData } from '../crawler/SiteAuditCrawler.js';
+import type { SiteContext } from './types.js';
 import axios from 'axios';
-import { discoverSitemapPageUrls } from '../crawler/sitemapParser';
+import { discoverSitemapPageUrls } from '../crawler/sitemapParser.js';
 
 /**
  * Build site-wide context for cross-page analysis
+ * TODO: Re-implement this when rebuilding the analyzer
  */
 export async function buildSiteContext(pages: PageData[], baseUrl: string): Promise<SiteContext> {
   const titleMap = new Map<string, string[]>();
@@ -113,15 +114,16 @@ export async function buildSiteContext(pages: PageData[], baseUrl: string): Prom
   
   return {
     baseUrl,
-    allPages: pages,
+    totalPages: pages.length,
     titleMap,
     descriptionMap,
     canonicalMap,
     internalLinkGraph,
     inboundLinkCount,
     hasRobotsTxt,
-    robotsTxt,
+    ...(robotsTxt && { robotsTxt }),
     robotsDisallowed,
-    sitemapUrls,
+    hasSitemap: sitemapUrls !== undefined && sitemapUrls.size > 0,
+    ...(sitemapUrls && { sitemapUrls }),
   };
 }

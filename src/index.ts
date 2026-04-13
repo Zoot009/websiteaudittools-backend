@@ -4,11 +4,12 @@ import { auditQueue } from './queues/auditQueue.js';
 import { auditWorker } from './workers/auditWorker.js';
 import { linkGraphQueue } from './queues/linkGraphQueue.js';
 import { linkGraphWorker } from './workers/linkGraphWorker.js';
-import { prisma } from '../lib/prisma.js';
+import { prisma } from './lib/prisma.js';
 import { getCacheStats } from './services/crawler/crawlCache.js';
 import { captureScreenshots } from './services/screenshots/screenshotService.js';
 import { generateLinkGraph, filterLinkGraphByDepth, exportToDOT, exportToCSV } from './services/linkGraph/linkGraphService.js';
-import { buildSiteContext } from './services/analyzer/siteContextBuilder.js';
+// TODO: Re-implement analyzer
+// import { buildSiteContext } from './services/analyzer/siteContextBuilder.js';
 import chatRoutes from './routes/chatRoutes.js';
 import 'dotenv/config';
 
@@ -44,6 +45,8 @@ app.post('/api/audits', async (req, res) => {
         where: { email: 'dev@example.com' }
       });
       userId = devUser?.id;
+      console.log('🔍 Dev user found:', devUser);
+      console.log('📝 Using userId:', userId);
       
       if (!userId) {
         return res.status(400).json({ 
@@ -134,7 +137,8 @@ app.get('/api/reports', async (req, res) => {
           _count: {
             select: {
               issues: true,
-              recommendations: true,
+              // TODO: Re-enable when recommendations are reimplemented
+              // recommendations: true,
               pages: true,
             },
           },
@@ -167,14 +171,15 @@ app.get('/api/reports/:id', async (req, res) => {
         issues: {
           orderBy: { severity: 'asc' },
         },
-        recommendations: {
-          orderBy: { priority: 'asc' },
-          include: {
-            steps: {
-              orderBy: { stepNumber: 'asc' },
-            },
-          },
-        },
+        // TODO: Re-enable when recommendations are reimplemented
+        // recommendations: {
+        //   orderBy: { priority: 'asc' },
+        //   include: {
+        //     steps: {
+        //       orderBy: { stepNumber: 'asc' },
+        //     },
+        //   },
+        // },
         user: {
           select: {
             id: true,
@@ -212,7 +217,8 @@ app.get('/api/users/:userId/reports', async (req, res) => {
           _count: {
             select: {
               issues: true,
-              recommendations: true,
+              // TODO: Re-enable when recommendations are reimplemented
+              // recommendations: true,
               pages: true,
             },
           },
@@ -310,9 +316,10 @@ app.get('/api/reports/:reportId/issues/category/:category', async (req, res) => 
 });
 
 // ============================================
-// RECOMMENDATIONS ROUTES
+// RECOMMENDATIONS ROUTES (Temporarily disabled)
 // ============================================
 
+/*
 // Get all recommendations for an audit report
 app.get('/api/reports/:reportId/recommendations', async (req, res) => {
   try {
@@ -361,6 +368,7 @@ app.get('/api/recommendations/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch recommendation', details: error.message });
   }
 });
+*/
 
 // ============================================
 // PAGES ROUTES
@@ -694,7 +702,9 @@ app.get('/api/reports/:reportId/link-graph', async (req, res) => {
     
     // Build site context
     console.log(`🔗 Building link graph for ${pages.length} pages...`);
-    const siteContext = await buildSiteContext(pages, report.url);
+    // TODO: Re-enable when analyzer is reimplemented
+    // const siteContext = await buildSiteContext(pages, report.url);
+    const siteContext = { pages: [], baseUrl: report.url }; // Placeholder
     
     // Generate link graph
     let linkGraph = generateLinkGraph(pages, siteContext);

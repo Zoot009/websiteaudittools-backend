@@ -5,7 +5,7 @@
  * Run: npx tsx src/services/ai/test-chat.ts
  */
 
-import { prisma } from '../../../lib/prisma.js';
+import { prisma } from '../../lib/prisma.js';
 import { sendChatMessage } from './chatService.js';
 import { generateConversationId, createConversationMetadata } from './conversationMemory.js';
 
