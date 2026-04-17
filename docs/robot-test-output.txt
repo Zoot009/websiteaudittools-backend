@@ -1,0 +1,509 @@
+
+[1m[36m================================================================================[0m
+[1m[36mSEO RULES TEST - LIVE CRAWL[0m
+[1m[36m================================================================================[0m
+
+[1mTarget URL:[0m https://example.com
+
+[SeoAnalyzer] Registered 53 rules: {
+  TECHNICAL: 13,
+  ON_PAGE: 12,
+  PERFORMANCE: 11,
+  LINKS: 1,
+  ACCESSIBILITY: 4,
+  SECURITY: 1,
+  STRUCTURED_DATA: 11
+}
+[1mTotal Rules Registered:[0m [32m53[0m
+
+[1mRules by Category:[0m
+  TECHNICAL            [36m█████████████░░[0m [1m13[0m rules
+  ON_PAGE              [36m████████████░░░[0m [1m12[0m rules
+  PERFORMANCE          [36m███████████░░░░[0m [1m11[0m rules
+  STRUCTURED_DATA      [36m███████████░░░░[0m [1m11[0m rules
+  ACCESSIBILITY        [36m████░░░░░░░░░░░[0m [1m4[0m rules
+  LINKS                [36m█░░░░░░░░░░░░░░[0m [1m1[0m rules
+  SECURITY             [36m█░░░░░░░░░░░░░░[0m [1m1[0m rules
+
+[1mRules by Type:[0m
+  Page Rules           [1m49[0m
+  Site Rules           [1m4[0m
+
+[2mStarting crawl and analysis...[0m
+
+[36m━━━ STEP 1: CRAWLING WEBSITE ━━━[0m
+
+🕷 Starting single crawl of https://example.com/ (max 1 pages)
+
+🔍 Processing: https://example.com/
+🌐 Launching 3 browsers (stealth mode)...
+✅ Browser pool ready with 3 browsers
+  ⏱  Load time: 809ms | Status: 200
+  🤖 Simulating human interaction...
+  📄 Title: Example Domain
+  📝 Description: N/A
+  🔤 Word count: 19
+  📊 Headings: 1 (1 H1s)
+  🖼  Images: 0
+  🔗 Links: 1 (0 internal)
+  ⚡ LCP: 805.5ms | Schema.org: ✗
+  🗜️  Compression: br | HTTP/2: ✗
+✅ Crawled: https://example.com/ (1/1)
+🎉 Crawl complete: 1 pages analyzed
+[32m✓[0m Successfully crawled [1m1[0m page(s)
+
+[2m1.[0m https://example.com/
+   Status: 200 | Load Time: 809ms | Words: 19
+   Title: Example Domain
+
+[36m━━━ STEP 2: RUNNING SEO ANALYSIS ━━━[0m
+
+[SeoAnalyzer] Starting analysis for 1 pages from https://example.com
+[SITEMAP] Checking robots.txt...
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP] robots.txt not accessible or not found
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap_index.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap_index.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap-index.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap-index.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap1.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap1.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/post-sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/post-sitemap.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/page-sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/page-sitemap.xml
+[SeoAnalyzer] Built site context: 1 pages
+[SeoAnalyzer] Found 15 issues and 23 passing checks
+[32m✓[0m Analysis complete!
+
+[1m[36m================================================================================[0m
+[1m[36mRESULTS[0m
+[1m[36m================================================================================[0m
+
+[1mOverall SEO Score:[0m [32m99.0/100[0m
+[1mTotal Issues:[0m 15
+[1mPassing Checks:[0m [32m23[0m
+
+[1m[36m━━━ ALL RULES EXECUTION STATUS (53 rules) ━━━[0m
+
+
+[1mACCESSIBILITY (4 rules: [32m3 passing[0m[1m, [31m1 failing[0m[1m)[0m
+[2m────────────────────────────────────────────────────────────────────────────────[0m
+
+[32m✓ PASS[0m | [1mNo IFrames[0m
+  [2mCode: IFRAME_USAGE[0m
+  [2mPage does not use iframes[0m
+
+[32m✓ PASS[0m | [1mMobile Viewport Configured[0m
+  [2mCode: MOBILE_VIEWPORT[0m
+  [2mViewport meta tag is properly configured: "width=device-width, initial-scale=1"[0m
+
+[32m✓ PASS[0m | [1mReadable Font Sizes[0m
+  [2mCode: FONT_SIZE_TOO_SMALL[0m
+  [2mAll text elements use readable font sizes (12px or larger)[0m
+
+[31m✗ FAIL[0m | [36m[MEDIUM][0m [1mSome Tap Targets Too Small[0m
+  [2mCode: TAP_TARGET_SIZE | Impact: 12/100[0m
+  [2mFound 1 clickable elements smaller than 48x48px. Increase element sizes to at least 48x48px for better mobile usability.[0m
+
+[1mLINKS (1 rules: [32m0 passing[0m[1m, [31m1 failing[0m[1m)[0m
+[2m────────────────────────────────────────────────────────────────────────────────[0m
+
+[31m✗ FAIL[0m | [36m[MEDIUM][0m [1mNo Internal Links[0m
+  [2mCode: NO_INTERNAL_LINKS | Impact: 15/100[0m
+  [2mPage has 1 external links but no internal links. Internal linking improves site navigation and SEO.[0m
+
+[1mON_PAGE (9 rules: [32m4 passing[0m[1m, [31m5 failing[0m[1m)[0m
+[2m────────────────────────────────────────────────────────────────────────────────[0m
+
+[32m✓ PASS[0m | [1mHeading Hierarchy Valid[0m
+  [2mCode: HEADING_HIERARCHY[0m
+  [2mPage has 1 headings in logical order[0m
+
+[32m✓ PASS[0m | [1mLang Attribute Present[0m
+  [2mCode: LANG_ATTRIBUTE[0m
+  [2mPage declares language as "en"[0m
+
+[32m✓ PASS[0m | [1mSERP Snippet Available[0m
+  [2mCode: SERP_SNIPPET[0m
+  [2mPreview: Example Domain | No description available[0m
+
+[32m✓ PASS[0m | [1mURL is Friendly[0m
+  [2mCode: FRIENDLY_URL[0m
+  [2mURL is readable and well-formatted[0m
+
+[31m✗ FAIL[0m | [36m[MEDIUM][0m [1mTitle Tag Too Short[0m
+  [2mCode: TITLE_TOO_SHORT | Impact: 10/100[0m
+  [2mTitle is only 14 characters. Recommended: 40-60 characters for optimal display in search results.[0m
+
+[31m✗ FAIL[0m | [33m[HIGH][0m [1mMissing Meta Description[0m
+  [2mCode: MISSING_META_DESCRIPTION | Impact: 25/100[0m
+  [2mPage "https://example.com/" has no meta description. Meta descriptions improve click-through rates from search results.[0m
+
+[31m✗ FAIL[0m | [2m[LOW][0m [1mH1 Tag Too Short[0m
+  [2mCode: H1_TOO_SHORT | Impact: 5/100[0m
+  [2mH1 "Example Domain" is only 14 characters. Consider making it more descriptive.[0m
+
+[31m✗ FAIL[0m | [36m[MEDIUM][0m [1mThin Content Detected[0m
+  [2mCode: THIN_CONTENT | Impact: 20/100[0m
+  [2mPage has only 19 words. Pages with less than 300 words may be considered thin content by search engines.[0m
+
+[31m✗ FAIL[0m | [2m[LOW][0m [1mMissing Favicon[0m
+  [2mCode: FAVICON_PRESENT | Impact: 5/100[0m
+  [2mNo favicon detected on this page. Add a favicon to improve brand recognition and help users identify your site in browser tabs and bookmarks.[0m
+
+[1mPERFORMANCE (7 rules: [32m7 passing[0m[1m, [31m0 failing[0m[1m)[0m
+[2m────────────────────────────────────────────────────────────────────────────────[0m
+
+[32m✓ PASS[0m | [1mGood Core Web Vitals[0m
+  [2mCode: CORE_WEB_VITALS[0m
+  [2mAll 3 Core Web Vitals metrics pass Google's thresholds[0m
+
+[32m✓ PASS[0m | [1mFast Page Load[0m
+  [2mCode: LOAD_TIME[0m
+  [2mPage loaded in 0.81s[0m
+
+[32m✓ PASS[0m | [1mNo Flash Content[0m
+  [2mCode: FLASH_USAGE[0m
+  [2mPage does not use deprecated Flash technology[0m
+
+[32m✓ PASS[0m | [1mPage Size Optimized[0m
+  [2mCode: PAGE_SIZE_TOO_LARGE[0m
+  [2mTotal page size is 0.00MB (excellent)[0m
+
+[32m✓ PASS[0m | [1mResource Count Optimized[0m
+  [2mCode: TOO_MANY_RESOURCES[0m
+  [2mPage loads 0 resources (0 JS, 0 CSS, 0 images, 0 fonts)[0m
+
+[32m✓ PASS[0m | [1mCSS/JavaScript Files Minified[0m
+  [2mCode: MINIFICATION[0m
+  [2mAll CSS and JavaScript files appear to be minified[0m
+
+[32m✓ PASS[0m | [1mHTTP Compression Enabled (Brotli)[0m
+  [2mCode: compression_enabled[0m
+  [2mBrotli compression is active, reducing bandwidth usage and improving page load speed.[0m
+
+[1mSECURITY (1 rules: [32m1 passing[0m[1m, [31m0 failing[0m[1m)[0m
+[2m────────────────────────────────────────────────────────────────────────────────[0m
+
+[32m✓ PASS[0m | [1mNo Exposed Emails[0m
+  [2mCode: EMAIL_PRIVACY[0m
+  [2mPage does not expose email addresses in plain text[0m
+
+[1mSTRUCTURED_DATA (3 rules: [32m0 passing[0m[1m, [31m3 failing[0m[1m)[0m
+[2m────────────────────────────────────────────────────────────────────────────────[0m
+
+[31m✗ FAIL[0m | [33m[HIGH][0m [1mMissing Open Graph Tags[0m
+  [2mCode: OPEN_GRAPH_TAGS | Impact: 15/100[0m
+  [2mThis page is missing 3 essential Open Graph tags: og:title, og:description, og:image. Add og:title, og:description, and og:image to improve how your content appears when shared on Facebook, LinkedIn, and other social platforms.[0m
+
+[31m✗ FAIL[0m | [33m[HIGH][0m [1mMissing Twitter Card Tags[0m
+  [2mCode: TWITTER_CARD_TAGS | Impact: 15/100[0m
+  [2mThis page is missing 4 essential Twitter Card tags: twitter:card, twitter:title, twitter:description, twitter:image. Add twitter:card, twitter:title, twitter:description, and twitter:image to control how your content appears when shared on Twitter/X.[0m
+
+[31m✗ FAIL[0m | [33m[HIGH][0m [1mNo Organization or Person Schema Found[0m
+  [2mCode: missing_identity_schema | Impact: 72/100[0m
+  [2mYour site is missing Organization or Person schema markup. This structured data helps Google understand who you are and can power your Knowledge Graph panel in search results. Add Organization schema for companies or Person schema for personal brands.[0m
+
+[1mTECHNICAL (13 rules: [32m8 passing[0m[1m, [31m5 failing[0m[1m)[0m
+[2m────────────────────────────────────────────────────────────────────────────────[0m
+
+[32m✓ PASS[0m | [1mHTTPS Enabled[0m
+  [2mCode: HTTPS_CHECK[0m
+  [2mPage is served securely over HTTPS[0m
+
+[32m✓ PASS[0m | [1mValid SSL Certificate[0m
+  [2mCode: SSL_ENABLED[0m
+  [2mPage has a valid SSL certificate[0m
+
+[32m✓ PASS[0m | [1mPage is Indexable[0m
+  [2mCode: NOINDEX_TAG[0m
+  [2mPage does not have a noindex directive[0m
+
+[32m✓ PASS[0m | [1mNo Blocking HTTP Headers[0m
+  [2mCode: no_blocking_http_headers[0m
+  [2mNo X-Robots-Tag header found, allowing normal indexing.[0m
+
+[32m✓ PASS[0m | [1mNo JavaScript Errors Detected[0m
+  [2mCode: no_javascript_errors[0m
+  [2mPage loaded without JavaScript runtime errors, ensuring proper functionality.[0m
+
+[32m✓ PASS[0m | [1mNo Deprecated Tags[0m
+  [2mCode: DEPRECATED_TAGS[0m
+  [2mPage uses modern HTML without deprecated tags[0m
+
+[32m✓ PASS[0m | [1mNo Inline Styles[0m
+  [2mCode: INLINE_STYLES[0m
+  [2mPage does not use inline styles[0m
+
+[32m✓ PASS[0m | [1mNo robots.txt File[0m
+  [2mCode: no_robots_txt[0m
+  [2mNo robots.txt file found. All pages are allowed for crawling by default.[0m
+
+[31m✗ FAIL[0m | [36m[MEDIUM][0m [1mMissing Canonical Tag[0m
+  [2mCode: MISSING_CANONICAL | Impact: 15/100[0m
+  [2mPage "https://example.com/" has no canonical tag. Canonical tags help prevent duplicate content issues.[0m
+
+[31m✗ FAIL[0m | [2m[LOW][0m [1mMissing Charset Declaration[0m
+  [2mCode: MISSING_CHARSET | Impact: 5/100[0m
+  [2mPage "https://example.com/" has no charset declaration. UTF-8 is recommended for proper character encoding.[0m
+
+[31m✗ FAIL[0m | [36m[MEDIUM][0m [1mHTTP/2 Not Enabled[0m
+  [2mCode: HTTP2_ENABLED | Impact: 12/100[0m
+  [2mThe server is using HTTP/1.1 instead of the faster HTTP/2 protocol. Upgrade to HTTP/2 for faster page loads through multiplexing and header compression.[0m
+
+[31m✗ FAIL[0m | [36m[MEDIUM][0m [1mXML Sitemap Not Found[0m
+  [2mCode: XML_SITEMAP | Impact: 20/100[0m
+  [2mNo XML sitemap was found for "https://example.com". Sitemaps help search engines discover and crawl your pages efficiently.[0m
+
+[31m✗ FAIL[0m | [2m[LOW][0m [1mRobots.txt Not Found[0m
+  [2mCode: ROBOTS_TXT | Impact: 10/100[0m
+  [2mNo robots.txt file found at "https://example.com/robots.txt". While not required, robots.txt helps control search engine crawling.[0m
+
+[1m[36m━━━ ISSUES BREAKDOWN BY SEVERITY ━━━[0m
+
+[1mIssues by Severity:[0m
+  [31mCritical:[0m 0
+  [33mHigh:[0m     4
+  [36mMedium:[0m   7
+  [2mLow:[0m      4
+
+[1mCategory Scores:[0m
+  TECHNICAL            [32m███████████████████░[0m [32m99[0m% (5 issues)
+  ON_PAGE              [32m███████████████████░[0m [32m99[0m% (5 issues)
+  PERFORMANCE          [32m████████████████████[0m [32m100[0m% (0 issues)
+  ACCESSIBILITY        [32m████████████████████[0m [32m100[0m% (1 issues)
+  LINKS                [32m████████████████████[0m [32m100[0m% (1 issues)
+  STRUCTURED_DATA      [32m███████████████████░[0m [32m97[0m% (3 issues)
+  SECURITY             [32m████████████████████[0m [32m100[0m% (0 issues)
+
+[1m[36m━━━ DETAILED ISSUE REPORTS ━━━[0m
+
+[1m[33m━━━ HIGH PRIORITY ISSUES (4) ━━━[0m
+
+[33m1. Missing Meta Description[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m MISSING_META_DESCRIPTION
+   [2mImpact:[0m [33m25/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   Page "https://example.com/" has no meta description. Meta descriptions improve click-through rates from search results.
+
+[33m2. Missing Open Graph Tags[0m
+   [2mCategory:[0m STRUCTURED_DATA
+   [2mCode:[0m OPEN_GRAPH_TAGS
+   [2mImpact:[0m [33m15/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   This page is missing 3 essential Open Graph tags: og:title, og:description, og:image. Add og:title, og:description, and og:image to improve how your content appears when shared on Facebook, LinkedIn, and other social platforms.
+
+[33m3. Missing Twitter Card Tags[0m
+   [2mCategory:[0m STRUCTURED_DATA
+   [2mCode:[0m TWITTER_CARD_TAGS
+   [2mImpact:[0m [33m15/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   This page is missing 4 essential Twitter Card tags: twitter:card, twitter:title, twitter:description, twitter:image. Add twitter:card, twitter:title, twitter:description, and twitter:image to control how your content appears when shared on Twitter/X.
+
+[33m4. No Organization or Person Schema Found[0m
+   [2mCategory:[0m STRUCTURED_DATA
+   [2mCode:[0m missing_identity_schema
+   [2mImpact:[0m [33m72/100[0m
+   [2mPage:[0m https://example.com
+   [2mDescription:[0m
+   Your site is missing Organization or Person schema markup. This structured data helps Google understand who you are and can power your Knowledge Graph panel in search results. Add Organization schema for companies or Person schema for personal brands.
+   Benefits:
+   • Enables Google Knowledge Graph
+   • Displays brand logo in search
+   • Shows social profiles
+   • Improves brand recognition
+   • Links your content to your identity
+
+[1m[36m━━━ MEDIUM PRIORITY ISSUES (7) ━━━[0m
+
+[36m1. Missing Canonical Tag[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m MISSING_CANONICAL
+   [2mImpact:[0m [36m15/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   Page "https://example.com/" has no canonical tag. Canonical tags help prevent duplicate content issues.
+
+[36m2. HTTP/2 Not Enabled[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m HTTP2_ENABLED
+   [2mImpact:[0m [36m12/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   The server is using HTTP/1.1 instead of the faster HTTP/2 protocol. Upgrade to HTTP/2 for faster page loads through multiplexing and header compression.
+
+[36m3. Title Tag Too Short[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m TITLE_TOO_SHORT
+   [2mImpact:[0m [36m10/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   Title is only 14 characters. Recommended: 40-60 characters for optimal display in search results.
+
+[36m4. Thin Content Detected[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m THIN_CONTENT
+   [2mImpact:[0m [36m20/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   Page has only 19 words. Pages with less than 300 words may be considered thin content by search engines.
+
+[36m5. No Internal Links[0m
+   [2mCategory:[0m LINKS
+   [2mCode:[0m NO_INTERNAL_LINKS
+   [2mImpact:[0m [36m15/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   Page has 1 external links but no internal links. Internal linking improves site navigation and SEO.
+
+[36m6. Some Tap Targets Too Small[0m
+   [2mCategory:[0m ACCESSIBILITY
+   [2mCode:[0m TAP_TARGET_SIZE
+   [2mImpact:[0m [36m12/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m
+   Found 1 clickable elements smaller than 48x48px. Increase element sizes to at least 48x48px for better mobile usability.
+
+[36m7. XML Sitemap Not Found[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m XML_SITEMAP
+   [2mImpact:[0m [36m20/100[0m
+   [2mPage:[0m https://example.com
+   [2mDescription:[0m
+   No XML sitemap was found for "https://example.com". Sitemaps help search engines discover and crawl your pages efficiently.
+
+[1m[2m━━━ LOW PRIORITY ISSUES (4) ━━━[0m
+
+[2m1. Missing Charset Declaration[0m
+   [2mCategory: TECHNICAL | Impact: 5/100[0m
+   [2mPage "https://example.com/" has no charset declaration. UTF-8 is recommended for proper character encoding.[0m
+
+[2m2. H1 Tag Too Short[0m
+   [2mCategory: ON_PAGE | Impact: 5/100[0m
+   [2mH1 "Example Domain" is only 14 characters. Consider making it more descriptive.[0m
+
+[2m3. Missing Favicon[0m
+   [2mCategory: ON_PAGE | Impact: 5/100[0m
+   [2mNo favicon detected on this page. Add a favicon to improve brand recognition and help users identify your site in browser tabs and bookmarks.[0m
+
+[2m4. Robots.txt Not Found[0m
+   [2mCategory: TECHNICAL | Impact: 10/100[0m
+   [2mNo robots.txt file found at "https://example.com/robots.txt". While not required, robots.txt helps control search engine crawling.[0m
+
+[1m[32m━━━ PASSING CHECKS (23) ━━━[0m
+
+[1mTECHNICAL (8):[0m
+[32m  ✓[0m HTTPS Enabled
+    [2m💡 HTTPS encrypts data between users and your site, improving security and search rankings.[0m
+[32m  ✓[0m Valid SSL Certificate
+    [2m💡 Valid SSL certificates ensure encrypted connections and build user trust.[0m
+[32m  ✓[0m Page is Indexable
+    [2m💡 Allowing search engines to index your important pages improves visibility.[0m
+[32m  ✓[0m No Blocking HTTP Headers
+    [2m💡 Pages are not blocked from indexing at the HTTP level[0m
+[32m  ✓[0m No JavaScript Errors Detected
+    [2m💡 Clean JavaScript execution prevents broken features and ensures proper rendering for search engines[0m
+[32m  ✓[0m No Deprecated Tags
+    [2m💡 Modern HTML ensures better browser compatibility and follows current web standards.[0m
+[32m  ✓[0m No Inline Styles
+    [2m💡 External CSS is cacheable, maintainable, and improves page load performance.[0m
+[32m  ✓[0m No robots.txt File
+    [2m💡 No robots.txt means no unintentional crawl blocks[0m
+
+[1mPERFORMANCE (7):[0m
+[32m  ✓[0m Good Core Web Vitals
+    [2m💡 Good Core Web Vitals (LCP, CLS, FID) improve user experience and are Google ranking factors.[0m
+[32m  ✓[0m Fast Page Load
+    [2m💡 Fast-loading pages (<2s) provide better user experience and improved SEO.[0m
+[32m  ✓[0m No Flash Content
+    [2m💡 Avoiding Flash ensures compatibility with modern browsers and mobile devices.[0m
+[32m  ✓[0m Page Size Optimized
+    [2m💡 Small page sizes lead to faster load times, better user experience, and lower bandwidth costs.[0m
+[32m  ✓[0m Resource Count Optimized
+    [2m💡 Limiting HTTP requests improves page load performance and reduces server load.[0m
+[32m  ✓[0m CSS/JavaScript Files Minified
+    [2m💡 Minification reduces file sizes by 20-40%, improving load times and reducing bandwidth usage.[0m
+[32m  ✓[0m HTTP Compression Enabled (Brotli)
+    [2m💡 Using Brotli compression reduces file sizes by 60-80%, improving Core Web Vitals[0m
+
+[1mON_PAGE (4):[0m
+[32m  ✓[0m Heading Hierarchy Valid
+    [2m💡 Logical heading hierarchy improves accessibility and helps search engines understand content structure.[0m
+[32m  ✓[0m Lang Attribute Present
+    [2m💡 The lang attribute helps screen readers pronounce content correctly and aids browser translation features.[0m
+[32m  ✓[0m SERP Snippet Available
+    [2m💡 Well-crafted titles and descriptions create compelling search result snippets that improve CTR.[0m
+[32m  ✓[0m URL is Friendly
+    [2m💡 Clean, descriptive URLs are easier for users to remember and may provide SEO benefits.[0m
+
+[1mACCESSIBILITY (3):[0m
+[32m  ✓[0m No IFrames
+    [2m💡 Avoiding iframes improves page performance and search engine crawlability.[0m
+[32m  ✓[0m Mobile Viewport Configured
+    [2m💡 Proper viewport configuration ensures your site is mobile-friendly and provides a good user experience on all devices.[0m
+[32m  ✓[0m Readable Font Sizes
+    [2m💡 Using readable font sizes improves accessibility and ensures content is readable on all devices.[0m
+
+[1mSECURITY (1):[0m
+[32m  ✓[0m No Exposed Emails
+    [2m💡 Protecting email addresses from crawlers reduces spam and improves privacy.[0m
+
+[1m[36m━━━ ISSUES BY CATEGORY ━━━[0m
+
+[1mTECHNICAL:[0m 5 issue(s)
+  [36m1. [MEDIUM][0m Missing Canonical Tag
+  [2m2. [LOW][0m Missing Charset Declaration
+  [36m3. [MEDIUM][0m HTTP/2 Not Enabled
+  [36m4. [MEDIUM][0m XML Sitemap Not Found
+  [2m5. [LOW][0m Robots.txt Not Found
+
+[1mON_PAGE:[0m 5 issue(s)
+  [36m1. [MEDIUM][0m Title Tag Too Short
+  [33m2. [HIGH][0m Missing Meta Description
+  [2m3. [LOW][0m H1 Tag Too Short
+  [36m4. [MEDIUM][0m Thin Content Detected
+  [2m5. [LOW][0m Missing Favicon
+
+[1mSTRUCTURED_DATA:[0m 3 issue(s)
+  [33m1. [HIGH][0m Missing Open Graph Tags
+  [33m2. [HIGH][0m Missing Twitter Card Tags
+  [33m3. [HIGH][0m No Organization or Person Schema Found
+
+[1mLINKS:[0m 1 issue(s)
+  [36m1. [MEDIUM][0m No Internal Links
+
+[1mACCESSIBILITY:[0m 1 issue(s)
+  [36m1. [MEDIUM][0m Some Tap Targets Too Small
+
+[1m[36m================================================================================[0m
+[1m[36mSUMMARY[0m
+[1m[36m================================================================================[0m
+
+[1mWebsite:[0m https://example.com
+[1mPages Analyzed:[0m 1
+[1mRules Executed:[0m 53
+[1mScore:[0m [32m99.0/100[0m
+[1mSEO Health:[0m [32mExcellent ✓[0m
+
+[32m[1m✓ All 53 rules executed successfully![0m
+

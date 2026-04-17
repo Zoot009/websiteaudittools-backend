@@ -1,0 +1,365 @@
+
+[1m[36m================================================================================[0m
+[1m[36mSEO RULES COMPREHENSIVE TEST[0m
+[1m[36m================================================================================[0m
+
+[1mTarget URL:[0m https://example.com
+[2mStarting crawl and analysis...[0m
+
+
+[1m[35m📡 CRAWLING WEBSITE[0m
+[2m--------------------------------------------------------------------------------[0m
+[2mCrawling up to 10 pages...[0m
+🕷 Starting multi crawl of https://example.com/ (max 10 pages)
+[SITEMAP] Checking robots.txt...
+🌐 Launching 3 browsers (stealth mode)...
+✅ Browser pool ready with 3 browsers
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP] robots.txt not accessible or not found
+[SITEMAP] No sitemaps in robots.txt, trying common locations...
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap_index.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap_index.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap-index.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap-index.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap1.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap1.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/post-sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/post-sitemap.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/page-sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/page-sitemap.xml
+[SITEMAP] Seeded 1 URLs from sitemaps
+📋 Seeded crawler with 1 URLs from sitemaps
+
+🔍 Processing: https://example.com/
+  ⏱  Load time: 542ms | Status: 200
+  🤖 Simulating human interaction...
+  📄 Title: Example Domain
+  📝 Description: N/A
+  🔤 Word count: 19
+  📊 Headings: 1 (1 H1s)
+  🖼  Images: 0
+  🔗 Links: 1 (0 internal)
+  ⚡ LCP: 539.5ms | Schema.org: ✗
+  🗜️  Compression: br | HTTP/2: ✗
+✅ Crawled: https://example.com/ (1/10)
+🎉 Crawl complete: 1 pages analyzed
+[32m✓[0m Crawled [1m1[0m pages
+  1. https://example.com/ [2m(200)[0m
+
+[1m[35m🔍 RUNNING SEO ANALYSIS[0m
+[2m--------------------------------------------------------------------------------[0m
+[SeoAnalyzer] Registered 53 rules: {
+  TECHNICAL: 13,
+  ON_PAGE: 12,
+  PERFORMANCE: 11,
+  LINKS: 1,
+  ACCESSIBILITY: 4,
+  SECURITY: 1,
+  STRUCTURED_DATA: 11
+}
+[2mAnalyzing 1 pages with all registered rules...[0m
+[SeoAnalyzer] Starting analysis for 1 pages from https://example.com
+[SITEMAP] Checking robots.txt...
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP] robots.txt not accessible or not found
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap_index.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap_index.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap-index.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap-index.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/sitemap1.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/sitemap1.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/post-sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/post-sitemap.xml
+[SITEMAP]  → Fetching sitemap: https://example.com/page-sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ HTTP 404
+[SITEMAP]  ✗ Failed to fetch: https://example.com/page-sitemap.xml
+[SeoAnalyzer] Built site context: 1 pages
+[SeoAnalyzer] Found 15 issues and 23 passing checks
+
+[1m[36m================================================================================[0m
+[1m[36mANALYSIS RESULTS[0m
+[1m[36m================================================================================[0m
+
+[1mOverall SEO Score:[0m [32m[1m99.0/100[0m
+[1mTotal Issues:[0m 15
+[1mTotal Passing Checks:[0m 23
+
+[1m[35m📊 CATEGORY SCORES[0m
+[2m--------------------------------------------------------------------------------[0m
+
+
+TECHNICAL            [32m███████████████████░[0m [32m99.0[0m (5 issues)
+ON_PAGE              [32m███████████████████░[0m [32m99.0[0m (5 issues)
+PERFORMANCE          [32m████████████████████[0m [32m100.0[0m (0 issues)
+ACCESSIBILITY        [32m████████████████████[0m [32m100.0[0m (1 issues)
+LINKS                [32m████████████████████[0m [32m100.0[0m (1 issues)
+STRUCTURED_DATA      [32m███████████████████░[0m [32m97.0[0m (3 issues)
+SECURITY             [32m████████████████████[0m [32m100.0[0m (0 issues)
+
+[1m[35m🔴 CRITICAL ISSUES (0)[0m
+[2m--------------------------------------------------------------------------------[0m
+[32m✓ No critical issues found![0m
+
+[1m[35m🟡 HIGH SEVERITY ISSUES (4)[0m
+[2m--------------------------------------------------------------------------------[0m
+
+[1m1. [HIGH] Missing Meta Description[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m MISSING_META_DESCRIPTION
+   [2mImpact Score:[0m [33m25/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m Page "https://example.com/" has no meta description. Meta descriptions improve click-through rates from search results.
+
+[1m2. [HIGH] Missing Open Graph Tags[0m
+   [2mCategory:[0m STRUCTURED_DATA
+   [2mCode:[0m OPEN_GRAPH_TAGS
+   [2mImpact Score:[0m [33m15/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m This page is missing 3 essential Open Graph tags: og:title, og:description, og:image. Add og:title, og:description, and og:image to improve how your content appears when shared on Facebook, LinkedIn, and other social platforms.
+
+[1m3. [HIGH] Missing Twitter Card Tags[0m
+   [2mCategory:[0m STRUCTURED_DATA
+   [2mCode:[0m TWITTER_CARD_TAGS
+   [2mImpact Score:[0m [33m15/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m This page is missing 4 essential Twitter Card tags: twitter:card, twitter:title, twitter:description, twitter:image. Add twitter:card, twitter:title, twitter:description, and twitter:image to control how your content appears when shared on Twitter/X.
+
+[1m4. [HIGH] No Organization or Person Schema Found[0m
+   [2mCategory:[0m STRUCTURED_DATA
+   [2mCode:[0m missing_identity_schema
+   [2mImpact Score:[0m [33m72/100[0m
+   [2mPage:[0m https://example.com
+   [2mDescription:[0m Your site is missing Organization or Person schema markup. This structured data helps Google understand who you are and can power your Knowledge Graph panel in search results. Add Organization schema for companies or Person schema for personal brands.
+   [2mBenefits:[0m
+   [2m• Enables Google Knowledge Graph[0m
+   [2m• Displays brand logo in search[0m
+   [2m• Shows social profiles[0m
+   [2m• Improves brand recognition[0m
+   [2m• Links your content to your identity[0m
+
+[1m[35m🔵 MEDIUM SEVERITY ISSUES (7)[0m
+[2m--------------------------------------------------------------------------------[0m
+
+[1m1. [MEDIUM] Missing Canonical Tag[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m MISSING_CANONICAL
+   [2mImpact Score:[0m [34m15/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m Page "https://example.com/" has no canonical tag. Canonical tags help prevent duplicate content issues.
+
+[1m2. [MEDIUM] HTTP/2 Not Enabled[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m HTTP2_ENABLED
+   [2mImpact Score:[0m [34m12/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m The server is using HTTP/1.1 instead of the faster HTTP/2 protocol. Upgrade to HTTP/2 for faster page loads through multiplexing and header compression.
+
+[1m3. [MEDIUM] Title Tag Too Short[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m TITLE_TOO_SHORT
+   [2mImpact Score:[0m [34m10/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m Title is only 14 characters. Recommended: 40-60 characters for optimal display in search results.
+
+[1m4. [MEDIUM] Thin Content Detected[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m THIN_CONTENT
+   [2mImpact Score:[0m [34m20/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m Page has only 19 words. Pages with less than 300 words may be considered thin content by search engines.
+
+[1m5. [MEDIUM] No Internal Links[0m
+   [2mCategory:[0m LINKS
+   [2mCode:[0m NO_INTERNAL_LINKS
+   [2mImpact Score:[0m [34m15/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m Page has 1 external links but no internal links. Internal linking improves site navigation and SEO.
+
+[2m... and 2 more medium issues[0m
+
+[1m[35m⚪ LOW SEVERITY ISSUES (4)[0m
+[2m--------------------------------------------------------------------------------[0m
+
+[1m1. [LOW] Missing Charset Declaration[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m MISSING_CHARSET
+   [2mImpact Score:[0m [36m5/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m Page "https://example.com/" has no charset declaration. UTF-8 is recommended for proper character encoding.
+
+[1m2. [LOW] H1 Tag Too Short[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m H1_TOO_SHORT
+   [2mImpact Score:[0m [36m5/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m H1 "Example Domain" is only 14 characters. Consider making it more descriptive.
+
+[1m3. [LOW] Missing Favicon[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m FAVICON_PRESENT
+   [2mImpact Score:[0m [36m5/100[0m
+   [2mPage:[0m https://example.com/
+   [2mDescription:[0m No favicon detected on this page. Add a favicon to improve brand recognition and help users identify your site in browser tabs and bookmarks.
+
+[2m... and 1 more low severity issues[0m
+
+[1m[35m✅ PASSING CHECKS (23)[0m
+[2m--------------------------------------------------------------------------------[0m
+[2mShowing first 10 passing checks...[0m
+
+[32m✓[0m [1mHTTPS Enabled[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m HTTPS_CHECK
+   [2mPage:[0m https://example.com/
+   [2mPage is served securely over HTTPS[0m
+   [2m💡 HTTPS encrypts data between users and your site, improving security and search rankings.[0m
+
+[32m✓[0m [1mValid SSL Certificate[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m SSL_ENABLED
+   [2mPage:[0m https://example.com/
+   [2mPage has a valid SSL certificate[0m
+   [2m💡 Valid SSL certificates ensure encrypted connections and build user trust.[0m
+
+[32m✓[0m [1mPage is Indexable[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m NOINDEX_TAG
+   [2mPage:[0m https://example.com/
+   [2mPage does not have a noindex directive[0m
+   [2m💡 Allowing search engines to index your important pages improves visibility.[0m
+
+[32m✓[0m [1mNo Blocking HTTP Headers[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m no_blocking_http_headers
+   [2mPage:[0m https://example.com/
+   [2mNo X-Robots-Tag header found, allowing normal indexing.[0m
+   [2m💡 Pages are not blocked from indexing at the HTTP level[0m
+
+[32m✓[0m [1mNo JavaScript Errors Detected[0m
+   [2mCategory:[0m TECHNICAL
+   [2mCode:[0m no_javascript_errors
+   [2mPage:[0m https://example.com/
+   [2mPage loaded without JavaScript runtime errors, ensuring proper functionality.[0m
+   [2m💡 Clean JavaScript execution prevents broken features and ensures proper rendering for search engines[0m
+
+[32m✓[0m [1mHeading Hierarchy Valid[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m HEADING_HIERARCHY
+   [2mPage:[0m https://example.com/
+   [2mPage has 1 headings in logical order[0m
+   [2m💡 Logical heading hierarchy improves accessibility and helps search engines understand content structure.[0m
+
+[32m✓[0m [1mLang Attribute Present[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m LANG_ATTRIBUTE
+   [2mPage:[0m https://example.com/
+   [2mPage declares language as "en"[0m
+   [2m💡 The lang attribute helps screen readers pronounce content correctly and aids browser translation features.[0m
+
+[32m✓[0m [1mSERP Snippet Available[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m SERP_SNIPPET
+   [2mPage:[0m https://example.com/
+   [2mPreview: Example Domain | No description available[0m
+   [2m💡 Well-crafted titles and descriptions create compelling search result snippets that improve CTR.[0m
+
+[32m✓[0m [1mURL is Friendly[0m
+   [2mCategory:[0m ON_PAGE
+   [2mCode:[0m FRIENDLY_URL
+   [2mPage:[0m https://example.com/
+   [2mURL is readable and well-formatted[0m
+   [2m💡 Clean, descriptive URLs are easier for users to remember and may provide SEO benefits.[0m
+
+[32m✓[0m [1mGood Core Web Vitals[0m
+   [2mCategory:[0m PERFORMANCE
+   [2mCode:[0m CORE_WEB_VITALS
+   [2mPage:[0m https://example.com/
+   [2mAll 3 Core Web Vitals metrics pass Google's thresholds[0m
+   [2m💡 Good Core Web Vitals (LCP, CLS, FID) improve user experience and are Google ranking factors.[0m
+
+[32m✓ ... and 13 more passing checks[0m
+
+[1m[35m📋 ISSUES BY CATEGORY[0m
+[2m--------------------------------------------------------------------------------[0m
+
+[1mTECHNICAL:[0m 5 issues
+  [34m•[0m [MEDIUM] Missing Canonical Tag
+  [36m•[0m [LOW] Missing Charset Declaration
+  [34m•[0m [MEDIUM] HTTP/2 Not Enabled
+  [2m... and 2 more[0m
+
+[1mON_PAGE:[0m 5 issues
+  [34m•[0m [MEDIUM] Title Tag Too Short
+  [33m•[0m [HIGH] Missing Meta Description
+  [36m•[0m [LOW] H1 Tag Too Short
+  [2m... and 2 more[0m
+
+[1mSTRUCTURED_DATA:[0m 3 issues
+  [33m•[0m [HIGH] Missing Open Graph Tags
+  [33m•[0m [HIGH] Missing Twitter Card Tags
+  [33m•[0m [HIGH] No Organization or Person Schema Found
+
+[1mLINKS:[0m 1 issues
+  [34m•[0m [MEDIUM] No Internal Links
+
+[1mACCESSIBILITY:[0m 1 issues
+  [34m•[0m [MEDIUM] Some Tap Targets Too Small
+
+[1m[35m📈 RULE STATISTICS[0m
+[2m--------------------------------------------------------------------------------[0m
+[1mTotal Rules Registered:[0m 53
+[1mRules by Category:[0m
+  TECHNICAL            13 rules
+  ON_PAGE              12 rules
+  PERFORMANCE          11 rules
+  LINKS                1 rules
+  ACCESSIBILITY        4 rules
+  SECURITY             1 rules
+  STRUCTURED_DATA      11 rules
+[1mRules by Type:[0m
+  Page Rules           49
+  Site Rules           4
+
+[1m[36m================================================================================[0m
+[1m[36mSUMMARY[0m
+[1m[36m================================================================================[0m
+
+[1mWebsite:[0m https://example.com
+[1mPages Analyzed:[0m 1
+[1mRules Executed:[0m 53
+[1mOverall Score:[0m [32m99.0/100[0m
+[1mIssues Found:[0m 15 ([31m0 critical[0m, [33m4 high[0m, [34m7 medium[0m, [36m4 low[0m)
+[1mPassing Checks:[0m [32m23[0m
+[1mSEO Health:[0m [32mExcellent[0m
+
+[2mTest completed successfully![0m
+

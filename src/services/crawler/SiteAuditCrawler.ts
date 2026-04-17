@@ -121,6 +121,20 @@ export interface PageData {
   compression?: 'gzip' | 'br' | 'deflate' | 'none';
   protocol?: string;
   isHTTP2?: boolean;
+  httpHeaders?: Record<string, string>; // HTTP response headers
+  
+  // Google PageSpeed Insights
+  pageSpeed?: {
+    mobile?: any; // PageSpeedMetrics from pageSpeedService
+    desktop?: any; // PageSpeedMetrics from pageSpeedService
+    error?: string;
+  };
+  
+  // Structured Data
+  schemas?: Array<{
+    type: string; // e.g., "Organization", "Person", "LocalBusiness"
+    data: any; // Parsed JSON-LD data
+  }>;
 }
 
 export interface CrawlResult {
@@ -335,6 +349,15 @@ export class SiteAuditCrawler {
 
       // Extract local SEO data (phone & address)
       const localSeo = extractLocalSeoData(pageData.html);
+      
+      // Extract HTTP headers (convert to simple object)
+      const httpHeaders: Record<string, string> = {};
+      for (const [key, value] of Object.entries(headers)) {
+        httpHeaders[key.toLowerCase()] = value;
+      }
+      
+      // Parse JSON-LD schemas
+      const schemas = this.parseSchemas(pageData.html);
 
       // Log extracted info
       console.log(`  📄 Title: ${pageData.title || 'N/A'}`);
@@ -356,6 +379,8 @@ export class SiteAuditCrawler {
         compression,
         protocol: await protocol,
         isHTTP2,
+        httpHeaders,
+        schemas,
       };
     } finally {
       // Cleanup in reverse order: page -> context -> browser
@@ -390,6 +415,49 @@ export class SiteAuditCrawler {
     if (encoding?.includes('gzip')) return 'gzip';
     if (encoding?.includes('deflate')) return 'deflate';
     return 'none';
+  }
+
+  /**
+   * Parse JSON-LD schemas from HTML
+   */
+  private parseSchemas(html: string): Array<{ type: string; data: any }> {
+    const schemas: Array<{ type: string; data: any }> = [];
+    
+    try {
+      // Match all <script type="application/ld+json"> tags
+      const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+      const matches = html.matchAll(jsonLdRegex);
+      
+      for (const match of matches) {
+        try {
+          const jsonContent = match[1].trim();
+          if (!jsonContent) continue;
+          
+          const parsed = JSON.parse(jsonContent);
+          
+          // Handle both single objects and arrays
+          const items = Array.isArray(parsed) ? parsed : [parsed];
+          
+          for (const item of items) {
+            if (item && item['@type']) {
+              const type = Array.isArray(item['@type']) ? item['@type'][0] : item['@type'];
+              schemas.push({
+                type: String(type),
+                data: item,
+              });
+            }
+          }
+        } catch (parseError) {
+          // Skip malformed JSON-LD
+          continue;
+        }
+      }
+    } catch (error) {
+      // Regex parsing failed - return empty array
+      console.warn('[SiteAuditCrawler] Failed to parse schemas:', error);
+    }
+    
+    return schemas;
   }
 
   /**

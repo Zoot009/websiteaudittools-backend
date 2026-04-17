@@ -1,28 +1,28 @@
 Here's a checklist of everything this SEO report tool checks for:
 
 **On-Page SEO**
-- [ ] Title Tag (presence + ideal length: 50–60 characters)
-- [ ] Meta Description Tag (presence + ideal length: 120–160 characters)
-- [ ] SERP Snippet Preview
-- [ ] Hreflang Attributes
-- [ ] Language / Lang Attribute
-- [ ] H1 Header Tag
-- [ ] H2–H6 Header Tags
-- [ ] Keyword Consistency across title, meta, and heading tags
-- [ ] Amount of Content / Word Count (thin content check)
-- [ ] Image Alt Attributes
+- [x] Title Tag (presence + ideal length: 50–60 characters)
+- [x] Meta Description Tag (presence + ideal length: 120–160 characters)
+- [x] SERP Snippet Preview
+- [x] Hreflang Attributes
+- [x] Language / Lang Attribute
+- [x] H1 Header Tag
+- [x] H2–H6 Header Tags
+- [x] Keyword Consistency across title, meta, and heading tags
+- [x] Amount of Content / Word Count (thin content check)
+- [x] Image Alt Attributes
 - [x] Canonical Tag
-- [ ] Noindex Tag
-- [ ] Noindex Header
-- [ ] SSL Enabled
-- [ ] HTTPS Redirect
-- [ ] Robots.txt file
-- [ ] Blocked by Robots.txt
+- [x] Noindex Tag
+- [x] Noindex Header
+- [x] SSL Enabled
+- [x] HTTPS Redirect
+- [x] Robots.txt file
+- [x] Blocked by Robots.txt
 - [ ] llms.txt file
-- [ ] XML Sitemap
+- [x] XML Sitemap
 - [ ] Analytics tool (e.g. Google Analytics)
-- [ ] Schema.org Structured Data
-- [ ] Identity Schema (Organization/Person)
+- [x] Schema.org Structured Data
+- [x] Identity Schema (Organization/Person)
 - [ ] Rendered Content / LLM Readability (rendering percentage)
 
 **Links**
@@ -31,47 +31,47 @@ Here's a checklist of everything this SEO report tool checks for:
 - [ ] Top Pages by Backlinks
 - [ ] Top Anchors / Anchor Text
 - [ ] Referring Domain Geographies
-- [ ] On-Page Link Structure (internal vs external, nofollow ratio)
-- [ ] Friendly / Readable URLs
+- [x] On-Page Link Structure (internal vs external, nofollow ratio)
+- [x] Friendly / Readable URLs
 
 **Usability**
 - [ ] Device Rendering (mobile/tablet/desktop)
-- [ ] Google Core Web Vitals
-- [ ] Mobile Viewport Meta Tag
-- [ ] PageSpeed Insights — Mobile (FCP, Speed Index, LCP, TTI, TBT, CLS)
-- [ ] PageSpeed Insights — Desktop
-- [ ] Flash Usage
-- [ ] iFrames Usage
-- [ ] Favicon
-- [ ] Email Privacy (plain text emails exposed)
-- [ ] Legible Font Sizes
-- [ ] Tap Target Sizing
+- [x] Google Core Web Vitals
+- [x] Mobile Viewport Meta Tag
+- [x] PageSpeed Insights — Mobile (FCP, Speed Index, LCP, TTI, TBT, CLS)
+- [x] PageSpeed Insights — Desktop
+- [x] Flash Usage
+- [x] iFrames Usage
+- [x] Favicon
+- [x] Email Privacy (plain text emails exposed)
+- [x] Legible Font Sizes
+- [x] Tap Target Sizing
 
 **Performance**
-- [ ] Website Load Speed (server response, full load, scripts complete)
-- [ ] Page Download Size & Breakdown (HTML, CSS, JS, images)
-- [ ] Compression (Gzip/Deflate/Brotli)
-- [ ] Resources Breakdown (total objects, JS, CSS, images)
-- [ ] Google AMP
-- [ ] JavaScript Errors
-- [ ] HTTP/2 Protocol Usage
-- [ ] Image Optimization
-- [ ] JS & CSS Minification
-- [ ] Deprecated HTML Tags
-- [ ] Inline Styles
+- [x] Website Load Speed (server response, full load, scripts complete)
+- [x] Page Download Size & Breakdown (HTML, CSS, JS, images)
+- [x] Compression (Gzip/Deflate/Brotli)
+- [x] Resources Breakdown (total objects, JS, CSS, images)
+- [x] Google AMP
+- [x] JavaScript Errors
+- [x] HTTP/2 Protocol Usage
+- [x] Image Optimization
+- [x] JS & CSS Minification
+- [x] Deprecated HTML Tags
+- [x] Inline Styles
 
 **Social**
-- [ ] Facebook Page Linked
-- [ ] Facebook Open Graph Tags
-- [ ] Facebook Pixel
-- [ ] X (Twitter) Account Linked
-- [ ] X Cards
-- [ ] Instagram Linked
-- [ ] LinkedIn Linked
-- [ ] YouTube Channel Linked & Activity
+- [x] Facebook Page Linked
+- [x] Facebook Open Graph Tags
+- [x] Facebook Pixel
+- [x] X (Twitter) Account Linked
+- [x] X Cards
+- [x] Instagram Linked
+- [x] LinkedIn Linked
+- [x] YouTube Channel Linked & Activity
 
 **Local SEO**
-- [ ] Address & Phone on Website
+- [x] Address & Phone on Website
 - [ ] Local Business Schema
 - [ ] Google Business Profile
 
@@ -80,11 +80,130 @@ Here's a checklist of everything this SEO report tool checks for:
 - [ ] Server IP Address
 - [ ] DNS Servers
 - [ ] Web Server
-- [ ] Charset
+- [x] Charset
 - [ ] DMARC Record
 - [ ] SPF Record
 
 That's roughly **70+ individual checks** across 6 categories.
+
+**PROGRESS: 53/70 checks implemented (76%)** ✅
+
+---
+
+## Priority Implementation List (17 Remaining Checks)
+### Ranked by SEO Impact: Most → Least Important
+
+### 🔴 **CRITICAL SEO IMPACT** (7 checks)
+*Directly affect rankings, indexing, or Core Web Vitals*
+
+**Priority 1 - Indexing Blockers** ⚡ *URGENT*
+1. ✅ **Noindex Header** (X-Robots-Tag) - COMPLETED
+2. ✅ **Blocked by Robots.txt** - COMPLETED
+
+**Priority 2 - Backlinks** 💰 *TOP RANKING FACTOR*
+3. **Backlink Summary** - One of Google's top 3 ranking signals
+4. **Top Backlinks** - Quality matters more than quantity
+5. **Top Pages by Backlinks** - Identify link-worthy content
+6. **Top Anchors** - Anchor text affects keyword rankings
+7. **Referring Domain Geographies** - Regional authority signals
+
+**Priority 3 - Structured Data (Identity)** 🎯
+8. ✅ **Identity Schema** (Organization/Person) - COMPLETED
+8. **PageSpeed Insights - Mobile** ✅ *COMPLETE* - Core Web Vitals are ranking factors
+9. **PageSpeed Insights - Desktop** ✅ *COMPLETE* - User experience signals
+10. **Compression (Gzip/Brotli)** ✅ *COMPLETE* - Directly impacts page speed scores
+
+---
+
+### 🟡 **HIGH SEO IMPACT** (8 checks)
+*Significant influence on search visibility*
+
+**Priority 4 - Structured Data** 📊
+11. **Identity Schema** (Organization/Person) - Powers Knowledge Graph
+12. **Local Business Schema** - Critical for local pack rankings
+
+**Priority 5 - Technical Foundation** 🔧
+13. **JavaScript Errors** ✅ *COMPLETE* - Can break critical rendering/functionality
+14. **Rendered Content Readability** - Google indexes rendered content (not just HTML)
+15. **Analytics Detection** - Essential for tracking SEO performance (not ranking)
+16. **Device Rendering** - Mobile-first indexing requirement
+
+**Priority 6 - Optimization** ⚙️
+17. **Technology Stack Detection** - Helps identify optimization opportunities
+18. **Google AMP** ✅ *COMPLETE* - Mobile search visibility (declining importance)
+
+---
+
+### 🟢 **MEDIUM SEO IMPACT** (5 checks)
+*Emerging trends and indirect factors*
+
+**Priority 7 - Future-Proofing** 🤖
+19. **llms.txt file** - AI crawler guidance (ChatGPT, Perplexity, etc.)
+20. **YouTube Activity Check** ✅ *COMPLETE* - Social signals (minor ranking factor)
+
+**Priority 8 - Security & Deliverability** 🔒
+21. **DMARC Record** - Email security (affects domain trust)
+22. **SPF Record** - Email authentication (brand protection)
+23. **Server IP Address** - Geolocation, hosting quality signals
+
+---
+
+### 🔵 **LOW SEO IMPACT** (3 checks)
+*Nice-to-have, minimal ranking influence*
+
+**Priority 9 - Infrastructure Details** 📡
+24. **DNS Servers** - Reliability indicator only
+25. **Web Server** - Type has minimal SEO impact (speed matters, brand doesn't)
+26. **Google Business Profile** - Local presence tool (not organic ranking factor)
+
+---
+
+## Recommended Implementation Order
+
+### **Phase 1: Critical Fixes (1 week)** 🔴
+- Noindex Header detection
+- Robots.txt blocking check
+- Compression rule ✅ *COMPLETE*
+- JavaScript Errors rule ✅ *COMPLETE*
+- 2 of 4 critical checks complete - finish the remaining indexing blockers
+
+### **Phase 2: Performance & Schema (1 week)** 🟡
+- PageSpeed Insights API integration ✅ *COMPLETE*
+- Identity & Local Business Schema parsing
+- Rendered content analysis
+- Device rendering tests
+- These improve Core Web Vitals scores
+
+### **Phase 3: Backlinks (2 weeks)** 💰
+- Choose API provider (Moz/Ahrefs/SEMrush)
+- Implement all 5 backlink checks together
+- **Decision needed:** Budget approval for API costs
+
+### **Phase 4: Tech Stack & Optimization (1 week)** 🟢
+- Technology detection (Wappalyzer-style)
+- Analytics detection
+- AMP validation
+- llms.txt check
+
+### **Phase 5: Infrastructure (3 days)** 🔵
+- DNS/SPF/DMARC records
+- Server info extraction
+- YouTube activity enhancement
+- Google Business Profile (optional)
+
+---
+
+## Quick Wins You Can Implement Today (4 checks - 2 hours) ✅ **COMPLETE**
+
+These use data already collected:
+1. ✅ **Compression Rule** - Check `page.compression` field
+2. ✅ **JavaScript Errors Rule** - Check `page.jsErrors` array
+3. ✅ **AMP Rule** - Check `page.isAMP` flag
+4. ✅ **YouTube Activity** - Enhance existing social check
+
+**Status: 50/70 checks complete (71%)** 🎉
+
+**Start here** → Then move to Phase 1 critical fixes.
 
 ----
 ## Plan: SEO Checks Implementation Strategy

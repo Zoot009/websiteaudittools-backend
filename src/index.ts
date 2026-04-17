@@ -1,3 +1,6 @@
+// IMPORTANT: Load environment variables FIRST
+import 'dotenv/config';
+
 import express from 'express';
 import cors from 'cors';
 import { auditQueue } from './queues/auditQueue.js';
@@ -11,7 +14,6 @@ import { generateLinkGraph, filterLinkGraphByDepth, exportToDOT, exportToCSV } f
 // TODO: Re-implement analyzer
 // import { buildSiteContext } from './services/analyzer/siteContextBuilder.js';
 import chatRoutes from './routes/chatRoutes.js';
-import 'dotenv/config';
 
 const app = express();
 const port = process.env.PORT || 3000;

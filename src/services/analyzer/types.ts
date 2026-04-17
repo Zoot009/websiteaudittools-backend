@@ -144,6 +144,22 @@ export interface PageData {
   protocol?: string;
   isHTTP2?: boolean;
 
+  // Google PageSpeed Insights
+  pageSpeed?: {
+    mobile?: any; // PageSpeedMetrics from pageSpeedService
+    desktop?: any; // PageSpeedMetrics from pageSpeedService
+    error?: string;
+  };
+
+  // HTTP Headers
+  httpHeaders?: Record<string, string>;
+
+  // Structured Data (JSON-LD schemas)
+  schemas?: Array<{
+    type: string; // e.g., "Organization", "Person", "LocalBusiness"
+    data: any; // Parsed JSON-LD data
+  }>;
+
   // Local SEO
   localSeo?: {
     phone: {

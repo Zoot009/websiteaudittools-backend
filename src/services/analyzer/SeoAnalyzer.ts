@@ -29,6 +29,8 @@ import { HTTPSCheckRule } from './rules/technical/HTTPSCheckRule.js';
 import { SSLEnabledRule } from './rules/technical/SSLEnabledRule.js';
 import { CanonicalTagRule } from './rules/technical/CanonicalTagRule.js';
 import { NoindexTagRule } from './rules/technical/NoindexTagRule.js';
+import { NoindexHeaderRule } from './rules/technical/NoindexHeaderRule.js';
+import { RobotsTxtBlockingRule } from './rules/technical/RobotsTxtBlockingRule.js';
 import { XMLSitemapRule } from './rules/technical/XMLSitemapRule.js';
 import { CharsetRule } from './rules/technical/CharsetRule.js';
 import { MissingRobotsRule } from './rules/technical/MissingRobotsRule.js';
@@ -55,6 +57,11 @@ import { PageSizeRule } from './rules/performance/PageSizeRule.js';
 import { ResourceCountRule } from './rules/performance/ResourceCountRule.js';
 import { ImageOptimizationRule } from './rules/performance/ImageOptimizationRule.js';
 import { MinificationRule } from './rules/performance/MinificationRule.js';
+import { PageSpeedMobileRule } from './rules/performance/PageSpeedMobileRule.js';
+import { PageSpeedDesktopRule } from './rules/performance/PageSpeedDesktopRule.js';
+import { CompressionRule } from './rules/performance/CompressionRule.js';
+import { JavaScriptErrorsRule } from './rules/performance/JavaScriptErrorsRule.js';
+import { AMPRule } from './rules/performance/AMPRule.js';
 
 // Links rules
 import { LinkStructureRule } from './rules/links/LinkStructureRule.js';
@@ -76,9 +83,15 @@ import { TwitterLinkRule } from './rules/social/TwitterLinkRule.js';
 import { InstagramLinkRule } from './rules/social/InstagramLinkRule.js';
 import { LinkedInLinkRule } from './rules/social/LinkedInLinkRule.js';
 import { YouTubeLinkRule } from './rules/social/YouTubeLinkRule.js';
+import { YouTubeActivityRule } from './rules/social/YouTubeActivityRule.js';
 import { LocalSEORule } from './rules/social/LocalSEORule.js';
 import { OpenGraphTagsRule } from './rules/social/OpenGraphTagsRule.js';
 import { TwitterCardTagsRule } from './rules/social/TwitterCardTagsRule.js';
+
+// Structured Data rules
+import { IdentitySchemaRule } from './rules/structured-data/IdentitySchemaRule.js';
+import { LocalBusinessSchemaRule } from './rules/structured-data/LocalBusinessSchemaRule.js';
+import { GoogleBusinessProfileRule } from './rules/structured-data/GoogleBusinessProfileRule.js';
 
 export class SeoAnalyzer {
   private registry: RuleRegistry;
@@ -337,16 +350,18 @@ export class SeoAnalyzer {
    */
   private registerAllRules(): void {
     try {
-      // Technical rules (8)
+      // Technical rules (11)
       this.registry.register(new HTTPSCheckRule());
       this.registry.register(new SSLEnabledRule());
       this.registry.register(new CanonicalTagRule());
       this.registry.register(new NoindexTagRule());
+      this.registry.register(new NoindexHeaderRule());
+      this.registry.register(new RobotsTxtBlockingRule());
       this.registry.register(new XMLSitemapRule());
       this.registry.register(new CharsetRule());
       this.registry.register(new MissingRobotsRule());
       this.registry.register(new HTTP2Rule());
-      this.registry.register(new HTTP2Rule());
+      this.registry.register(new JavaScriptErrorsRule());
 
       // On-page rules (11)
       this.registry.register(new TitleTagRule());
@@ -361,7 +376,7 @@ export class SeoAnalyzer {
       this.registry.register(new SERPSnippetRule());
       this.registry.register(new FriendlyURLRule());
 
-      // Performance rules (7)
+      // Performance rules (11)
       this.registry.register(new CoreWebVitalsRule());
       this.registry.register(new LoadTimeRule());
       this.registry.register(new FlashUsageRule());
@@ -369,6 +384,10 @@ export class SeoAnalyzer {
       this.registry.register(new ResourceCountRule());
       this.registry.register(new ImageOptimizationRule());
       this.registry.register(new MinificationRule());
+      this.registry.register(new PageSpeedMobileRule());
+      this.registry.register(new PageSpeedDesktopRule());
+      this.registry.register(new CompressionRule());
+      this.registry.register(new AMPRule());
 
       // Links rules (1)
       this.registry.register(new LinkStructureRule());
@@ -383,16 +402,22 @@ export class SeoAnalyzer {
       this.registry.register(new FontSizeRule());
       this.registry.register(new TapTargetSizeRule());
 
-      // Social rules (9)
+      // Social rules (10)
       this.registry.register(new FacebookLinkRule());
       this.registry.register(new FacebookPixelRule());
       this.registry.register(new TwitterLinkRule());
       this.registry.register(new InstagramLinkRule());
       this.registry.register(new LinkedInLinkRule());
       this.registry.register(new YouTubeLinkRule());
+      this.registry.register(new YouTubeActivityRule());
       this.registry.register(new LocalSEORule());
       this.registry.register(new OpenGraphTagsRule());
       this.registry.register(new TwitterCardTagsRule());
+
+      // Structured Data rules (3)
+      this.registry.register(new IdentitySchemaRule());
+      this.registry.register(new LocalBusinessSchemaRule());
+      this.registry.register(new GoogleBusinessProfileRule());
 
       const stats = this.registry.getStats();
       console.log(`[SeoAnalyzer] Registered ${stats.total} rules:`, stats.byCategory);

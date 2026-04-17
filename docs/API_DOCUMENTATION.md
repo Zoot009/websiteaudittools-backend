@@ -1,8 +1,18 @@
 # Website Audit Tools - API Documentation
 
 **Base URL:** `http://localhost:3000`  
-**Version:** 1.3.0  
-**Last Updated:** April 6, 2026
+**Version:** 2.0.0  
+**Last Updated:** April 16, 2026
+
+## What's New in v2.0.0
+
+- 🤖 **AI Chat**: New conversational AI endpoint to ask questions about any audit report (powered by DeepSeek)
+- 🔑 **Keyword Consistency**: Per-page keyword frequency analysis — individual keywords + 2-word phrases with presence in title, meta description, and headings
+- 📊 **Heading Frequency**: Structured H1–H6 frequency breakdowns with actual heading text values per page
+- 🏪 **Local Business Schema Rule**: Validates LocalBusiness JSON-LD schema — required fields, opening hours, aggregate rating, geo coordinates
+- 📍 **Google Business Profile Rule**: Detects GBP links in HTML and schema `sameAs`; flags missing GBP for local businesses
+- 🧩 **44 Total SEO Rules**: 2 new structured-data rules added (LocalBusinessSchema, GoogleBusinessProfile)
+- ⚠️ **Recommendations temporarily disabled**: The recommendations endpoints are inactive pending reimplementation
 
 ## What's New in v1.3.0
 
@@ -10,20 +20,16 @@
 - 📊 **Graph Analytics**: Automatic identification of orphan pages, hub pages, and authority pages
 - 🎨 **Multiple Export Formats**: JSON, DOT (Graphviz), and CSV formats for link graph data
 - 📈 **Site Structure Insights**: BFS depth calculation, inbound/outbound link counts, and detailed metrics
-- 📚 **Complete D3.js Guide**: Comprehensive documentation with working examples for frontend visualization
 
 ## What's New in v1.2.0
 
-- ✨ **Passing Checks**: Reports now show both issues AND what's working well! See 27+ positive findings alongside issues
+- ✨ **Passing Checks**: Reports now show both issues AND what's working well!
 - 📸 **Screenshot Endpoint**: On-demand desktop & mobile screenshots (base64) via separate API call
-- 🎯 **Better UX**: Complete picture of SEO health with positive reinforcement
 
 ## What's New in v1.1.0
 
 - ✅ **9 New SEO Checks**: Keyword consistency, heading structure, word count, link analysis, mobile viewport, robots.txt, sitemap, favicon, HTTP/2
-- ✅ **34 Total Rules**: Expanded from 25 to 34 comprehensive SEO checks (85% parity with SEOptimizer)
-- ✅ **Enhanced Analysis**: Detailed keyword distribution tables, heading frequency breakdowns, and link ratio reporting
-- ✅ **Better Recommendations**: More granular fix guidance for technical SEO issues
+- ✅ **34 Total Rules**: Expanded from 25 to 34 comprehensive SEO checks
 
 ---
 
@@ -33,15 +39,16 @@
 2. [Audit Queue Endpoints](#audit-queue-endpoints)
 3. [Audit Report Endpoints](#audit-report-endpoints)
 4. [Issues Endpoints](#issues-endpoints)
-5. [Recommendations Endpoints](#recommendations-endpoints)
+5. [Recommendations Endpoints](#recommendations-endpoints) ⚠️ *Temporarily disabled*
 6. [Pages Endpoints](#pages-endpoints)
 7. [User Management Endpoints](#user-management-endpoints)
 8. [Statistics & Analytics Endpoints](#statistics--analytics-endpoints)
 9. [Screenshot Endpoints](#screenshot-endpoints)
 10. [Link Graph Endpoints](#link-graph-endpoints)
-11. [Health Check](#health-check)
-12. [Error Handling](#error-handling)
-13. [Data Models](#data-models)
+11. [AI Chat Endpoints](#ai-chat-endpoints)
+12. [Health Check](#health-check)
+13. [Error Handling](#error-handling)
+14. [Data Models](#data-models)
 
 ---
 
@@ -663,130 +670,7 @@ GET /api/reports/clyyy789012/issues/category/ACCESSIBILITY
 
 ## Recommendations Endpoints
 
-### 9. Get All Recommendations
-
-Retrieve all fix recommendations for an audit report.
-
-**Endpoint:** `GET /api/reports/:reportId/recommendations`
-
-**URL Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| reportId | string | Audit report ID |
-
-**Success Response (200 OK):**
-```json
-[
-  {
-    "id": "clrrr789012",
-    "title": "Fix Missing Meta Descriptions",
-    "description": "Meta descriptions are crucial for click-through rates from search results. Add unique, compelling descriptions to all pages.",
-    "priority": 1,
-    "estimatedTimeMinutes": 30,
-    "difficulty": "BEGINNER",
-    "category": "ON_PAGE",
-    "fixGuideId": "clggg111222",
-    "auditReportId": "clyyy789012",
-    "issueId": "cliii123457",
-    "createdAt": "2026-03-26T10:32:13.000Z",
-    "steps": [
-      {
-        "id": "clsss123456",
-        "stepNumber": 1,
-        "instruction": "Open your page's HTML in a text editor",
-        "codeExample": null,
-        "toolsNeeded": ["VS Code", "Sublime Text"],
-        "recommendationId": "clrrr789012"
-      },
-      {
-        "id": "clsss123457",
-        "stepNumber": 2,
-        "instruction": "Add a meta description tag in the <head> section",
-        "codeExample": "<meta name=\"description\" content=\"A compelling 150-160 character description of your page content\">",
-        "toolsNeeded": ["Text editor"],
-        "recommendationId": "clrrr789012"
-      },
-      {
-        "id": "clsss123458",
-        "stepNumber": 3,
-        "instruction": "Verify the description appears in search results using Google Search Console",
-        "codeExample": null,
-        "toolsNeeded": ["Google Search Console"],
-        "recommendationId": "clrrr789012"
-      }
-    ],
-    "issue": {
-      "title": "Missing Meta Descriptions",
-      "severity": "HIGH",
-      "category": "ON_PAGE"
-    }
-  }
-]
-```
-
-**Recommendations Sorted By:** Priority (1 = highest)
-
----
-
-### 10. Get Specific Recommendation
-
-Retrieve a single recommendation with all steps.
-
-**Endpoint:** `GET /api/recommendations/:id`
-
-**URL Parameters:**
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| id | string | Recommendation ID |
-
-**Success Response (200 OK):**
-```json
-{
-  "id": "clrrr789012",
-  "title": "Add Alt Text to Images",
-  "description": "Adding descriptive alt text improves accessibility and SEO",
-  "priority": 3,
-  "estimatedTimeMinutes": 15,
-  "difficulty": "BEGINNER",
-  "category": "ACCESSIBILITY",
-  "fixGuideId": null,
-  "auditReportId": "clyyy789012",
-  "issueId": "cliii123456",
-  "createdAt": "2026-03-26T10:32:13.000Z",
-  "steps": [
-    {
-      "id": "clsss123456",
-      "stepNumber": 1,
-      "instruction": "Locate images missing alt text in your HTML",
-      "codeExample": "<img src=\"/image.jpg\" alt=\"\">",
-      "toolsNeeded": ["Browser DevTools"],
-      "recommendationId": "clrrr789012"
-    }
-  ],
-  "issue": {
-    "id": "cliii123456",
-    "category": "ACCESSIBILITY",
-    "type": "missing_alt_text",
-    "title": "Images Missing Alt Text",
-    "description": "1 image(s) found without alt text",
-    "severity": "MEDIUM",
-    "impactScore": 15.0,
-    "pageUrl": "https://example.com",
-    "elementSelector": "img[alt='']",
-    "auditReportId": "clyyy789012",
-    "pageId": "clzzz456789",
-    "createdAt": "2026-03-26T10:32:12.000Z"
-  }
-}
-```
-
-**Error Responses:**
-```json
-// 404 Not Found
-{
-  "error": "Recommendation not found"
-}
-```
+> ⚠️ **Temporarily Disabled**: The recommendations endpoints are currently inactive while the recommendations engine is being reimplemented. Endpoints `GET /api/reports/:reportId/recommendations` and `GET /api/recommendations/:id` return 404.
 
 ---
 
@@ -1478,6 +1362,141 @@ simulation.on('tick', () => {
 
 ---
 
+## AI Chat Endpoints
+
+### 25. Chat About an Audit Report
+
+Ask AI-powered questions about any completed audit report. Uses DeepSeek LLM with conversation memory and supports streaming via Server-Sent Events.
+
+**Endpoint:** `POST /api/reports/:reportId/chat`
+
+**URL Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| reportId | string | Yes | The audit report ID |
+
+**Request Body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| message | string | Yes | Question or message about the audit |
+| userId | string | Yes | User ID |
+| conversationId | string | No | Continue an existing conversation |
+| stream | boolean | No | Stream response via SSE (default: `true`) |
+
+**Streaming Response (SSE — `text/event-stream`):**
+
+Each line is a newline-delimited JSON event:
+```
+data: {"type":"chunk","content":"Based on your audit..."}\n\n
+data: {"type":"chunk","content":" the main issues are..."}\n\n
+data: {"type":"done","conversationId":"conv_abc123","suggestedQuestions":["What should I fix first?","How do I improve page speed?"]}\n\n
+```
+
+**Non-Streaming Response (200 OK — when `stream: false`):**
+```json
+{
+  "content": "Based on your audit, the main issues are...",
+  "conversationId": "conv_abc123",
+  "suggestedQuestions": [
+    "What should I fix first?",
+    "How do I improve my page speed?",
+    "Which issues affect rankings the most?"
+  ]
+}
+```
+
+**Error Response (404):**
+```json
+{
+  "error": "Report not found or not completed yet"
+}
+```
+
+---
+
+### 26. Get Suggested Questions
+
+Get AI-generated suggested questions for an audit report.
+
+**Endpoint:** `GET /api/reports/:reportId/chat/suggestions`
+
+**Success Response (200 OK):**
+```json
+{
+  "reportId": "clyyy789012",
+  "suggestedQuestions": [
+    "What are the most critical issues to fix?",
+    "How can I improve my page speed?",
+    "What's causing the low SEO score?"
+  ]
+}
+```
+
+---
+
+### 27. Get Conversation Metadata
+
+Retrieve metadata about an existing chat conversation.
+
+**Endpoint:** `GET /api/conversations/:conversationId`
+
+**Success Response (200 OK):**
+```json
+{
+  "conversationId": "conv_abc123",
+  "reportId": "clyyy789012",
+  "userId": "clxxx123456",
+  "messageCount": 5,
+  "createdAt": "2026-04-16T10:30:00.000Z",
+  "updatedAt": "2026-04-16T10:45:00.000Z"
+}
+```
+
+---
+
+### 28. Get Conversation Stats
+
+Get statistics about a conversation (message count, token usage, etc.).
+
+**Endpoint:** `GET /api/conversations/:conversationId/stats`
+
+---
+
+### 29. Delete Conversation
+
+Delete a conversation and its message history.
+
+**Endpoint:** `DELETE /api/conversations/:conversationId`
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Conversation deleted successfully"
+}
+```
+
+---
+
+### 30. List User Conversations
+
+List all conversations for a given user.
+
+**Endpoint:** `GET /api/users/:userId/conversations`
+
+**Success Response (200 OK):**
+```json
+[
+  {
+    "conversationId": "conv_abc123",
+    "reportId": "clyyy789012",
+    "messageCount": 5,
+    "updatedAt": "2026-04-16T10:45:00.000Z"
+  }
+]
+```
+
+---
+
 ## Statistics & Analytics Endpoints
 
 ### 23. Get Overall Statistics
@@ -1599,7 +1618,7 @@ GET /api/stats/reports?startDate=2026-03-01&endDate=2026-03-26
 
 ## Health Check
 
-### 24. API Health Check
+### 31. API Health Check
 
 Verify API is running and get endpoint information.
 
@@ -1609,22 +1628,24 @@ Verify API is running and get endpoint information.
 ```json
 {
   "message": "Website Audit Tools API",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "endpoints": {
     "audits": "/api/audits",
     "reports": "/api/reports",
     "users": "/api/users",
     "stats": "/api/stats",
-    "screenshots": "/api/screenshots"
-
-### Analysis Issue Types
-
-Some issues with severity "LOW" and impactScore 0 are informational/analysis results rather than problems:
-- **Good indicators**: `keyword_consistency_good`, `heading_structure_good`, `word_count_good`, `viewport_correct`, `robots_txt_found`, `sitemap_found`, `favicon_present`, `http2_likely`
-- **Action needed**: All issues with impactScore > 0 require fixes
+    "screenshots": "/api/screenshots",
+    "chat": "/api/reports/:reportId/chat",
+    "linkGraph": "/api/reports/:reportId/link-graph"
   }
 }
 ```
+
+**Analysis Issue Types Note:**
+
+Some issues with severity "LOW" and `impactScore` of 0 are informational/analysis results rather than problems:
+- **Good indicators**: `keyword_consistency_good`, `heading_structure_good`, `word_count_good`, `viewport_correct`, `robots_txt_found`, `sitemap_found`, `favicon_present`, `http2_likely`
+- **Action needed**: All issues with `impactScore > 0` require fixes
 
 ---
 
@@ -1693,6 +1714,95 @@ All endpoints follow consistent error response patterns.
 }
 ```
 
+---
+
+### Heading Frequency (New in v2.0.0)
+
+**HeadingFrequency Interface:**
+```typescript
+{
+  level: number;     // Heading level (1–6)
+  tag: string;       // HTML tag name ("h1", "h2", etc.)
+  count: number;     // Number of headings at this level on the page
+  values: string[];  // Actual heading text values
+}
+```
+
+**PageHeadingSummary Interface:**
+```typescript
+{
+  pageUrl: string;
+  frequency: HeadingFrequency[];  // One entry per heading level found
+}
+```
+
+**Example:**
+```json
+{
+  "pageUrl": "https://example.com/about",
+  "frequency": [
+    { "level": 1, "tag": "h1", "count": 1, "values": ["About Us"] },
+    { "level": 2, "tag": "h2", "count": 3, "values": ["Our Mission", "Our Team", "Our History"] },
+    { "level": 3, "tag": "h3", "count": 5, "values": ["John Doe", "Jane Smith", "..."] }
+  ]
+}
+```
+
+---
+
+### Keyword Consistency (New in v2.0.0)
+
+**KeywordEntry Interface:**
+```typescript
+{
+  keyword: string;            // Individual word or 2-word phrase
+  inTitle: boolean;           // Present in page title
+  inMetaDescription: boolean; // Present in meta description
+  inHeadingTags: boolean;     // Present in any heading (H1–H6)
+  pageFrequency: number;      // Occurrence count in page body
+}
+```
+
+**PageKeywordConsistency Interface:**
+```typescript
+{
+  pageUrl: string;
+  passed: boolean;                // Whether keyword consistency is good
+  message: string;                // Summary message
+  keywords: KeywordEntry[];       // Top individual keywords
+  phrases: KeywordEntry[];        // Top 2-word phrases
+}
+```
+
+**Example:**
+```json
+{
+  "pageUrl": "https://example.com/",
+  "passed": true,
+  "message": "Keywords are consistent across page elements",
+  "keywords": [
+    {
+      "keyword": "seo",
+      "inTitle": true,
+      "inMetaDescription": true,
+      "inHeadingTags": true,
+      "pageFrequency": 12
+    }
+  ],
+  "phrases": [
+    {
+      "keyword": "website audit",
+      "inTitle": false,
+      "inMetaDescription": true,
+      "inHeadingTags": true,
+      "pageFrequency": 4
+    }
+  ]
+}
+```
+
+---
+
 **Example Passing Checks:**
 - "HTTPS Enabled" - Site uses SSL/TLS encryption
 - "Title Tag Present" - Page has proper title tag
@@ -1754,33 +1864,30 @@ All scores are 0-100:
 - `LOW`: Nice to have - minimal impact
 ### SEO Rule Coverage
 
-As of v1.1.0, the system includes **34 comprehensive SEO rules**:
+As of v2.0.0, the system includes **44 comprehensive SEO rules**:
 
-**Core Rules (25):**
-- 5 Crawlability rules (status codes, redirects, noindex, canonicals)
-- 4 Title tag rules
-- 4 Meta description rules
-- 3 Heading rules (H1 validation)
-- 1 Content quality rule
-- 1 Internal linking rule
-- 1 Image optimization rule
-- 4 Structured data rules (Schema.org, Open Graph, Twitter Cards, Identity)
-- 3 Local SEO rules (phone, address, local business schema)
-- 2 On-page rules (analytics, llms.txt)
-- 1 Security rule (HTTPS)
+**Technical (11):**
+- HTTPSCheck, SSLEnabled, CanonicalTag, NoindexTag, NoindexHeader, RobotsTxtBlocking, XMLSitemap, Charset, MissingRobots, HTTP2, JavaScriptErrors
 
-**Enhancement Rules (9 - New in v1.1.0):**
-- Keyword consistency analysis
-- H2-H6 heading structure
-- Word count analysis
-- Link structure analysis (internal/external ratios)
-- Mobile viewport validation
-- Robots.txt detection
-- XML sitemap detection
-- Favicon check
-- HTTP/2 protocol detection
+**On-Page (11):**
+- TitleTag (40–60 chars), MetaDescription, H1Tag, HeadingHierarchy, KeywordConsistency, WordCount, ImageAltText, Hreflang, LangAttribute, SERPSnippet, FriendlyURL
 
-**Coverage:** ~85% parity with SEOptimizer's free report (excluding backlinks and keyword rankings which require external APIs)
+**Performance (11):**
+- CoreWebVitals, LoadTime, FlashUsage, PageSize, ResourceCount, ImageOptimization, Minification, PageSpeedMobile, PageSpeedDesktop, Compression, AMP
+
+**Links (1):**
+- LinkStructure
+
+**Usability (8):**
+- IFrameUsage, EmailPrivacy, DeprecatedTags, InlineStyles, MobileViewport, Favicon, FontSize, TapTargetSize
+
+**Social (10):**
+- FacebookLink, FacebookPixel, TwitterLink, InstagramLink, LinkedInLink, YouTubeLink, YouTubeActivity, LocalSEO, OpenGraphTags, TwitterCardTags
+
+**Structured Data (3):**
+- IdentitySchema, LocalBusinessSchema, GoogleBusinessProfile
+
+**Coverage:** ~90% parity with SEOptimizer's free report (excluding backlinks and keyword rankings which require external APIs)
 
 
 **Difficulty:**
@@ -1822,8 +1929,10 @@ curl http://localhost:3000/api/reports/clyyy789012
 # 5. Get specific issues by severity
 curl http://localhost:3000/api/reports/clyyy789012/issues?severity=CRITICAL
 
-# 6. Get recommendations
-curl http://localhost:3000/api/reports/clyyy789012/recommendations
+# 6. Chat about the audit (AI-powered)
+curl -X POST http://localhost:3000/api/reports/clyyy789012/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What should I fix first?", "userId": "clxxx123456", "stream": false}'
 ```
 
 ### JavaScript/Fetch Example
@@ -1871,9 +1980,12 @@ async function runAudit(url) {
   
   console.log(`Overall Score: ${report.overallScore}/100`);
   console.log(`Issues Found: ${report.issues.length}`);
-  console.log(`Recommendations: ${report.recommendations.length}`);
-**Analysis Results:**
-- All 34 rules run on every audit
+  console.log(`Passing Checks: ${report.passingChecks.length}`);
+}
+```
+
+**Analysis Results Notes:**
+- All 44 rules run on every audit
 - Analysis issues (impactScore = 0) provide insights, not problems
 - Data-rich issues include JSON in `elementSelector` field
 - Parse JSON to display keyword tables, heading breakdowns, link stats
@@ -1889,8 +2001,8 @@ For more information, see:
 - [SEOPTIMER_COMPARISON.md](./SEOPTIMER_COMPARISON.md) - Feature comparison with SEOptimizer
 - [CLOUDFLARE_BYPASS_GUIDE.md](./CLOUDFLARE_BYPASS_GUIDE.md) - Bot detection bypass strategies
 
-**API Version:** 1.2.0  
-**Last Updated:** April 6, 2026  
+**API Version:** 2.0.0  
+**Last Updated:** April 16, 2026  
 **Total SEO Rules:** 44 (all rules check for both passing and failing conditions)
 
 ## New Features Detail
@@ -1963,5 +2075,5 @@ For more information, see:
 - [prisma/schema.prisma](./prisma/schema.prisma) - Complete database schema
 - [src/services/analyzer/rules/](./src/services/analyzer/rules/) - All SEO rules
 
-**API Version:** 1.0.0  
-**Last Updated:** March 26, 2026
+**API Version:** 2.0.0  
+**Last Updated:** April 16, 2026

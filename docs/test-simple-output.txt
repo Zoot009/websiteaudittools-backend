@@ -1,0 +1,100 @@
+
+[1m[36m================================================================================[0m
+[1m[36mSEO RULES REGISTRATION TEST[0m
+[1m[36m================================================================================[0m
+
+[SeoAnalyzer] Registered 53 rules: {
+  TECHNICAL: 13,
+  ON_PAGE: 12,
+  PERFORMANCE: 11,
+  LINKS: 1,
+  ACCESSIBILITY: 4,
+  SECURITY: 1,
+  STRUCTURED_DATA: 11
+}
+[1mTotal Rules Registered:[0m [32m53[0m
+
+[1mRules by Category:[0m
+  TECHNICAL            [36m█████████████░░[0m [1m13[0m rules
+  ON_PAGE              [36m████████████░░░[0m [1m12[0m rules
+  PERFORMANCE          [36m███████████░░░░[0m [1m11[0m rules
+  STRUCTURED_DATA      [36m███████████░░░░[0m [1m11[0m rules
+  ACCESSIBILITY        [36m████░░░░░░░░░░░[0m [1m4[0m rules
+  LINKS                [36m█░░░░░░░░░░░░░░[0m [1m1[0m rules
+  SECURITY             [36m█░░░░░░░░░░░░░░[0m [1m1[0m rules
+
+[1mRules by Type:[0m
+  Page Rules           [1m49[0m
+  Site Rules           [1m4[0m
+
+[2mAll rules successfully loaded and registered![0m
+
+[1m[33mRunning Quick Analysis Test with Mock Data...[0m
+
+[SeoAnalyzer] Starting analysis for 1 pages from https://test.com/
+[SITEMAP] Checking robots.txt...
+🌐 Launching 3 browsers (stealth mode)...
+✅ Browser pool ready with 3 browsers
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://test.com/robots.txt
+Call log:
+[2m  - navigating to "https://test.com/robots.txt", waiting until "domcontentloaded"[22m
+
+[SITEMAP] robots.txt not accessible or not found
+[SITEMAP]  → Fetching sitemap: https://test.com/sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://test.com/sitemap.xml
+Call log:
+[2m  - navigating to "https://test.com/sitemap.xml", waiting until "domcontentloaded"[22m
+
+[SITEMAP]  ✗ Failed to fetch: https://test.com/sitemap.xml
+[SITEMAP]  → Fetching sitemap: https://test.com/sitemap_index.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://test.com/sitemap_index.xml
+Call log:
+[2m  - navigating to "https://test.com/sitemap_index.xml", waiting until "domcontentloaded"[22m
+
+[SITEMAP]  ✗ Failed to fetch: https://test.com/sitemap_index.xml
+[SITEMAP]  → Fetching sitemap: https://test.com/sitemap-index.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://test.com/sitemap-index.xml
+Call log:
+[2m  - navigating to "https://test.com/sitemap-index.xml", waiting until "domcontentloaded"[22m
+
+[SITEMAP]  ✗ Failed to fetch: https://test.com/sitemap-index.xml
+[SITEMAP]  → Fetching sitemap: https://test.com/sitemap1.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://test.com/sitemap1.xml
+Call log:
+[2m  - navigating to "https://test.com/sitemap1.xml", waiting until "domcontentloaded"[22m
+
+[SITEMAP]  ✗ Failed to fetch: https://test.com/sitemap1.xml
+[SITEMAP]  → Fetching sitemap: https://test.com/post-sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://test.com/post-sitemap.xml
+Call log:
+[2m  - navigating to "https://test.com/post-sitemap.xml", waiting until "domcontentloaded"[22m
+
+[SITEMAP]  ✗ Failed to fetch: https://test.com/post-sitemap.xml
+[SITEMAP]  → Fetching sitemap: https://test.com/page-sitemap.xml
+[SITEMAP]    ↳ API request failed, trying page.goto...
+[SITEMAP]    ↳ Error: page.goto: net::ERR_NAME_NOT_RESOLVED at https://test.com/page-sitemap.xml
+Call log:
+[2m  - navigating to "https://test.com/page-sitemap.xml", waiting until "domcontentloaded"[22m
+
+[SITEMAP]  ✗ Failed to fetch: https://test.com/page-sitemap.xml
+[SeoAnalyzer] Built site context: 1 pages
+[SeoAnalyzer] Found 9 issues and 25 passing checks
+[32m✓[0m Analysis complete!
+[1mOverall Score:[0m 100.0/100
+[1mIssues Found:[0m 9
+[1mPassing Checks:[0m 25
+
+[1mIssues by Severity:[0m
+  Critical: 0
+  High:     1
+  Medium:   5
+  Low:      3
+
+[1m[32m✓ All 53 rules executed successfully![0m
+

@@ -6,6 +6,7 @@ import { SeoAnalyzer } from '../services/analyzer/SeoAnalyzer.js';
 // import { RecommendationGenerator } from '../services/recommendations/RecommendatonGenerator.js';
 import { prisma } from '../lib/prisma.js';
 import { SiteAuditCrawler, type PageData } from '../services/crawler/SiteAuditCrawler.js';
+import { pageSpeedService } from '../services/performance/pageSpeedService.js';
 import { 
   shouldRecrawl, 
   loadCachedPageData,
@@ -87,7 +88,45 @@ async function processAudit(job: Job<AuditJobData>) {
     await job.updateProgress(20);
     console.log(`✅ ${forceRecrawl || pagesAnalyzed === pageData.length ? 'Crawled' : 'Loaded'} ${pagesAnalyzed} pages`);
 
-    // Step 2: Analyze SEO (20-60% progress)
+    // Step 1.5: Fetch PageSpeed Insights for homepage (20-40% progress)
+    if (pageSpeedService.isConfigured() && pageData.length > 0) {
+      console.log(`📊 Fetching PageSpeed Insights for homepage...`);
+      try {
+        const homepageUrl = baseUrl;
+        const pageSpeedResult = await pageSpeedService.analyze(homepageUrl, {
+          mobile: true,
+          desktop: true,
+        });
+        
+        // Attach PageSpeed data to homepage
+        const homepageIndex = pageData.findIndex(p => 
+          new URL(p.url).origin === baseUrl && 
+          (new URL(p.url).pathname === '/' || p.url === baseUrl)
+        );
+        
+        if (homepageIndex >= 0 && pageData[homepageIndex]) {
+          pageData[homepageIndex].pageSpeed = pageSpeedResult;
+          console.log(`✅ PageSpeed data attached to homepage`);
+        } else if (pageData[0]) {
+          // If we can't find the exact homepage, attach to first page
+          pageData[0].pageSpeed = pageSpeedResult;
+          console.log(`✅ PageSpeed data attached to first page (${pageData[0].url})`);
+        }
+        
+        await job.updateProgress(40);
+      } catch (error) {
+        console.error(`⚠️  PageSpeed Insights failed:`, error);
+        // Continue without PageSpeed data - not a fatal error
+        await job.updateProgress(40);
+      }
+    } else {
+      if (!pageSpeedService.isConfigured()) {
+        console.log(`ℹ️  PageSpeed Insights skipped (no API key configured)`);
+      }
+      await job.updateProgress(40);
+    }
+
+    // Step 2: Analyze SEO (40-60% progress)
     console.log(`🔍 Analyzing ${pageData.length} pages for SEO issues...`);
     const analyzer = new SeoAnalyzer();
     const analysisResult = await analyzer.analyze(pageData, baseUrl);

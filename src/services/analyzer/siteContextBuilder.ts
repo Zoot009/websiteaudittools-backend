@@ -23,9 +23,21 @@ export async function buildSiteContext(pages: PageData[], baseUrl: string): Prom
     const robotsUrl = new URL('/robots.txt', baseUrl).href;
     const response = await axios.get(robotsUrl, { 
       timeout: 5000,
-      validateStatus: (status) => status === 200,
+      validateStatus: (status) => status < 500, // Accept any status except server errors
     });
-    hasRobotsTxt = response.status === 200 && response.data.length > 0;
+    
+    // Only consider it a valid robots.txt if:
+    // 1. Status is 200 (not 404, 403, etc.)
+    // 2. Has content
+    // 3. Content is not HTML (some servers return HTML 404 pages with 200 status)
+    const isValidRobotsTxt = 
+      response.status === 200 && 
+      response.data && 
+      response.data.length > 0 &&
+      !String(response.data).trim().toLowerCase().startsWith('<!doctype') &&
+      !String(response.data).trim().toLowerCase().startsWith('<html');
+    
+    hasRobotsTxt = isValidRobotsTxt;
 
     if (hasRobotsTxt) {
       robotsTxt = String(response.data);
@@ -49,8 +61,9 @@ export async function buildSiteContext(pages: PageData[], baseUrl: string): Prom
       }
     }
   } catch (error) {
-    // robots.txt doesn't exist or is inaccessible
+    // robots.txt doesn't exist or is inaccessible (network error, timeout, etc.)
     hasRobotsTxt = false;
+    robotsTxt = undefined;
   }
 
   // Build sitemap context used by technical rules.
