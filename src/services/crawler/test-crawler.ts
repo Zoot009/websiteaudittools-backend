@@ -4,7 +4,6 @@
  * Usage:
  *   npx tsx src/services/crawler/test-crawler.ts --quick
  *   npx tsx src/services/crawler/test-crawler.ts --single
- *   npx tsx src/services/crawler/test-crawler.ts --multi
  */
 
 import 'dotenv/config'; // Load environment variables
@@ -35,7 +34,6 @@ async function quickTest() {
 
   try {
     const result = await crawler.crawl(TEST_URL, {
-      mode: 'single',
       timeout: 30000,
     });
 
@@ -253,7 +251,6 @@ async function testSingleMode() {
 
     try {
       const result = await crawler.crawl(url, {
-        mode: 'single',
         timeout: 30000,
       });
 
@@ -282,92 +279,6 @@ async function testSingleMode() {
   console.log('\n✨ Single mode tests complete\n');
 }
 
-/**
- * Multi Page Test: Test multi-page crawling
- */
-async function testMultiMode() {
-  // 🔧 CHANGE THIS URL TO TEST DIFFERENT WEBSITES
-  const TEST_URL = 'https://example.com';
-  const PAGE_LIMIT = 5;
-
-  console.log('\n');
-  console.log('╔════════════════════════════════════════════════════════╗');
-  console.log('║   📚  MULTI PAGE MODE TEST                             ║');
-  console.log('╚════════════════════════════════════════════════════════╝');
-  console.log(`\n🔍 Testing URL: ${TEST_URL}`);
-  console.log(`📊 Page limit: ${PAGE_LIMIT}`);
-  console.log(`⏰ Started at: ${new Date().toLocaleTimeString()}`);
-  console.log(`\n🛡️  Anti-Bot Settings:`);
-  console.log(`   STEALTH_MODE:    ${process.env.STEALTH_MODE || 'false'}`);
-  console.log(`   HUMAN_BEHAVIOR:  ${process.env.HUMAN_BEHAVIOR || 'false'}`);
-  console.log('─'.repeat(60));
-
-  const startTime = Date.now();
-  const crawler = new SiteAuditCrawler();
-
-  try {
-    const result = await crawler.crawl(TEST_URL, {
-      mode: 'multi',
-      pageLimit: PAGE_LIMIT,
-      timeout: 30000,
-    });
-
-    const duration = Date.now() - startTime;
-
-    console.log(`\n✅ Crawl completed successfully!`);
-    console.log(`⏱️  Total time: ${duration}ms (${(duration / 1000).toFixed(1)}s)`);
-    console.log(`📊 Pages analyzed: ${result.pagesAnalyzed}`);
-    console.log(`📈 Average time per page: ${(duration / result.pagesAnalyzed).toFixed(0)}ms`);
-    
-    if (result.errors.length > 0) {
-      console.log(`⚠️  Errors encountered: ${result.errors.length}`);
-    }
-
-    // Display summary of all pages
-    console.log('\n📄 Pages Crawled:');
-    console.log('─'.repeat(60));
-    
-    result.pages.forEach((page, idx) => {
-      console.log(`\n${idx + 1}. ${page.url}`);
-      console.log(`   Title: ${page.title || '(none)'}`);
-      console.log(`   Status: ${page.statusCode}, Load: ${page.loadTime}ms`);
-      console.log(`   Content: ${page.wordCount} words, ${page.images.length} images, ${page.links.length} links`);
-      if (page.lcp) console.log(`   LCP: ${page.lcp.toFixed(0)}ms`);
-    });
-
-    // Link analysis
-    console.log('\n🔗 Link Analysis:');
-    console.log('─'.repeat(60));
-    const allLinks = result.pages.flatMap(p => p.links);
-    const internalLinks = allLinks.filter(l => l.isInternal);
-    const externalLinks = allLinks.filter(l => !l.isInternal);
-    console.log(`   Total links: ${allLinks.length}`);
-    console.log(`   Internal: ${internalLinks.length}`);
-    console.log(`   External: ${externalLinks.length}`);
-
-    if (result.errors.length > 0) {
-      console.log('\n❌ Errors:');
-      console.log('─'.repeat(60));
-      result.errors.slice(0, 10).forEach((error, idx) => {
-        console.log(`   ${idx + 1}. ${error}`);
-      });
-      if (result.errors.length > 10) {
-        console.log(`   ... and ${result.errors.length - 10} more`);
-      }
-    }
-
-  } catch (error: any) {
-    console.error(`\n❌ Crawl failed: ${error.message}`);
-    console.error('Stack trace:', error.stack);
-  } finally {
-    await browserPool.closeAll();
-  }
-
-  console.log('\n╔══════════════════════════════════════════════════════╗');
-  console.log('║   ✨  TEST COMPLETE                                    ║');
-  console.log('╚════════════════════════════════════════════════════════╝\n');
-}
-
 // Parse command line arguments
 const args = process.argv.slice(2);
 const testMode = args[0];
@@ -379,14 +290,11 @@ const testMode = args[0];
       await quickTest();
     } else if (testMode === '--single' || testMode === '-s') {
       await testSingleMode();
-    } else if (testMode === '--multi' || testMode === '-m') {
-      await testMultiMode();
     } else {
       // Default: show usage and run quick test
       console.log('\n📖 Usage:');
       console.log('   npx tsx src/services/crawler/test-crawler.ts --quick   # Quick single page test');
-      console.log('   npx tsx src/services/crawler/test-crawler.ts --single  # Test multiple URLs (single mode)');
-      console.log('   npx tsx src/services/crawler/test-crawler.ts --multi   # Multi-page crawl test\n');
+      console.log('   npx tsx src/services/crawler/test-crawler.ts --single  # Test multiple URLs\n');
       
       await quickTest();
     }

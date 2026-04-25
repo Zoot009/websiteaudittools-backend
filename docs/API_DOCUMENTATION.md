@@ -1,11 +1,57 @@
 # Website Audit Tools - API Documentation
 
 **Base URL:** `http://localhost:3000`  
-**Version:** 2.0.0  
-**Last Updated:** April 16, 2026
+**Version:** 2.3.0  
+**Last Updated:** April 24, 2026
+
+## What's New in v2.3.0 🔧
+
+- 🎯 **Fixed Scoring Formula**: Resolved issue where all sites received near-perfect scores (95-100)
+- 📉 **Realistic Differentiation**: New direct deduction formula properly distinguishes between good and bad sites
+- ⚖️ **Fair Penalties**: Each issue now deducts points based on `(impactScore / 10) × severityMultiplier`
+  - CRITICAL issues (4x): impact=50 → 20 points deducted (was ~0.75 points)
+  - HIGH issues (2x): impact=60 → 12 points deducted (was ~0.90 points)
+  - MEDIUM issues (1x): impact=40 → 4 points deducted (was ~0.30 points)
+  - LOW issues (0.5x): impact=30 → 1.5 points deducted (was ~0.11 points)
+- 🎁 **Bonus System Fix**: Reduced max bonus from 15 to 5 points per category
+  - **Problem**: Bonuses were offsetting penalties too much (44 bonus vs 45 penalty = 100 score)
+  - **Solution**: Lower bonuses still reward good practices without masking issues
+  - **Result**: Sites with 10-15 issues now score 70-85 instead of 95-100 ✓
+- 📊 **Better Grade Distribution**: Sites now properly span entire A+ to F range based on actual issues
+- ✅ **Backward Compatible**: No API changes, only improved scoring accuracy
+
+**Example Impact (freeserp.com with 13 issues):**
+- Site with 13 issues: **OLD** 100 (A+) → **NEW** ~70-80 (B-C) ✓
+- Site with 3 CRITICAL issues: **OLD** 92.5 (A) → **NEW** 40 (F) ✓
+
+## What's New in v2.2.0 ✨
+
+- 🎯 **Enhanced Scoring System**: All audits now include letter grades (A+ to F) and performance tiers (Excellent/Good/Fair/Poor)
+- ⭐ **Positive Reinforcement**: Passing checks now earn bonus points (+0 to +5 per category) - reward what's done right!
+- 📊 **Score Summary with Insights**: Comprehensive breakdown with AI-generated insights and recommendations
+- 🎁 **Category Bonuses**: See exactly how many bonus points each category earned from passing checks
+- 📈 **Enhanced Statistics**: Penalty points vs bonus points breakdown in every audit
+- 🆕 **New Endpoint**: `GET /api/audits/anonymous/:jobId/results` for clean, formatted anonymous audit results
+- 🗄️ **Database Schema**: 16 new fields added to `AuditReport` (grades + tiers for overall + 7 categories)
+
+**Key Changes:**
+- Job returnvalue now includes `overallGrade`, `overallTier`, enhanced `categoryScores[]` with bonuses, and `scoreSummary`
+- All database audit reports now store grades and tiers alongside numeric scores
+- Backward compatible: existing clients continue working with numeric scores
+
+## What's New in v2.1.0
+
+- 🔐 **NextAuth Authentication**: Full Bearer token authentication via NextAuth.js sessions
+- 💳 **Credits & Billing System**: Complete credit-based billing with monthly quotas and top-ups
+- 🔗 **Link Graph Crawl Jobs**: New asynchronous link graph crawling with depth control (separate from audit reports)
+- 💰 **Pricing Endpoint**: Public pricing API for frontend cost estimation
+- 📊 **Enhanced Statistics**: Cache statistics and date-range filtered reports
+- 🔒 **Protected Endpoints**: `POST /api/audits`, `GET /api/users/:userId/reports`, and `POST /api/link-graph/crawl` now require authentication
 
 ## What's New in v2.0.0
 
+- 🙋 **Anonymous Audit Endpoint**: New `POST /api/audits/anonymous` route for single-page audits without authentication
+- 🛡️ **Anonymous Abuse Protection**: IP/day, domain/hour, and URL cooldown limits with `Retry-After` support
 - 🤖 **AI Chat**: New conversational AI endpoint to ask questions about any audit report (powered by DeepSeek)
 - 🔑 **Keyword Consistency**: Per-page keyword frequency analysis — individual keywords + 2-word phrases with presence in title, meta description, and headings
 - 📊 **Heading Frequency**: Structured H1–H6 frequency breakdowns with actual heading text values per page
@@ -45,20 +91,48 @@
 8. [Statistics & Analytics Endpoints](#statistics--analytics-endpoints)
 9. [Screenshot Endpoints](#screenshot-endpoints)
 10. [Link Graph Endpoints](#link-graph-endpoints)
-11. [AI Chat Endpoints](#ai-chat-endpoints)
-12. [Health Check](#health-check)
-13. [Error Handling](#error-handling)
-14. [Data Models](#data-models)
+11. [Link Graph Crawl Endpoints](#link-graph-crawl-endpoints) 🆕
+12. [AI Chat Endpoints](#ai-chat-endpoints)
+13. [Pricing Endpoint](#pricing-endpoint) 🆕
+14. [Health Check](#health-check)
+15. [Error Handling](#error-handling)
+16. [Data Models](#data-models)
 
 ---
 
 ## Authentication
 
-Currently, the API does not require authentication for development. In production, integrate with Clerk for JWT-based authentication.
+The API uses **NextAuth.js** for session-based authentication with Bearer tokens.
+
+**Authentication Method:**
+- Include session token in request header: `Authorization: Bearer <session_token>`
+- Session tokens are validated against the `Session` table in PostgreSQL
+- Invalid or expired tokens return `401 Unauthorized`
+
+**Protected Endpoints** (require `Authorization` header):
+- `POST /api/audits` - Create authenticated audit
+- `GET /api/users/:userId/reports` - Get user's reports
+- `POST /api/link-graph/crawl` - Queue link graph crawl
+- `POST /api/reports/:reportId/chat` - AI chat (user must own report)
+
+**Public Endpoints** (no auth required):
+- `POST /api/audits/anonymous` - Anonymous single-page audits
+- `GET /api/audits/anonymous/:jobId/results` - Get anonymous audit results (with enhanced scoring) 🆕
+- `GET /api/audits/jobs/:jobId` - Check job status
+- `GET /api/reports/:id` - View any completed report
+- `GET /api/reports/:reportId/link-graph` - View link graph for any report
+- All other GET endpoints (issues, pages, users, stats, etc.)
 
 **User Tiers:**
-- `FREE`: Limited audits per month
-- `PAID`: Unlimited audits
+- `FREE`: Monthly quota-based credits
+- `PAID`: Higher monthly quota + ability to purchase top-up credits
+
+**Credit System:**
+- Credits are reserved when jobs are queued
+- Spent when jobs complete successfully
+- Refunded automatically if jobs fail
+- Quota credits (use-it-or-lose-it) are spent first
+- Purchased credits never expire
 
 ---
 
@@ -66,28 +140,23 @@ Currently, the API does not require authentication for development. In productio
 
 ### 1. Create Audit Job
 
-Queues a new SEO audit job for asynchronous processing.
+Queues a new SEO audit job for asynchronous processing. **Requires authentication.**
 
 **Endpoint:** `POST /api/audits`
+
+**Authentication:** Required — `Authorization: Bearer <session_token>`
 
 **Request Body:**
 ```json
 {
   "url": "https://example.com",
-  "userId": "clxxx123456",           // Optional - uses dev user if omitted
-  "mode": "single",                  // "single" or "multi"
-  "pageLimit": 10,                   // Required for multi mode (default: 10)
   "forceRecrawl": false              // Optional - bypass cache (default: false)
 }
 ```
-
 **Request Parameters:**
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | url | string | Yes | - | Website URL to audit |
-| userId | string | No | dev user | User ID from database |
-| mode | string | No | "single" | "single" for one page, "multi" for full site |
-| pageLimit | number | No | 10 | Max pages to crawl (multi mode only) |
 | forceRecrawl | boolean | No | false | Skip cache, force fresh crawl |
 
 **Success Response (201 Created):**
@@ -103,19 +172,19 @@ Queues a new SEO audit job for asynchronous processing.
 
 **Error Responses:**
 ```json
+// 401 Unauthorized - No auth token
+{
+  "error": "Authentication required"
+}
+
+// 401 Unauthorized - Invalid token
+{
+  "error": "Authentication failed"
+}
+```json
 // 400 Bad Request - Missing URL
 {
   "error": "URL is required"
-}
-
-// 400 Bad Request - Invalid mode
-{
-  "error": "Mode must be \"single\" or \"multi\""
-}
-
-// 400 Bad Request - No user found
-{
-  "error": "No userId provided and test user not found. Run: npx prisma db seed"
 }
 
 // 500 Internal Server Error
@@ -124,6 +193,8 @@ Queues a new SEO audit job for asynchronous processing.
   "details": "Connection timeout"
 }
 ```
+
+**Note:** The authenticated user's ID is automatically extracted from the session token. Credits are reserved when the job is queued and spent upon completion.
 
 ---
 
@@ -147,8 +218,6 @@ Poll this endpoint to monitor audit progress.
   "data": {
     "url": "https://example.com",
     "userId": "clxxx123456",
-    "mode": "single",
-    "pageLimit": null,
     "options": {
       "forceRecrawl": false
     }
@@ -156,9 +225,72 @@ Poll this endpoint to monitor audit progress.
   "returnvalue": {
     "success": true,
     "auditReportId": "clyyy789012",
-    "overallScore": 78.5,
+    "overallScore": 87.3,
+    "overallGrade": "B+",              // NEW: Letter grade (A+ to F)
+    "overallTier": "Good",             // NEW: Performance tier
     "issuesFound": 23,
-    "pagesAnalyzed": 1
+    "passingChecks": 45,               // NEW: Count of checks passed
+    "pagesAnalyzed": 1,
+    "categoryScores": [                // NEW: Enhanced with grades, tiers, bonuses
+      {
+        "category": "TECHNICAL",
+        "score": 95.5,
+        "grade": "A+",
+        "tier": "Excellent",
+        "issueCount": 2,
+        "passingCount": 8,
+        "bonus": 12.3                  // Bonus points earned from passing checks
+      },
+      {
+        "category": "ON_PAGE",
+        "score": 88.0,
+        "grade": "B+",
+        "tier": "Good",
+        "issueCount": 5,
+        "passingCount": 6,
+        "bonus": 8.5
+      }
+      // ... 5 more categories (PERFORMANCE, SECURITY, LINKS, ACCESSIBILITY, STRUCTURED_DATA)
+    ],
+    "scoreSummary": {                  // NEW: Comprehensive scoring insights
+      "overall": {
+        "score": 87.3,
+        "grade": "B+",
+        "tier": "Good"
+      },
+      "categories": [
+        {
+          "category": "TECHNICAL",
+          "score": 95.5,
+          "grade": "A+",
+          "tier": "Excellent",
+          "weight": 0.20,              // Weight used in overall calculation
+          "contribution": 19.1         // Contribution to overall score
+        }
+        // ... other categories
+      ],
+      "statistics": {
+        "totalIssues": 23,
+        "totalPassing": 45,
+        "penaltyPoints": 34.2,         // Total penalty from issues
+        "bonusPoints": 67.5,           // Total bonus from passing checks
+        "pagesAnalyzed": 1
+      },
+      "insights": {
+        "overall": "Good work! Your site has a solid SEO foundation with some areas for improvement.",
+        "categories": [
+          {
+            "category": "TECHNICAL",
+            "insight": "Excellent technical SEO! Your site follows best practices."
+          }
+          // ... other categories
+        ],
+        "recommendations": [
+          "Focus on improving performance (score: 72)",
+          "Address 23 issues to improve overall score"
+        ]
+      }
+    }
   },
   "failedReason": null
 }
@@ -178,6 +310,26 @@ Poll this endpoint to monitor audit progress.
 | completed | Successfully finished |
 | failed | Error occurred (see failedReason) |
 
+**Grade Scale:**
+| Grade | Score Range | Description |
+|-------|-------------|-------------|
+| A+ | 95-100 | Outstanding |
+| A | 90-94 | Excellent |
+| B+ | 85-89 | Very Good |
+| B | 80-84 | Good |
+| C+ | 75-79 | Above Average |
+| C | 70-74 | Average |
+| D | 60-69 | Below Average |
+| F | 0-59 | Needs Improvement |
+
+**Performance Tiers:**
+| Tier | Score Range |
+|------|-------------|
+| Excellent | 90-100 |
+| Good | 70-89 |
+| Fair | 50-69 |
+| Poor | 0-49 |
+
 **Error Responses:**
 ```json
 // 404 Not Found
@@ -191,6 +343,284 @@ Poll this endpoint to monitor audit progress.
   "details": "Redis connection error"
 }
 ```
+
+---
+
+### 2A. Get Anonymous Audit Results (Enhanced)
+
+Fetch full audit results with enhanced scoring for anonymous audits. This endpoint provides a cleaner, more structured response compared to the job status endpoint.
+
+**Endpoint:** `GET /api/audits/anonymous/:jobId/results`
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| jobId | string | BullMQ job ID from anonymous audit creation |
+
+**Success Response - In Progress (202 Accepted):**
+```json
+{
+  "status": "active",
+  "progress": 45,
+  "message": "Audit is in progress"
+}
+```
+
+**Success Response - Completed (200 OK):**
+```json
+{
+  "id": "clyyy789012",
+  "jobId": "1234567890",
+  "url": "https://example.com",
+  "status": "COMPLETED",
+  "pagesAnalyzed": 1,
+  
+  "scoring": {
+    "overall": {
+      "score": 87.3,
+      "grade": "B+",
+      "tier": "Good"
+    },
+    "categories": {
+      "technical": {
+        "score": 95.5,
+        "grade": "A+",
+        "tier": "Excellent"
+      },
+      "onPage": {
+        "score": 88.0,
+        "grade": "B+",
+        "tier": "Good"
+      },
+      "performance": {
+        "score": 72.0,
+        "grade": "C",
+        "tier": "Good"
+      },
+      "accessibility": {
+        "score": 90.0,
+        "grade": "A",
+        "tier": "Excellent"
+      },
+      "links": {
+        "score": 85.0,
+        "grade": "B+",
+        "tier": "Good"
+      },
+      "structuredData": {
+        "score": 50.0,
+        "grade": "F",
+        "tier": "Fair"
+      },
+      "security": {
+        "score": 100.0,
+        "grade": "A+",
+        "tier": "Excellent"
+      }
+    }
+  },
+  
+  "summary": {
+    "overall": {
+      "score": 87.3,
+      "grade": "B+",
+      "tier": "Good"
+    },
+    "categories": [
+      {
+        "category": "TECHNICAL",
+        "score": 95.5,
+        "grade": "A+",
+        "tier": "Excellent",
+        "weight": 0.20,
+        "contribution": 19.1
+      }
+      // ... other categories
+    ],
+    "statistics": {
+      "totalIssues": 23,
+      "totalPassing": 45,
+      "penaltyPoints": 34.2,
+      "bonusPoints": 67.5,
+      "pagesAnalyzed": 1
+    },
+    "insights": {
+      "overall": "Good work! Your site has a solid SEO foundation with some areas for improvement.",
+      "categories": [
+        {
+          "category": "TECHNICAL",
+          "insight": "Excellent technical SEO! Your site follows best practices."
+        }
+        // ... other categories
+      ],
+      "recommendations": [
+        "Focus on improving structured data (score: 50)",
+        "Address 23 issues to improve overall score"
+      ]
+    }
+  },
+  
+  "categoryDetails": [
+    {
+      "category": "TECHNICAL",
+      "score": 95.5,
+      "grade": "A+",
+      "tier": "Excellent",
+      "issueCount": 2,
+      "passingCount": 8,
+      "bonus": 12.3
+    }
+    // ... other categories
+  ],
+  
+  "issues": [
+    {
+      "id": "clzzz111222",
+      "category": "PERFORMANCE",
+      "type": "SLOW_LOAD_TIME",
+      "title": "Slow Page Load Time",
+      "description": "Page takes 3.2s to load (recommended: < 2.0s)",
+      "severity": "MEDIUM",
+      "impactScore": 45.0,
+      "pageUrl": "https://example.com",
+      "elementSelector": null,
+      "lineNumber": null
+    }
+    // ... more issues
+  ],
+  
+  "passingChecks": [
+    {
+      "category": "TECHNICAL",
+      "code": "HTTPS_CHECK",
+      "title": "HTTPS Enabled",
+      "description": "Site uses HTTPS protocol",
+      "pageUrl": "https://example.com",
+      "goodPractice": "HTTPS encrypts data and is a ranking factor"
+    }
+    // ... more passing checks
+  ],
+  
+  "pages": [
+    {
+      "id": "clppp333444",
+      "url": "https://example.com",
+      "title": "Example Domain",
+      "description": "Example website for demonstration",
+      "statusCode": 200,
+      "loadTime": 3.2,
+      "lcp": 2800.0,
+      "cls": 0.05,
+      "fid": 80.0,
+      "wordCount": 450,
+      "imageCount": 10,
+      "linkCount": 25,
+      "h1Count": 1
+    }
+  ],
+  
+  "createdAt": "2026-04-24T10:30:00.000Z",
+  "completedAt": "2026-04-24T10:32:15.000Z"
+}
+```
+
+**Error Responses:**
+```json
+// 404 Not Found
+{
+  "error": "Job not found"
+}
+
+// 500 Internal Server Error
+{
+  "error": "Audit completed but report ID not found"
+}
+
+// 500 Internal Server Error
+{
+  "error": "Failed to fetch audit results",
+  "details": "Database connection error"
+}
+```
+
+**Usage Notes:**
+- Returns `202 Accepted` with progress if job is still processing
+- Returns `200 OK` with full results once job completes
+- Cleaner structure than job status endpoint - recommended for anonymous audit results
+- Includes all enhanced scoring features: grades, tiers, bonuses, insights
+
+---
+
+### 1A. Create Anonymous Single-Page Audit Job
+
+Queues a single-page SEO audit job for anonymous users. This endpoint is intentionally restricted and protected with anti-abuse limits.
+
+**Endpoint:** `POST /api/audits/anonymous`
+
+**Request Body:**
+```json
+{
+  "url": "https://example.com",
+  "forceRecrawl": false
+}
+```
+
+**Request Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| url | string | Yes | - | Website URL to audit |
+| forceRecrawl | boolean | No | false | Must be false for anonymous audits |
+
+**Success Response (201 Created):**
+```json
+{
+  "jobId": "1234567890",
+  "message": "Anonymous single-page audit job queued successfully",
+  "url": "https://example.com/",
+  "mode": "single",
+  "anonymous": true
+}
+```
+
+**Error Responses:**
+```json
+// 400 Bad Request - Missing URL
+{
+  "error": "URL is required"
+}
+
+// 400 Bad Request - Unsupported anonymous option
+{
+  "error": "forceRecrawl is not available for anonymous audits"
+}
+
+// 409 Conflict - Same IP and URL recently queued
+{
+  "error": "An anonymous audit for this URL is already queued recently (job: 1234567890)."
+}
+
+// 429 Too Many Requests - Anonymous limit exceeded
+{
+  "error": "Anonymous daily limit reached (3/day). Please sign in for more audits."
+}
+
+// 500 Internal Server Error
+{
+  "error": "Failed to queue anonymous audit job",
+  "details": "Connection timeout"
+}
+```
+
+**Anonymous Protection Limits (default values):**
+- IP limit: `3` audits/day
+- Domain limit: `10` anonymous audits/hour per target domain
+- URL cooldown: `900` seconds per IP + normalized URL
+
+**Anonymous Audit Environment Variables:**
+- `ANON_AUDIT_USER_EMAIL` (default: `anonymous@system.local`)
+- `ANON_AUDITS_PER_IP_PER_DAY` (default: `3`)
+- `ANON_AUDITS_PER_DOMAIN_PER_HOUR` (default: `10`)
+- `ANON_URL_COOLDOWN_SECONDS` (default: `900`)
 
 ---
 
@@ -226,19 +656,43 @@ GET /api/reports?page=1&limit=20&status=COMPLETED&userId=clxxx123456
       "mode": "SINGLE",
       "pageLimit": null,
       "pagesAnalyzed": 1,
-      "overallScore": 78.5,
-      "technicalScore": 85.0,
-      "onPageScore": 72.0,
-      "performanceScore": 68.0,
+      
+      // Numeric scores (0-100)
+      "overallScore": 87.3,
+      "technicalScore": 95.5,
+      "onPageScore": 88.0,
+      "performanceScore": 72.0,
       "accessibilityScore": 90.0,
-      "linkScore": 75.0,
+      "linkScore": 85.0,
       "structuredDataScore": 50.0,
       "securityScore": 100.0,
+      
+      // Letter grades (A+ to F) - NEW in v2.2.0
+      "overallGrade": "B+",
+      "technicalGrade": "A+",
+      "onPageGrade": "B+",
+      "performanceGrade": "C",
+      "accessibilityGrade": "A",
+      "linkGrade": "B+",
+      "structuredDataGrade": "F",
+      "securityGrade": "A+",
+      
+      // Performance tiers - NEW in v2.2.0
+      "overallTier": "Good",
+      "technicalTier": "Excellent",
+      "onPageTier": "Good",
+      "performanceTier": "Good",
+      "accessibilityTier": "Excellent",
+      "linkTier": "Good",
+      "structuredDataTier": "Fair",
+      "securityTier": "Excellent",
+      
+      "passingChecks": [/* Array of PassingCheck objects */],
       "status": "COMPLETED",
       "errorMessage": null,
       "userId": "clxxx123456",
-      "createdAt": "2026-03-26T10:30:00.000Z",
-      "completedAt": "2026-03-26T10:32:15.000Z",
+      "createdAt": "2026-04-24T10:30:00.000Z",
+      "completedAt": "2026-04-24T10:32:15.000Z",
       "_count": {
         "issues": 23,
         "recommendations": 8,
@@ -277,14 +731,37 @@ Retrieve a complete audit report with all related data.
   "mode": "SINGLE",
   "pageLimit": null,
   "pagesAnalyzed": 1,
-  "overallScore": 78.5,
-  "technicalScore": 85.0,
-  "onPageScore": 72.0,
-  "performanceScore": 68.0,
+  
+  // Numeric scores (0-100)
+  "overallScore": 87.3,
+  "technicalScore": 95.5,
+  "onPageScore": 88.0,
+  "performanceScore": 72.0,
   "accessibilityScore": 90.0,
-  "linkScore": 75.0,
+  "linkScore": 85.0,
   "structuredDataScore": 50.0,
   "securityScore": 100.0,
+  
+  // Letter grades (A+ to F) - NEW in v2.2.0
+  "overallGrade": "B+",
+  "technicalGrade": "A+",
+  "onPageGrade": "B+",
+  "performanceGrade": "C",
+  "accessibilityGrade": "A",
+  "linkGrade": "B+",
+  "structuredDataGrade": "F",
+  "securityGrade": "A+",
+  
+  // Performance tiers - NEW in v2.2.0
+  "overallTier": "Good",
+  "technicalTier": "Excellent",
+  "onPageTier": "Good",
+  "performanceTier": "Good",
+  "accessibilityTier": "Excellent",
+  "linkTier": "Good",
+  "structuredDataTier": "Fair",
+  "securityTier": "Excellent",
+  
   "status": "COMPLETED",
   "errorMessage": null,
   "userId": "clxxx123456",
@@ -470,9 +947,11 @@ Retrieve a complete audit report with all related data.
 
 ### 5. Get User's Audit Reports
 
-Retrieve all audit reports for a specific user.
+Retrieve all audit reports for a specific user. **Requires authentication.**
 
 **Endpoint:** `GET /api/users/:userId/reports`
+
+**Authentication:** Required — `Authorization: Bearer <session_token>`
 
 **URL Parameters:**
 | Parameter | Type | Description |
@@ -488,6 +967,7 @@ Retrieve all audit reports for a specific user.
 **Example Request:**
 ```
 GET /api/users/clxxx123456/reports?page=1&limit=5
+Authorization: Bearer <session_token>
 ```
 
 **Success Response (200 OK):**
@@ -1354,21 +1834,247 @@ simulation.on('tick', () => {
 
 **Important Notes:**
 - Only available for COMPLETED audit reports
-- Multi-page crawls (`mode: "multi"`) produce more useful graphs
-- Single-page audits will have minimal graph structure
+- Link graph is built from the internal links discovered on the audited page
 - Orphan pages indicate potential SEO issues (not linked from anywhere)
 - Hub pages (>10 outbound links) may indicate navigation/menu pages
 - Authority pages (>5 inbound links) often represent important content
 
 ---
 
+## Link Graph Crawl Endpoints
+
+These endpoints allow you to queue **standalone link graph crawl jobs** independent of audit reports. Unlike the report-based link graph endpoint (`GET /api/reports/:reportId/link-graph`), these endpoints crawl a site's internal linking structure with configurable depth.
+
+### 23. Queue Link Graph Crawl Job
+
+Queue an asynchronous link graph crawl job with depth control. **Requires authentication.**
+
+**Endpoint:** `POST /api/link-graph/crawl`
+
+**Authentication:** Required — `Authorization: Bearer <session_token>`
+
+**Request Body:**
+```json
+{
+  "url": "https://example.com",
+  "depth": 3,
+  "options": {
+    "maxPages": 500,
+    "respectRobots": true
+  }
+}
+```
+
+**Request Parameters:**
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| url | string | Yes | - | Website URL to crawl |
+| depth | number | Yes | - | Crawl depth (1-5) |
+| options | object | No | {} | Additional crawl options |
+
+**Depth Limits:**
+- Minimum: 1 (homepage only)
+- Maximum: 5 (5 levels deep)
+- Higher depths may take significantly longer
+
+**Success Response (202 Accepted):**
+```json
+{
+  "jobId": "9876543210",
+  "message": "Link graph crawl job queued successfully",
+  "url": "https://example.com",
+  "depth": 3,
+  "statusUrl": "/api/link-graph/jobs/9876543210",
+  "resultUrl": "/api/link-graph/jobs/9876543210/result"
+}
+```
+
+**Error Responses:**
+```json
+// 400 Bad Request - Missing URL
+{
+  "error": "URL is required"
+}
+
+// 400 Bad Request - Invalid depth
+{
+  "error": "Depth must be between 1 and 5",
+  "provided": 10
+}
+
+// 400 Bad Request - Invalid URL
+{
+  "error": "URL must use HTTP or HTTPS protocol",
+  "provided": "ftp://example.com"
+}
+
+// 401 Unauthorized
+{
+  "error": "Authentication required"
+}
+
+// 500 Internal Server Error
+{
+  "error": "Failed to queue link graph job",
+  "details": "Redis connection error"
+}
+```
+
+---
+
+### 24. Get Link Graph Job Status
+
+Check the status of a queued link graph crawl job.
+
+**Endpoint:** `GET /api/link-graph/jobs/:jobId`
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| jobId | string | BullMQ job ID from crawl response |
+
+**Success Response (200 OK):**
+```json
+{
+  "id": "9876543210",
+  "state": "active",
+  "progress": 45,
+  "data": {
+    "url": "https://example.com",
+    "depth": 3
+  },
+  "finishedOn": null,
+  "processedOn": 1714035890123,
+  "failedReason": null
+}
+```
+
+**Job States:**
+| State | Description |
+|-------|-------------|
+| waiting | Job is queued |
+| active | Currently crawling |
+| completed | Successfully finished |
+| failed | Error occurred (see failedReason) |
+
+**Progress Values:**
+- `0-100%`: Percentage of pages crawled
+
+**Error Responses:**
+```json
+// 404 Not Found
+{
+  "error": "Job not found"
+}
+
+// 500 Internal Server Error
+{
+  "error": "Failed to get job status",
+  "details": "Redis connection error"
+}
+```
+
+---
+
+### 25. Get Link Graph Crawl Result
+
+Retrieve the complete link graph from a finished crawl job.
+
+**Endpoint:** `GET /api/link-graph/jobs/:jobId/result`
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| jobId | string | BullMQ job ID from crawl response |
+
+**Success Response (200 OK):**
+```json
+{
+  "nodes": [
+    {
+      "id": "https://example.com/",
+      "url": "https://example.com/",
+      "title": "Homepage",
+      "depth": 0,
+      "inboundCount": 0,
+      "outboundCount": 15,
+      "isOrphan": false,
+      "isHub": true,
+      "isAuthority": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-0",
+      "source": "https://example.com/",
+      "target": "https://example.com/about",
+      "anchorText": "About Us"
+    }
+  ],
+  "metadata": {
+    "totalPages": 125,
+    "totalLinks": 487,
+    "maxDepth": 3,
+    "orphanPages": 5,
+    "hubPages": 3,
+    "authorityPages": 8,
+    "crawlStarted": "2026-04-23T10:30:00.000Z",
+    "crawlCompleted": "2026-04-23T10:35:12.000Z"
+  }
+}
+```
+
+**Error Responses:**
+```json
+// 404 Not Found
+{
+  "error": "Job not found"
+}
+
+// 400 Bad Request - Job not completed
+{
+  "error": "Job not completed yet",
+  "state": "active",
+  "message": "Job is currently active. Please check status endpoint."
+}
+
+// 400 Bad Request - Job failed
+{
+  "error": "Job not completed yet",
+  "state": "failed",
+  "message": "Job failed: Navigation timeout"
+}
+
+// 500 Internal Server Error
+{
+  "error": "Failed to get job result",
+  "details": "Invalid result format"
+}
+```
+
+**Use Cases:**
+- **Standalone link graph analysis**: Analyze site structure without running a full SEO audit
+- **Faster crawling**: Focus only on internal links, skip SEO rule analysis
+- **Depth control**: Explore only specific levels of site hierarchy
+- **Regular monitoring**: Schedule periodic link graph snapshots
+
+**Performance Notes:**
+- Depth 1 (homepage only): ~5-10 seconds
+- Depth 2 (homepage + direct links): ~30-60 seconds
+- Depth 3 (3 levels): ~2-5 minutes (depending on site size)
+- Depth 4-5: Can take 10+ minutes for large sites
+
+---
+
 ## AI Chat Endpoints
 
-### 25. Chat About an Audit Report
+### 26. Chat About an Audit Report
 
-Ask AI-powered questions about any completed audit report. Uses DeepSeek LLM with conversation memory and supports streaming via Server-Sent Events.
+Ask AI-powered questions about any completed audit report. Uses DeepSeek LLM with conversation memory and supports streaming via Server-Sent Events. **Requires authentication & report ownership.**
 
 **Endpoint:** `POST /api/reports/:reportId/chat`
+
+**Authentication:** Required — `Authorization: Bearer <session_token>` (user must own the report)
 
 **URL Parameters:**
 | Parameter | Type | Required | Description |
@@ -1414,7 +2120,7 @@ data: {"type":"done","conversationId":"conv_abc123","suggestedQuestions":["What 
 
 ---
 
-### 26. Get Suggested Questions
+### 27. Get Suggested Questions
 
 Get AI-generated suggested questions for an audit report.
 
@@ -1434,7 +2140,7 @@ Get AI-generated suggested questions for an audit report.
 
 ---
 
-### 27. Get Conversation Metadata
+### 28. Get Conversation Metadata
 
 Retrieve metadata about an existing chat conversation.
 
@@ -1616,6 +2322,68 @@ GET /api/stats/reports?startDate=2026-03-01&endDate=2026-03-26
 
 ---
 
+## Pricing Endpoint
+
+### 29. Get Pricing Information
+
+Retrieve the public pricing table for all services. Used by frontend to display costs before users submit jobs.
+
+**Endpoint:** `GET /api/pricing`
+
+**Authentication:** Not required (public endpoint)
+
+**Success Response (200 OK):**
+```json
+{
+  "credits": {
+    "audit": {
+      "single": 10,
+      "example": 10
+    },
+    "linkGraph": {
+      "base": 50,
+      "per100Pages": 10,
+      "examples": {
+        "pages100": 50,
+        "pages500": 90,
+        "pages1000": 140
+      }
+    },
+    "chatMessage": 2,
+    "screenshot": 5
+  }
+}
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| credits.audit.single | number | Cost in credits for a single-page audit |
+| credits.linkGraph.base | number | Base cost for link graph crawl |
+| credits.linkGraph.per100Pages | number | Additional cost per 100 pages crawled |
+| credits.linkGraph.examples | object | Example costs for common page counts |
+| credits.chatMessage | number | Cost per AI chat message |
+| credits.screenshot | number | Cost for screenshot capture |
+
+**Example Calculations:**
+
+**Audit Job:**
+- Single-page audit = 10 credits
+
+**Link Graph Crawl:**
+- 50 pages = 50 credits (base)
+- 250 pages = 50 + (2 × 10) = 70 credits
+- 1,000 pages = 50 + (9 × 10) = 140 credits
+
+**Use Cases:**
+- Display costs before job submission
+- Calculate total cost for user's monthly usage
+- Show pricing comparison tables
+- Estimate credit requirements
+
+---
+
 ## Health Check
 
 ### 31. API Health Check
@@ -1628,15 +2396,15 @@ Verify API is running and get endpoint information.
 ```json
 {
   "message": "Website Audit Tools API",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "endpoints": {
     "audits": "/api/audits",
+    "anonymousAudits": "/api/audits/anonymous",
     "reports": "/api/reports",
     "users": "/api/users",
     "stats": "/api/stats",
     "screenshots": "/api/screenshots",
-    "chat": "/api/reports/:reportId/chat",
-    "linkGraph": "/api/reports/:reportId/link-graph"
+    "chat": "/api/reports/:reportId/chat"
   }
 }
 ```
@@ -1660,6 +2428,8 @@ All endpoints follow consistent error response patterns.
 | 200 | OK | Successful GET/PATCH/DELETE |
 | 201 | Created | Successful POST |
 | 400 | Bad Request | Missing required fields, invalid parameters |
+| 409 | Conflict | Duplicate/blocked request (e.g., anonymous URL cooldown) |
+| 429 | Too Many Requests | Rate limits exceeded |
 | 404 | Not Found | Resource doesn't exist |
 | 500 | Internal Server Error | Database errors, unexpected failures |
 
@@ -1699,6 +2469,176 @@ All endpoints follow consistent error response patterns.
 ---
 
 ## Data Models
+
+### Enhanced Scoring (New in v2.2.0)
+
+#### Score Grades
+
+All scores now include letter grades (A+ to F):
+
+| Grade | Score Range | Description |
+|-------|-------------|-------------|
+| A+ | 95-100 | Outstanding - exceeds best practices |
+| A | 90-94 | Excellent - follows all best practices |
+| B+ | 85-89 | Very Good - minor improvements possible |
+| B | 80-84 | Good - solid foundation |
+| C+ | 75-79 | Above Average - some issues to address |
+| C | 70-74 | Average - multiple improvements needed |
+| D | 60-69 | Below Average - significant issues |
+| F | 0-59 | Poor - critical issues require immediate attention |
+
+#### Performance Tiers
+
+Simplified tier system for quick understanding:
+
+| Tier | Score Range | Color Indicator |
+|------|-------------|-----------------|
+| Excellent | 90-100 | Green |
+| Good | 70-89 | Blue |
+| Fair | 50-69 | Yellow |
+| Poor | 0-49 | Red |
+
+#### Bonus Points System
+
+**How It Works:**
+- Each category can earn +0 to +5 bonus points from passing checks (reduced from 15 in v2.3.0)
+- Bonus points are added to the base score (capped at 100)
+- Bonuses reward good practices without masking issues
+- Critical rules (HTTPS, Title, Core Web Vitals) = 1.0 point each
+- Important rules = 0.5 points each
+- Nice-to-have rules = 0.3 points each
+
+**Why the Reduction?**
+- **Old System (15pt max)**: Bonuses were offsetting penalties too much
+  - Site with 13 issues: 45 penalty - 45 bonus = 100 score ❌
+- **New System (5pt max)**: Bonuses complement but don't mask issues
+  - Site with 13 issues: 45 penalty - 15 bonus = ~70 score ✓
+
+**Example Calculation:**
+```
+Base Score (from penalties): 85.0
+Passing Check Bonuses:
+  - HTTPS Enabled: +1.0
+  - Title Tag Present: +1.0
+  - SSL Valid: +1.0
+  - Core Web Vitals Passed: +1.0
+  - Canonical Correct: +0.8
+  [More checks contribute but capped]
+Total Bonus: +3.8 (capped at 5.0)
+Final Score: min(100, 85.0 + 3.8) = 88.8 (Grade: B+, Tier: Good)
+```
+
+**CategoryScore Interface (Enhanced):**
+```typescript
+{
+  category: string;          // Category name (TECHNICAL, ON_PAGE, etc.)
+  score: number;             // Final score (0-100) including bonus
+  grade: string;             // Letter grade (A+ to F)
+  tier: string;              // Performance tier (Excellent/Good/Fair/Poor)
+  issueCount: number;        // Number of issues found
+  passingCount: number;      // Number of checks passed
+  bonus: number;             // Bonus points earned (0-5, was 0-15 before v2.3.0)
+}
+```
+
+**ScoreSummary Interface:**
+```typescript
+{
+  overall: {
+    score: number;           // Overall score
+    grade: string;           // Overall grade
+    tier: string;            // Overall tier
+  },
+  categories: [
+    {
+      category: string;
+      score: number;
+      grade: string;
+      tier: string;
+      weight: number;        // Weight in overall calculation (0.0-1.0)
+      contribution: number;  // Contribution to overall score
+    }
+  ],
+  statistics: {
+    totalIssues: number;     // Total issues across all categories
+    totalPassing: number;    // Total passing checks
+    penaltyPoints: number;   // Total penalty from issues
+    bonusPoints: number;     // Total bonus from passing checks
+    pagesAnalyzed: number;   // Pages in the audit
+  },
+  insights: {
+    overall: string;         // AI-generated overall insight
+    categories: [
+      {
+        category: string;
+        insight: string;     // AI-generated per-category insight
+      }
+    ],
+    recommendations: string[]; // Actionable recommendations
+  }
+}
+```
+
+**Category Weights (used in overall score calculation):**
+```json
+{
+  "ON_PAGE": 0.30,           // 30% weight (most important)
+  "TECHNICAL": 0.20,         // 20% weight
+  "PERFORMANCE": 0.20,       // 20% weight
+  "SECURITY": 0.10,          // 10% weight
+  "LINKS": 0.10,             // 10% weight
+  "ACCESSIBILITY": 0.05,     // 5% weight
+  "STRUCTURED_DATA": 0.05    // 5% weight
+}
+```
+
+**Category Score Formula (NEW in v2.3.0):**
+```
+categoryScore = 100 - Σ(impactScore / 10 × severityMultiplier) + bonus
+
+Where:
+- impactScore: 0-100 value indicating issue severity (from rule)
+- severityMultiplier: CRITICAL=4.0, HIGH=2.0, MEDIUM=1.0, LOW=0.5
+- bonus: 0-5 points from passing checks (reduced from 15 in v2.3.0)
+
+Examples:
+- 1 CRITICAL issue (impact=50): 100 - (50/10 × 4.0) = 100 - 20 = 80 points
+- 1 HIGH issue (impact=60):     100 - (60/10 × 2.0) = 100 - 12 = 88 points
+- 1 MEDIUM issue (impact=40):   100 - (40/10 × 1.0) = 100 - 4  = 96 points
+- 1 LOW issue (impact=30):      100 - (30/10 × 0.5) = 100 - 1.5 = 98.5 points
+```
+
+**Overall Score Formula:**
+```
+overallScore = sum(categoryScore × categoryWeight) / sum(weights)
+            = (onPage × 0.30) + (technical × 0.20) + (performance × 0.20)
+              + (security × 0.10) + (links × 0.10) + (accessibility × 0.05)
+              + (structuredData × 0.05)
+```
+
+**Example Insights:**
+```json
+{
+  "overall": "Good work! Your site has a solid SEO foundation with some areas for improvement.",
+  "categories": [
+    {
+      "category": "TECHNICAL",
+      "insight": "Excellent technical SEO! Your site follows best practices."
+    },
+    {
+      "category": "PERFORMANCE",
+      "insight": "Fair performance. Several important issues need attention."
+    }
+  ],
+  "recommendations": [
+    "Focus on improving performance (score: 55)",
+    "Address 12 issues to improve overall score",
+    "Implement more SEO best practices to earn bonus points"
+  ]
+}
+```
+
+---
 
 ### Passing Checks (New in v1.2.0)
 
@@ -1799,7 +2739,90 @@ All endpoints follow consistent error response patterns.
     }
   ]
 }
+}
 ```
+
+---
+
+### User Model (Updated in v2.1.0)
+
+**User Interface:**
+```typescript
+{
+  id: string;                      // User ID (cuid)
+  name: string | null;             // Display name
+  email: string;                   // Unique email address
+  emailVerified: DateTime | null;  // Email verification timestamp
+  image: string | null;            // Profile image URL
+  passwordHash: string | null;     // Hashed password (null for OAuth users)
+  
+  // App-specific fields
+  tier: "FREE" | "PAID";          // User tier
+  auditsUsedThisMonth: number;    // Monthly audit counter
+  lastResetDate: DateTime;        // Last reset timestamp for monthly counter
+  
+  // Relations (not always included in responses)
+  accounts: Account[];            // OAuth account links
+  sessions: Session[];            // Active sessions
+  auditReports: AuditReport[];    // Audit history
+  serviceRequests: ServiceRequest[]; // Job requests
+  creditAccount: CreditAccount;   // Credit balance (if exists)
+  subscription: Subscription;     // Active subscription (if exists)
+  
+  createdAt: DateTime;
+  updatedAt: DateTime;
+}
+```
+
+---
+
+### Credit Account (New in v2.1.0)
+
+**CreditAccount Interface:**
+```typescript
+{
+  id: string;                     // Account ID
+  userId: string;                 // Owner's user ID
+  
+  // Current balances
+  availableBalance: number;       // Purchased credits (never expire)
+  reservedBalance: number;        // Credits reserved for pending jobs
+  monthlyQuotaBalance: number;    // Quota credits (use-it-or-lose-it)
+  
+  // Monthly quota tracking
+  monthlyQuotaGrant: number;      // Credits granted at billing cycle start
+  quotaConsumed: number;          // Quota credits used this cycle
+  
+  // Billing cycle
+  billingCycleStart: DateTime;    // Current cycle start
+  billingCycleEnd: DateTime;      // Current cycle end
+  
+  createdAt: DateTime;
+  updatedAt: DateTime;
+}
+```
+
+**Credit Spending Priority:**
+1. **Monthly Quota Credits** (use-it-or-lose-it) are spent first
+2. **Purchased Credits** (never expire) are spent after quota exhausted
+3. **Reserved Credits** are held for pending jobs and released when job completes/fails
+
+**Example Scenario:**
+```json
+{
+  "availableBalance": 500,        // Purchased top-up credits
+  "reservedBalance": 50,          // 50 credits held for pending jobs
+  "monthlyQuotaBalance": 200,     // 200 quota credits remaining this month
+  "monthlyQuotaGrant": 1000,      // Started month with 1000 quota credits
+  "quotaConsumed": 800            // Used 800 quota credits so far
+}
+```
+
+When a job costing 100 credits is queued:
+- 100 credits deducted from `monthlyQuotaBalance` (200 → 100)
+- 100 credits added to `reservedBalance` (50 → 150)
+- When job completes: 100 credits deducted from `reservedBalance` (150 → 50)
+- If job fails: 100 credits refunded to `monthlyQuotaBalance` (100 → 200)
 
 ---
 
@@ -1823,21 +2846,33 @@ All endpoints follow consistent error response patterns.
 - 17 issues found (things to fix)
 - 27 passing checks (things working well)
 - Total: 44 rules checked
-- Overall Score: 82/100
+- Overall Score: 87.3/100 (Grade: B+, Tier: Good)
+- Bonus Points Earned: +67.5 across all categories
 
-### Score Ranges
+### Score Ranges & Grading (Updated in v2.2.0)
 
-All scores are 0-100:
-- **90-100**: Excellent
-- **75-89**: Good
-- **50-74**: Needs Improvement
-- **0-49**: Poor
+All scores are 0-100 with corresponding grades and tiers:
+
+**Letter Grades:**
+- **A+ (95-100)**: Outstanding
+- **A (90-94)**: Excellent
+- **B+ (85-89)**: Very Good  
+- **B (80-84)**: Good
+- **C+ (75-79)**: Above Average
+- **C (70-74)**: Average
+- **D (60-69)**: Below Average
+- **F (0-59)**: Needs Improvement
+
+**Performance Tiers:**
+- **Excellent (90-100)**: Site exceeds best practices
+- **Good (70-89)**: Solid SEO foundation, minor improvements
+- **Fair (50-69)**: Several issues need attention
+- **Poor (0-49)**: Critical issues require immediate action
 
 ### Enum Values
 
 **AuditMode:**
 - `SINGLE`: Audit one page only
-- `MULTI`: Crawl multiple pages (up to pageLimit)
 
 **AuditStatus:**
 - `PROCESSING`: Job is currently running
@@ -1906,9 +2941,7 @@ As of v2.0.0, the system includes **44 comprehensive SEO rules**:
 curl -X POST http://localhost:3000/api/audits \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://example.com",
-    "mode": "multi",
-    "pageLimit": 20
+    "url": "https://example.com"
   }'
 
 # Response: { "jobId": "1234567890", ... }
@@ -1916,29 +2949,108 @@ curl -X POST http://localhost:3000/api/audits \
 # 2. Check job progress (poll every 5 seconds)
 curl http://localhost:3000/api/audits/jobs/1234567890
 
-# Response: { "state": "active", "progress": 45, ... }
+# Anonymous single-page audit (no userId required)
+curl -X POST http://localhost:3000/api/audits/anonymous \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com"
+  }'
 
-# 3. Once completed, get the report
+# Response: { "jobId": "1234567890", "anonymous": true, ... }
+
+# 2. Check anonymous audit status
 curl http://localhost:3000/api/audits/jobs/1234567890
 
-# Response: { "state": "completed", "returnvalue": { "auditReportId": "clyyy789012", ... } }
+# Response: { "state": "active", "progress": 45, ... }
 
-# 4. Retrieve full audit report
+# 3. Get full anonymous audit results with enhanced scoring (NEW in v2.2.0)
+curl http://localhost:3000/api/audits/anonymous/1234567890/results
+
+# If still processing: { "status": "active", "progress": 45, ... }
+# If complete: Full report with scoring, summary, issues, passingChecks, etc.
+
+# 4. Check for completed job (alternative method)
+curl http://localhost:3000/api/audits/jobs/1234567890
+
+# Response: { 
+#   "state": "completed", 
+#   "returnvalue": { 
+#     "auditReportId": "clyyy789012",
+#     "overallScore": 87.3,
+#     "overallGrade": "B+",
+#     "overallTier": "Good",
+#     "categoryScores": [...],
+#     "scoreSummary": {...}
+#   } 
+# }
+
+# 5. Retrieve full audit report from database
 curl http://localhost:3000/api/reports/clyyy789012
 
-# 5. Get specific issues by severity
+# 6. Get specific issues by severity
 curl http://localhost:3000/api/reports/clyyy789012/issues?severity=CRITICAL
 
-# 6. Chat about the audit (AI-powered)
+# 7. Chat about the audit (AI-powered)
 curl -X POST http://localhost:3000/api/reports/clyyy789012/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "What should I fix first?", "userId": "clxxx123456", "stream": false}'
 ```
 
-### JavaScript/Fetch Example
+### JavaScript/Fetch Example (Enhanced Scoring)
 
 ```javascript
-// Create audit and wait for completion
+// Anonymous audit with enhanced scoring workflow
+async function runAnonymousAudit(url) {
+  // Step 1: Queue the anonymous audit
+  const createResponse = await fetch('http://localhost:3000/api/audits/anonymous', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: url })
+  });
+  
+  const { jobId } = await createResponse.json();
+  console.log('Audit queued:', jobId);
+  
+  // Step 2: Poll for completion
+  let result;
+  while (true) {
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3s
+    
+    const statusResponse = await fetch(
+      `http://localhost:3000/api/audits/anonymous/${jobId}/results`
+    );
+    
+    if (statusResponse.status === 202) {
+      // Still processing
+      const progress = await statusResponse.json();
+      console.log(`Progress: ${progress.progress}%`);
+      continue;
+    }
+    
+    // Completed - get full results
+    result = await statusResponse.json();
+    break;
+  }
+  
+  // Step 3: Process enhanced scoring results
+  console.log('=== AUDIT COMPLETE ===');
+  console.log(`Overall: ${result.scoring.overall.score} (${result.scoring.overall.grade})`);
+  console.log(`Tier: ${result.scoring.overall.tier}`);
+  console.log(`Issues: ${result.issues.length}, Passing: ${result.passingChecks.length}`);
+  
+  // Display category scores with bonuses
+  result.categoryDetails.forEach(cat => {
+    console.log(`${cat.category}: ${cat.score} (${cat.grade}) +${cat.bonus} bonus`);
+  });
+  
+  // Show insights
+  console.log('\nInsights:', result.summary.insights.overall);
+  console.log('Recommendations:', result.summary.insights.recommendations);
+  
+  return result;
+}
+
+// Original authenticated audit workflow
 async function runAudit(url) {
   // Step 1: Queue the audit
   const createResponse = await fetch('http://localhost:3000/api/audits', {
@@ -2058,9 +3170,25 @@ Separate on-demand endpoint for visual previews:
 - Cache improves performance by 80%+
 
 **Page Limits:**
-- Single mode: Always 1 page
-- Multi mode: Default 10, max recommended 100
-- Large sites (>100 pages) may take 5-10 minutes
+- Always 1 page per audit
+
+**Anonymous Audits:**
+- Anonymous route: `POST /api/audits/anonymous`
+- Anonymous audits are single-page only
+- `forceRecrawl` is not supported for anonymous audits
+- Default protection limits:
+  - `3/day` per IP
+  - `10/hour` per target domain
+  - `900s` cooldown per IP + URL
+- On throttling, API may return `Retry-After` header
+- Use `GET /api/audits/anonymous/:jobId/results` for clean, enhanced scoring results
+
+**Enhanced Scoring (v2.2.0):**
+- All audits now include letter grades (A+ to F) and performance tiers
+- Passing checks earn bonus points (+0 to +5 per category, reduced from 15 in v2.3.0)
+- Use `scoreSummary` in job returnvalue for AI-generated insights
+- Category weights: ON_PAGE (30%), TECHNICAL (20%), PERFORMANCE (20%), others (5-10% each)
+- Database reports automatically include all grade and tier fields
 
 **URL Format:**
 - Always include protocol: `https://example.com` (not `example.com`)
@@ -2072,8 +3200,10 @@ Separate on-demand endpoint for visual previews:
 
 For more information, see:
 - [PROJECT_WORKFLOW.md](./PROJECT_WORKFLOW.md) - System architecture
+- [ANONYMOUS_API_EXAMPLE.ts](./ANONYMOUS_API_EXAMPLE.ts) - Enhanced scoring usage examples 🆕
 - [prisma/schema.prisma](./prisma/schema.prisma) - Complete database schema
 - [src/services/analyzer/rules/](./src/services/analyzer/rules/) - All SEO rules
+- [src/services/analyzer/scoring.ts](./src/services/analyzer/scoring.ts) - Scoring utilities 🆕
 
-**API Version:** 2.0.0  
-**Last Updated:** April 16, 2026
+**API Version:** 2.2.0  
+**Last Updated:** April 24, 2026

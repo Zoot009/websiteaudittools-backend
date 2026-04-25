@@ -4,7 +4,6 @@
  * Usage:
  *   npx tsx src/services/analyzer/test/test.ts <url>
  *   npx tsx src/services/analyzer/test/test.ts https://example.com
- *   npx tsx src/services/analyzer/test/test.ts https://example.com --multi
  */
 
 import 'dotenv/config';
@@ -46,11 +45,10 @@ function boxLine(content: string) {
 // ── Entry point ────────────────────────────────────────────────
 const args = process.argv.slice(2);
 const url  = args.find(a => !a.startsWith('--'));
-const mode = args.includes('--multi') ? 'multi' : 'single';
 
 if (!url) {
   console.error(`${RED}Error:${R} please provide a URL.\n`);
-  console.error(`  Usage: npx tsx src/services/analyzer/test/test.ts <url> [--multi]\n`);
+  console.error(`  Usage: npx tsx src/services/analyzer/test/test.ts <url>\n`);
   process.exit(1);
 }
 
@@ -60,7 +58,6 @@ async function run() {
   boxLine(`🚀  SEO CRAWLER + RULES TEST`);
   console.log('╚' + hr('═') + '╝');
   console.log(`\n${B}URL :${R}  ${url}`);
-  console.log(`${B}Mode:${R}  ${mode}`);
   console.log(`${B}Time:${R}  ${new Date().toLocaleTimeString()}`);
   console.log(hr());
 
@@ -71,8 +68,6 @@ async function run() {
     // ── 1. CRAWL ─────────────────────────────────────────────
     console.log(`\n${CYA}${B}[1/2] Crawling...${R}`);
     const result = await crawler.crawl(url!, {
-      mode,
-      pageLimit: mode === 'multi' ? 10 : 1,
       timeout: 30000,
     });
 

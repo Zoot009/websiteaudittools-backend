@@ -1,8 +1,6 @@
 import type { Browser, Page, BrowserContext } from 'playwright';
 import { browserPool } from './BrowserPool';
-import { getSeedUrls } from './sitemapParser';
 import { fetchViaScrapeDo } from './scrapeDoFallback';
-import { cleanUrl, isPageUrl } from './antibot';
 import { extractLocalSeoData } from './localSeoDetection';
 import { 
   simulateHumanInteraction, 
@@ -27,8 +25,6 @@ export class BotBlockedError extends Error {
 }
 
 export interface CrawlerOptions {
-  mode: 'single' | 'multi';
-  pageLimit?: number | undefined;
   timeout?: number | undefined; // milliseconds
 }
 
@@ -139,7 +135,6 @@ export interface PageData {
 
 export interface CrawlResult {
   baseUrl: string;
-  mode: 'single' | 'multi';
   pagesAnalyzed: number;
   pages: PageData[];
   errors: string[];
@@ -165,31 +160,11 @@ export class SiteAuditCrawler {
     this.reset();
     this.baseUrl = this.normalizeUrl(url);
 
-    const maxPages = options.mode === 'single' ? 1 : (options.pageLimit || 10);
+    const maxPages = 1;
 
-    console.log(`🕷 Starting ${options.mode} crawl of ${this.baseUrl} (max ${maxPages} pages)`);
+    console.log(`🕷 Starting crawl of ${this.baseUrl}`);
 
-    // For multi-page mode, seed with sitemap URLs
-    if (options.mode === 'multi') {
-      try {
-        const sitemapUrls = await getSeedUrls(this.baseUrl);
-        // Add sitemap URLs to queue (deduplicated)
-        for (const sitemapUrl of sitemapUrls) {
-          const cleaned = cleanUrl(sitemapUrl);
-          if (!this.visitedUrls.has(cleaned) && isPageUrl(cleaned)) {
-            this.toVisit.push(cleaned);
-          }
-        }
-        console.log(`📋 Seeded crawler with ${this.toVisit.length} URLs from sitemaps`);
-      } catch (error) {
-        console.log(`⚠️ Could not load sitemaps, starting with base URL only`);
-      }
-    }
-
-    // Ensure base URL is in the queue
-    if (this.toVisit.length === 0) {
-      this.toVisit.push(this.baseUrl);
-    }
+    this.toVisit.push(this.baseUrl);
 
     const pages: PageData[] = [];
 
@@ -209,12 +184,7 @@ export class SiteAuditCrawler {
         this.visitedUrls.add(currentUrl);
         this.lastVisitedUrl = currentUrl;
 
-        // In multi-page mode, discover more links
-        if (options.mode === 'multi') {
-          this.discoverLinks(pageData);
-        }
-
-        console.log(`✅ Crawled: ${currentUrl} (${pages.length}/${maxPages})`);
+        console.log(`✅ Crawled: ${currentUrl}`);
       } catch (error) {
         if (error instanceof BotBlockedError) {
           console.log(`  🔄 Bot blocked (${error.message}), trying scrape.do fallback...`);
@@ -223,10 +193,7 @@ export class SiteAuditCrawler {
             pages.push(pageData);
             this.visitedUrls.add(currentUrl);
             this.lastVisitedUrl = currentUrl;
-            if (options.mode === 'multi') {
-              this.discoverLinks(pageData);
-            }
-            console.log(`✅ Scraped via scrape.do: ${currentUrl} (${pages.length}/${maxPages})`);
+            console.log(`✅ Scraped via scrape.do: ${currentUrl}`);
           } catch (fallbackError) {
             const errorMsg = `Failed to scrape ${currentUrl} via scrape.do: ${fallbackError}`;
             this.errors.push(errorMsg);
@@ -244,7 +211,6 @@ export class SiteAuditCrawler {
 
     return {
       baseUrl: this.baseUrl,
-      mode: options.mode,
       pagesAnalyzed: pages.length,
       pages,
       errors: this.errors,
@@ -377,7 +343,7 @@ export class SiteAuditCrawler {
         ...webVitals,
         localSeo,
         compression,
-        protocol: await protocol,
+        protocol: (await protocol) ?? 'https',
         isHTTP2,
         httpHeaders,
         schemas,
@@ -430,7 +396,7 @@ export class SiteAuditCrawler {
       
       for (const match of matches) {
         try {
-          const jsonContent = match[1].trim();
+          const jsonContent = match[1]?.trim();
           if (!jsonContent) continue;
           
           const parsed = JSON.parse(jsonContent);
@@ -458,61 +424,6 @@ export class SiteAuditCrawler {
     }
     
     return schemas;
-  }
-
-  /**
-   * Discover internal links from a page
-   */
-  private discoverLinks(pageData: PageData): void {
-    for (const link of pageData.links) {
-      if (link.isInternal && !this.visitedUrls.has(link.href)) {
-        // Clean URL
-        const cleaned = cleanUrl(link.href);
-        
-        // Filter using antibot utilities
-        if (isPageUrl(cleaned) && this.shouldCrawlUrl(cleaned)) {
-          // Deduplicate
-          if (!this.toVisit.includes(cleaned) && !this.visitedUrls.has(cleaned)) {
-            this.toVisit.push(cleaned);
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Should this URL be crawled?
-   */
-  private shouldCrawlUrl(url: string): boolean {
-    try {
-      const urlObj = new URL(url);
-      
-      // Skip common non-content patterns
-      const skipPatterns = [
-        '/wp-admin',
-        '/admin',
-        '/login',
-        '/cart',
-        '/checkout',
-        '/account',
-        '/wp-json',
-        '/feed',
-        '/category',
-        '/tag',
-        '/author',
-      ];
-
-      const pathname = urlObj.pathname.toLowerCase();
-      for (const pattern of skipPatterns) {
-        if (pathname.includes(pattern)) {
-          return false;
-        }
-      }
-
-      return true;
-    } catch {
-      return false;
-    }
   }
 
   /**

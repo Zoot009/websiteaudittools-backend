@@ -15,6 +15,96 @@ export type IssueCategory =
 export type Severity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 /**
+ * Seoptimer-style report sections (UI grouping, separate from scoring categories)
+ */
+export type AuditSection = 'seo' | 'performance' | 'ui' | 'links' | 'technology' | 'geo' | 'social';
+
+/**
+ * Letter grade assigned based on score (A+ to F)
+ */
+export type ScoreGrade = 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'F';
+
+/**
+ * Performance tier for easier understanding
+ */
+export type ScoreTier = 'Excellent' | 'Good' | 'Fair' | 'Poor';
+
+/**
+ * Static metadata every rule must define.
+ * These values never change regardless of the page being evaluated.
+ */
+export interface CheckDefinition {
+  /** Unique check identifier, matches rule code */
+  id: string;
+  /** Human-readable display name */
+  name: string;
+  /** Maximum achievable score for this check (0 = informational) */
+  maxScore: number;
+  /** 1 = Critical, 2 = Medium, 3 = Low importance */
+  priority: 1 | 2 | 3;
+  /** UI section this check belongs to */
+  section: AuditSection;
+  /** If true, check is display-only and never affects the score */
+  informational: boolean;
+  /** Educational: what this check evaluates */
+  what: string;
+  /** Educational: why this matters for SEO */
+  why: string;
+  /** Educational: how to implement / fix */
+  how: string;
+  /** Estimated fix time, e.g. "15 minutes", "2 hours" */
+  time?: string;
+  /** Extra context appended to the recommendation */
+  append?: string;
+}
+
+/**
+ * Canonical scored check — the single source of truth for scoring.
+ * Extends CheckDefinition with the dynamic result fields.
+ */
+export interface SEOAuditCheck extends CheckDefinition {
+  /** Scoring category this check belongs to */
+  category: IssueCategory;
+  /** true = passed, false = failed, null = informational */
+  passed: boolean | null;
+  /** Achieved score (0 ≤ score ≤ maxScore) */
+  score: number;
+  /** Short one-line result summary */
+  shortAnswer: string;
+  /** Full result message (may include extracted data details) */
+  answer: string;
+  /** Actionable recommendation when failed, null when passed */
+  recommendation: string | null;
+  /** Raw scalar value for display (e.g. title length, word count) */
+  value?: string | number | null;
+  /** Structured data payload for rich UI display */
+  data?: any;
+  /** Page URL where this check was evaluated */
+  pageUrl?: string;
+}
+
+/**
+ * Result returned by every rule execution.
+ * `check`      — the canonical scored/informational check for the scoring engine.
+ * `issues`     — per-page problem records for DB storage and issue lists.
+ * `passingChecks` — what passed, for the "passing checks" display.
+ */
+export interface RuleResult {
+  check: SEOAuditCheck;
+  issues: Issue[];
+  passingChecks: PassingCheck[];
+}
+
+/**
+ * Aggregated output from the RuleEngine across all rules and pages.
+ */
+export interface EngineResult {
+  checks: SEOAuditCheck[];
+  issues: Issue[];
+  passingChecks: PassingCheck[];
+}
+
+/**
  * Page data structure from crawler
  */
 export interface PageData {
@@ -146,8 +236,8 @@ export interface PageData {
 
   // Google PageSpeed Insights
   pageSpeed?: {
-    mobile?: any; // PageSpeedMetrics from pageSpeedService
-    desktop?: any; // PageSpeedMetrics from pageSpeedService
+    mobile?: any;
+    desktop?: any;
     error?: string;
   };
 
@@ -156,8 +246,8 @@ export interface PageData {
 
   // Structured Data (JSON-LD schemas)
   schemas?: Array<{
-    type: string; // e.g., "Organization", "Person", "LocalBusiness"
-    data: any; // Parsed JSON-LD data
+    type: string;
+    data: any;
   }>;
 
   // Local SEO
@@ -183,55 +273,83 @@ export interface SiteContext {
   totalPages: number;
 
   // Cross-page analysis
-  titleMap: Map<string, string[]>; // title → URLs with that title
-  descriptionMap: Map<string, string[]>; // description → URLs
-  canonicalMap: Map<string, string[]>; // canonical → URLs
+  titleMap: Map<string, string[]>;
+  descriptionMap: Map<string, string[]>;
+  canonicalMap: Map<string, string[]>;
 
   // Link graph
-  internalLinkGraph: Map<string, Set<string>>; // page → pages it links to
-  inboundLinkCount: Map<string, number>; // page → count of inbound links
+  internalLinkGraph: Map<string, Set<string>>;
+  inboundLinkCount: Map<string, number>;
 
   // Site-level data
   hasRobotsTxt: boolean;
   robotsTxt?: string;
-  robotsDisallowed: Set<string>; // URLs blocked by robots.txt
+  robotsDisallowed: Set<string>;
   hasSitemap: boolean;
   sitemapUrls?: Set<string>;
 }
 
 /**
- * SEO issue found during analysis
+ * Platform-specific implementation guides
+ */
+export interface PlatformGuides {
+  wordpress?: string;
+  shopify?: string;
+  wix?: string;
+}
+
+/**
+ * Educational content for checks/issues
+ */
+export interface RecommendationContent {
+  what: string;
+  why: string;
+  how: string;
+  timeEstimate?: string;
+  moreInfoUrl?: string;
+  bestPracticesUrl?: string;
+  platformGuides?: PlatformGuides;
+}
+
+/**
+ * SEO issue found during analysis (for DB storage and issue display)
  */
 export interface Issue {
   category: IssueCategory;
-  type: string; // Unique code like "MISSING_META_DESCRIPTION"
-  title: string; // Human-readable title
-  description: string; // Detailed explanation
-  severity: Severity; // CRITICAL | HIGH | MEDIUM | LOW
-  impactScore: number; // 0-100, how much it affects SEO
-  pageUrl?: string; // Which page has this issue
-  elementSelector?: string; // CSS selector for the element
-  lineNumber?: number; // Line number in HTML (optional)
+  type: string;
+  title: string;
+  description: string;
+  severity: Severity;
+  impactScore: number;
+  pageUrl?: string;
+  elementSelector?: string;
+  lineNumber?: number;
+  recommendation?: string;
+  recommendationContent?: RecommendationContent;
+  data?: any;
 }
 
 /**
- * Check that passed (what's working well)
+ * Check that passed (for passing checks display)
  */
 export interface PassingCheck {
   category: IssueCategory;
-  code: string; // Rule code that passed
-  title: string; // Human-readable title
-  description: string; // What passed
-  pageUrl?: string; // Which page passed
-  goodPractice: string; // Why this is good
+  code: string;
+  title: string;
+  description: string;
+  pageUrl?: string;
+  goodPractice: string;
+  recommendationContent?: RecommendationContent;
+  data?: any;
 }
 
 /**
- * Result of running a single rule
+ * Score for a Seoptimer-style section
  */
-export interface RuleResult {
-  issues: Issue[];
-  passingChecks: PassingCheck[];
+export interface SectionScore {
+  section: AuditSection;
+  score: number;
+  checks: number;
 }
 
 /**
@@ -239,9 +357,9 @@ export interface RuleResult {
  */
 export interface HeadingFrequency {
   level: 1 | 2 | 3 | 4 | 5 | 6;
-  tag: string;      // e.g. "H1"
+  tag: string;
   count: number;
-  values: string[]; // actual text of each heading at this level
+  values: string[];
 }
 
 /**
@@ -270,21 +388,69 @@ export interface PageKeywordConsistency {
   pageUrl: string;
   passed: boolean;
   message: string;
-  keywords: KeywordEntry[]; // top individual words
-  phrases: KeywordEntry[];  // top 2-word phrases
+  keywords: KeywordEntry[];
+  phrases: KeywordEntry[];
+}
+
+/**
+ * Enhanced category score with grade and tier
+ */
+export interface CategoryScore {
+  category: string;
+  score: number;
+  grade: ScoreGrade;
+  tier: ScoreTier;
+  issueCount: number;
+  passingCount: number;
+  bonus: number;
+}
+
+/**
+ * Score summary with insights and breakdown
+ */
+export interface ScoreSummary {
+  overall: {
+    score: number;
+    grade: ScoreGrade;
+    tier: ScoreTier;
+  };
+  categories: Array<{
+    category: string;
+    score: number;
+    grade: ScoreGrade;
+    tier: ScoreTier;
+    weight: number;
+    contribution: number;
+  }>;
+  statistics: {
+    totalIssues: number;
+    totalPassing: number;
+    penaltyPoints: number;
+    bonusPoints: number;
+    pagesAnalyzed: number;
+  };
+  insights: {
+    overall: string;
+    categories: Array<{
+      category: string;
+      insight: string;
+    }>;
+    recommendations?: string[];
+  };
 }
 
 /**
  * Complete analysis result
  */
 export interface AnalysisResult {
-  overallScore: number; // 0-100
+  overallScore: number;
+  overallGrade: ScoreGrade;
+  overallTier: ScoreTier;
   totalIssues: number;
-  categoryScores: Array<{
-    category: string;
-    score: number; // 0-100
-    issueCount: number;
-  }>;
+  categoryScores: CategoryScore[];
+  sectionScores: SectionScore[];
+  scoreSummary: ScoreSummary;
+  checks: SEOAuditCheck[];
   issues: Issue[];
   passingChecks: PassingCheck[];
   pageHeadings: PageHeadingSummary[];
@@ -292,24 +458,21 @@ export interface AnalysisResult {
 }
 
 /**
- * Base interface for all SEO rules
+ * Base interface for all SEO rules.
+ * Every rule must define `checkDefinition` (static metadata) and
+ * return a `RuleResult` that includes the canonical `check`.
  */
 export interface Rule {
-  // Unique identifier for this rule
   code: string;
-
-  // Which category this rule belongs to
   category: IssueCategory;
-
-  // Whether this rule analyzes individual pages or the entire site
   level: 'page' | 'site';
-
-  // Execute the rule
+  /** Static metadata — maxScore, priority, section, educational content */
+  checkDefinition: CheckDefinition;
   execute(input: PageData | PageData[], context: SiteContext): RuleResult;
 }
 
 /**
- * Page-level rule analyzes individual pages
+ * Page-level rule — runs once per page
  */
 export interface PageRule extends Rule {
   level: 'page';
@@ -317,7 +480,7 @@ export interface PageRule extends Rule {
 }
 
 /**
- * Site-level rule analyzes all pages together
+ * Site-level rule — runs once across all pages
  */
 export interface SiteRule extends Rule {
   level: 'site';
@@ -341,13 +504,13 @@ export interface CategoryWeights {
  * Default category weights (must sum to 1.0)
  */
 export const DEFAULT_CATEGORY_WEIGHTS: CategoryWeights = {
-  TECHNICAL: 0.20, // robots.txt, sitemap, canonical, SSL
-  ON_PAGE: 0.30, // titles, descriptions, headings, content
-  PERFORMANCE: 0.20, // Core Web Vitals, load time
-  ACCESSIBILITY: 0.05, // alt text, ARIA (limited checks for now)
-  LINKS: 0.10, // internal linking structure
-  STRUCTURED_DATA: 0.05, // Schema.org, Open Graph
-  SECURITY: 0.10, // HTTPS, security headers
+  TECHNICAL: 0.20,
+  ON_PAGE: 0.30,
+  PERFORMANCE: 0.20,
+  ACCESSIBILITY: 0.05,
+  LINKS: 0.10,
+  STRUCTURED_DATA: 0.05,
+  SECURITY: 0.10,
 };
 
 /**

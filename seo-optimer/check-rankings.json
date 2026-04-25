@@ -1,0 +1,20 @@
+{
+    "endpoint":"https://www.seoptimer.com/check-rankings.inc",
+    "success": true,
+    "results": {
+        "topKeywordRankings": {
+            "answer": "You can see the live Keyword Rankings for your page within the report by signing up to one of our premium plans.",
+            "append2": "<a class=\"btn btn-primary btn-sm btn-report-signup\" href=\"/register\" target=\"_blank\">Signup - Free Trial</a>",
+            "what": "A goal of Search Engine Optimization is to improve the ranking of your website for particular keywords to drive more clicks and traffic to your site. The Top Organic Keyword Rankings check shows you the keywords that your site is currently ranking for in the normal '10 blue links' organic segment of a Google search result, ordered by those that are likely driving the most traffic to your site. Note this data is a snapshot and may be several weeks old in some cases.",
+            "section": "rankings",
+            "name": "topKeywordRankings",
+            "recommendation": null,
+            "passed": null,
+            "hideTable": true
+        },
+        "keywordPositions": false,
+        "totalTrafficFromSearch": false,
+        "topAIOverviewRankings": false,
+        "topPaidRankings": false
+    }
+}

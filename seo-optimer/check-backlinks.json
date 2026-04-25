@@ -1,0 +1,280 @@
+{
+    "endpoint":"https://www.seoptimer.com/check-backlinks.inc",
+    "results": {
+        "backlinks": {
+            "name": "backlinks",
+            "section": "links",
+            "passed": false,
+            "score": 0,
+            "maxScore": 10,
+            "priority": 0,
+            "answer": "You have a reasonably weak level of backlink activity to this page.",
+            "shortAnswer": "Low Backlink Activity",
+            "recommendation": "Execute a Link Building Strategy",
+            "append2": "Search Engines use backlinks as a strong indicator of a page's authority, relevance and ranking potential. There are various strategies available to gain links to a page to improve this factor",
+            "what": "Backlinks are links to your site from another site. Search Engines can see these interconnections and use them as a strong signal of the importance and authority of your page or content. Backlinks are one of the most important ranking factors, and in general, more links from authoritative websites will improve the ranking ability of your site. Building Backlinks can be a difficult and time consuming activity, though the rewards are large when done successfully.",
+            "why": "",
+            "how": "We recommend having a strategy in place for Building Backlinks to your site. Some common methods including adding your site to relevant online directories, asking other sites to link to you, performing outreach and guest blogging on other websites or creating 'lead magnet' content that encourages linking.",
+            "value": "0",
+            "data": {
+                "backlinks": 32,
+                "allbacklinks": 26,
+                "domain_authority": 0,
+                "page_strength": 0,
+                "nofollow_backlinks": 32,
+                "dofollow_backlinks": 0,
+                "edu_backlinks": 0,
+                "gov_backlinks": 0,
+                "subnets": 4,
+                "ips": 4
+            },
+            "icon": "fa-tag",
+            "time": "Ongoing",
+            "link1": "",
+            "link2": "",
+            "more-info": "/blog/backlinks/",
+            "best-practices": "/blog/backlinks/#guide",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "backlinksList": {
+            "name": "backlinksList",
+            "section": "links",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 2,
+            "answer": "These are the highest value external pages we have found linking to your site.",
+            "shortAnswer": "These are the highest value external pages we have found linking to your site.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Backlinks from higher authority websites generally deliver the best ranking potential to your site. This report provides a sample of some of the highest value backlinks we can see linking to your site.",
+            "why": "",
+            "how": "",
+            "value": "1",
+            "data": [
+                {
+                    "domain_authority": 67,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://urls-shortener.eu/share/36969",
+                    "title": "❤️ URL Shared ❤️"
+                },
+                {
+                    "domain_authority": 66,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://wants.cfd/domain/domain/part/90778",
+                    "title": "seo domain research"
+                },
+                {
+                    "domain_authority": 65,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://quero.party/report/36970",
+                    "title": "👲 Domain Report 👲"
+                },
+                {
+                    "domain_authority": 64,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://takes.sbs/domain/domain/part/90778",
+                    "title": "seo domain research"
+                },
+                {
+                    "domain_authority": 63,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://bye.fyi/report/36970",
+                    "title": "👲 Domain Report 👲"
+                },
+                {
+                    "domain_authority": 62,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://drjack.world/report/36970",
+                    "title": "👲 Domain Report 👲"
+                },
+                {
+                    "domain_authority": 61,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://atomizelink.icu/report/36969",
+                    "title": "👲 Domain Report 👲"
+                },
+                {
+                    "domain_authority": 59,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://anchorurl.cloud/share/36969",
+                    "title": "❤️ URL Shared ❤️"
+                },
+                {
+                    "domain_authority": 58,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://backlinks-checker.com/share/36969",
+                    "title": "❤️ URL Shared ❤️"
+                },
+                {
+                    "domain_authority": 58,
+                    "anchor_text": "freeserp.com",
+                    "url": "https://shortenurls.eu/share/36970",
+                    "title": "❤️ URL Shared ❤️"
+                }
+            ],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "/blog/backlinks/",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "backlinksTopPages": {
+            "name": "backlinksTopPages",
+            "section": "links",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 2,
+            "answer": "These are the pages on your site with the most the backlinks from other sites.",
+            "shortAnswer": "These are the pages on your site with the most the backlinks from other sites.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Your Top Pages with the most Backlinks are likely to drive the most ranking value to your site as well as having a higher potential for themselves ranking.",
+            "why": "",
+            "how": "Top Pages are useful to consider when making any change to your site (to make sure they don't get removed or are atleast redirected appropriately). They are also useful to consider from a future link building perspective; is there a particular reason these pages are gathering the most links? and do they present any new content ideas for driving further links?",
+            "value": "1",
+            "data": [
+                {
+                    "url": "https://freeserp.com/",
+                    "backlinks": 32
+                }
+            ],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "backlinksTopAnchors": {
+            "name": "backlinksTopAnchors",
+            "section": "links",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 2,
+            "answer": "These are the top pieces of Anchor Text we found used to link to your site.",
+            "shortAnswer": "These are the top pieces of Anchor Text we found used to link to your site.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Anchor Text is the text that is placed inside an A Href HTML tag that links to your site. Anchor Text is a very strong ranking signal that helps Search Engines understand the content of your page and the keywords it should rank for.",
+            "why": "",
+            "how": "It is important for Anchor Text to be natural and diverse. Having a lot of unnatural Anchor Text can be a strong spam signal for Search Engines. Seeing your Anchor Text can also give you an understanding of how others are talking about your website or service.",
+            "value": "1",
+            "data": [
+                {
+                    "anchor": "freeserp.com",
+                    "backlinks": 32
+                }
+            ],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "backlinksTopGeographies": {
+            "name": "backlinksTopGeographies",
+            "section": "links",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 2,
+            "answer": "These are the Top Geographies we have found linking to your site.",
+            "shortAnswer": "These are the Top Geographies we have found linking to your site.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Top Geographies are locations found to be linking most frequently to your site in terms of Top Level Domain types (TLDs) and actual physical website server locations.",
+            "why": "",
+            "how": "Top Geographies are useful for understanding if you are building links in the right places for your business. Many links from an unexpected location could also point to incorrectly targeted or spammy links that could be disavowed.",
+            "value": "4",
+            "data": {
+                "tlds": [
+                    {
+                        "tld": "com",
+                        "count": 5
+                    },
+                    {
+                        "tld": "top",
+                        "count": 5
+                    },
+                    {
+                        "tld": "sbs",
+                        "count": 3
+                    },
+                    {
+                        "tld": "eu",
+                        "count": 2
+                    },
+                    {
+                        "tld": "cfd",
+                        "count": 1
+                    },
+                    {
+                        "tld": "cloud",
+                        "count": 1
+                    },
+                    {
+                        "tld": "fyi",
+                        "count": 1
+                    },
+                    {
+                        "tld": "icu",
+                        "count": 1
+                    },
+                    {
+                        "tld": "monster",
+                        "count": 1
+                    },
+                    {
+                        "tld": "org",
+                        "count": 1
+                    }
+                ],
+                "countries": [
+                    {
+                        "country": "fi",
+                        "count": 18
+                    },
+                    {
+                        "country": "fr",
+                        "count": 6
+                    },
+                    {
+                        "country": "ca",
+                        "count": 1
+                    },
+                    {
+                        "country": "sg",
+                        "count": 1
+                    }
+                ],
+                "allbacklinks": 26
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        }
+    },
+    "errors": []
+}

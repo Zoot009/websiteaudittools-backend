@@ -5,14 +5,20 @@ import 'dotenv/config'
 // Helper function to parse Redis URL into ConnectionOptions
 function parseRedisUrl(url: string): ConnectionOptions {
   const parsed = new URL(url);
+  const isTls = parsed.protocol === 'rediss:';
+
   return {
     host: parsed.hostname,
     port: parseInt(parsed.port) || 6379,
     password: parsed.password || undefined,
     username: parsed.username || undefined,
     db: parsed.pathname ? parseInt(parsed.pathname.slice(1)) || 0 : 0,
+    connectTimeout: 15000,
+    keepAlive: 30000,
+    retryStrategy: (times: number) => Math.min(times * 100, 3000),
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
+    ...(isTls ? { tls: { rejectUnauthorized: false } } : {}),
   };
 }
 
@@ -23,6 +29,9 @@ export const redisConnection: ConnectionOptions = process.env.REDIS_URL
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
       password: process.env.REDIS_PASSWORD,
+      connectTimeout: 15000,
+      keepAlive: 30000,
+      retryStrategy: (times: number) => Math.min(times * 100, 3000),
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
     };
@@ -30,14 +39,23 @@ export const redisConnection: ConnectionOptions = process.env.REDIS_URL
 // Create a dedicated client for health checks
 const redisClient = process.env.REDIS_URL
   ? new Redis(process.env.REDIS_URL, {
+      connectTimeout: 15000,
+      keepAlive: 30000,
+      retryStrategy: (times: number) => Math.min(times * 100, 3000),
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       lazyConnect: true,
+      tls: process.env.REDIS_URL.startsWith('rediss://')
+        ? { rejectUnauthorized: false }
+        : undefined,
     })
   : new Redis({
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
       password: process.env.REDIS_PASSWORD || undefined,
+      connectTimeout: 15000,
+      keepAlive: 30000,
+      retryStrategy: (times: number) => Math.min(times * 100, 3000),
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       lazyConnect: true,
@@ -57,6 +75,10 @@ redisClient.on('connect', () => {
 
 redisClient.on('close', () => {
   console.log('Redis connection closed');
+});
+
+redisClient.on('reconnecting', (delay: number) => {
+  console.warn(`Redis reconnecting in ${delay}ms`);
 });
 
 export async function checkRedisConnection(): Promise<boolean> {

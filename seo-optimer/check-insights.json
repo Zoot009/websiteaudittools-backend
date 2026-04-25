@@ -1,0 +1,314 @@
+{
+	"endpoint":"https://www.seoptimer.com/check-insights.inc",
+  "results": {
+        "hasMinified": {
+            "name": "hasMinified",
+            "section": "performance",
+            "passed": true,
+            "score": 1,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "All your JavaScript and CSS files appear to be minified.",
+            "shortAnswer": "All your JavaScript and CSS files appear to be minified.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Minification is a procedure run on code text files that can reduce the text size by removing white space and substituting common values or names with shorter versions. Minification also offers the additional value of making code much harder to read and reverse engineer by third parties. It is best practice to minify any exposed JS and CSS Files before publishing them to a live site.",
+            "why": "",
+            "how": " Minification can be done automatically through some development tools and website build procedures, or through minification CMS Plugins, or manually through minification tools available online.",
+            "value": "1",
+            "data": [],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasOptimizedImages": {
+            "name": "hasOptimizedImages",
+            "section": "performance",
+            "passed": true,
+            "score": 2,
+            "maxScore": 2,
+            "priority": 2,
+            "answer": "All of the images on your page appear to be optimized.",
+            "shortAnswer": "All of the images on your page appear to be optimized.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Image and media files in general tend to be the largest component of file size on most modern webpages. File size can directly impact how quickly a page loads, and subsequently the quality of the experience for users. Images in general can have a large range in how much they can be optimized. For example, a high quality photograph downloaded from a camera could be 16MB, but using a reasonable level of size reduction and optimization could comfortably reduce it to 150KB without a noticeable amount of quality loss.",
+            "why": "",
+            "how": "Review the images used on your site, starting from the largest in file size to determine if there are optimization opportunities. You can use common image editing tools like Photoshop or even free online compression tools to optimize them.",
+            "value": "1",
+            "data": [],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasLegibleFontsizes": {
+            "name": "hasLegibleFontsizes",
+            "section": "ui",
+            "passed": true,
+            "score": 1,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "The text on your page appears to be legible across devices.",
+            "shortAnswer": "The text on your page appears to be legible across devices.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Page text legibility is important from an accessibility perspective, and also to ensure your users can comfortably spend time on your site. In particular it's important  to review text legibility on mobile and tablet devices where the text may naturally be smaller or lower lighting could make it more challenging to read.",
+            "why": "",
+            "how": "We recommend reviewing the legibility of your text including less considered items like footer links and text.",
+            "value": "1",
+            "data": [],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "mobilePageInsights": {
+            "name": "mobilePageInsights",
+            "section": "ui",
+            "passed": false,
+            "score": 0,
+            "maxScore": 2,
+            "priority": 2,
+            "answer": "Google is indicating that your page is scoring poorly on their Mobile PageSpeed Insights evaluation.<br><br>Note that this evaluation is being performed from US servers and the results may differ slightly from an evaluation carried out from Google's PageSpeed Web Interface as that reporting localizes to the region in which you are running the report.",
+            "shortAnswer": "Mobile PageSpeed Insights Failing",
+            "recommendation": "Optimize for Mobile PageSpeed Insights",
+            "append2": "Google has indicated that the performance of a webpage is becoming more important from a user and subsequently ranking perspective.",
+            "what": "PageSpeed Insights is a tool from Google that evaluates a website's performance in both mobile and desktop, providing suggestions for how to improve it. Google has indicated that performance is becoming a more important ranking factor, so understanding Google's own analysis of your site is valuable. Also irrespective of SEO rankings, it has been well researched that pages that load faster perform better in user bounce rate and conversions.",
+            "why": "",
+            "how": "We recommend reviewing and implementing some of Google's listed opportunities to improve your site.",
+            "value": "",
+            "data": {
+                "insights": [
+                    {
+                        "id": "first-contentful-paint",
+                        "name": "First Contentful Paint",
+                        "value": 1.6999999999999999555910790149937383830547332763671875,
+                        "score": 0.91000000000000003108624468950438313186168670654296875,
+                        "raw": "1.7 s",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "speed-index",
+                        "name": "Speed Index",
+                        "value": 4.70000000000000017763568394002504646778106689453125,
+                        "score": 0.689999999999999946709294817992486059665679931640625,
+                        "raw": "4.7 s",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "largest-contentful-paint",
+                        "name": "Largest Contentful Paint",
+                        "value": 3.79999999999999982236431605997495353221893310546875,
+                        "score": 0.560000000000000053290705182007513940334320068359375,
+                        "raw": "3.8 s",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "interactive",
+                        "name": "Time to Interactive",
+                        "value": 5.20000000000000017763568394002504646778106689453125,
+                        "score": 0.7399999999999999911182158029987476766109466552734375,
+                        "raw": "5.2 s",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "total-blocking-time",
+                        "name": "Total Blocking Time",
+                        "value": 0.299999999999999988897769753748434595763683319091796875,
+                        "score": 0.79000000000000003552713678800500929355621337890625,
+                        "raw": "300 ms",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "cumulative-layout-shift",
+                        "name": "Cumulative Layout Shift",
+                        "value": 0.00200000000000000004163336342344337026588618755340576171875,
+                        "score": 1,
+                        "raw": "0.002"
+                    }
+                ],
+                "opportunities": [
+                    {
+                        "name": "Avoid multiple page redirects",
+                        "value": 0.63000000000000000444089209850062616169452667236328125,
+                        "score": 0
+                    },
+                    {
+                        "name": "Reduce unused JavaScript",
+                        "value": 0.429999999999999993338661852249060757458209991455078125,
+                        "score": 0
+                    }
+                ],
+                "score": 76
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "desktopPageInsights": {
+            "name": "desktopPageInsights",
+            "section": "ui",
+            "passed": true,
+            "score": 2,
+            "maxScore": 2,
+            "priority": 2,
+            "answer": "Google is indicating that your page is scoring well on their Desktop PageSpeed Insights evaluation.",
+            "shortAnswer": "Google is indicating that your page is scoring well on their Desktop PageSpeed Insights evaluation.",
+            "recommendation": null,
+            "append2": "",
+            "what": "PageSpeed Insights is a tool from Google that evaluates a website's performance in both mobile and desktop, providing suggestions for how to improve it. Google has indicated that performance is becoming a larger ranking factor, so understanding Google's own analysis of your site is valuable. Also irrespective of SEO rankings, it has been well researched that pages that load faster perform better in user bounce rate and conversions.",
+            "why": "",
+            "how": "We recommend reviewing and implementing some of Google's listed opportunities to improve your site.",
+            "value": "1",
+            "data": {
+                "insights": [
+                    {
+                        "id": "first-contentful-paint",
+                        "name": "First Contentful Paint",
+                        "value": 0.40000000000000002220446049250313080847263336181640625,
+                        "score": 1,
+                        "raw": "0.4 s",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "speed-index",
+                        "name": "Speed Index",
+                        "value": 1.399999999999999911182158029987476766109466552734375,
+                        "score": 0.84999999999999997779553950749686919152736663818359375,
+                        "raw": "1.4 s",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "largest-contentful-paint",
+                        "name": "Largest Contentful Paint",
+                        "value": 1.1999999999999999555910790149937383830547332763671875,
+                        "score": 0.91000000000000003108624468950438313186168670654296875,
+                        "raw": "1.2 s",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "interactive",
+                        "name": "Time to Interactive",
+                        "value": 1.3000000000000000444089209850062616169452667236328125,
+                        "score": 1,
+                        "raw": "1.3 s",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "total-blocking-time",
+                        "name": "Total Blocking Time",
+                        "value": 0.08000000000000000166533453693773481063544750213623046875,
+                        "score": 0.979999999999999982236431605997495353221893310546875,
+                        "raw": "80 ms",
+                        "postfix": "s"
+                    },
+                    {
+                        "id": "cumulative-layout-shift",
+                        "name": "Cumulative Layout Shift",
+                        "value": 0.00899999999999999931998839741709161899052560329437255859375,
+                        "score": 1,
+                        "raw": "0.009"
+                    }
+                ],
+                "opportunities": [
+                    {
+                        "name": "Avoid multiple page redirects",
+                        "value": 0.190000000000000002220446049250313080847263336181640625,
+                        "score": 0
+                    },
+                    {
+                        "name": "Reduce unused JavaScript",
+                        "value": 0.1600000000000000033306690738754696212708950042724609375,
+                        "score": 0
+                    }
+                ],
+                "score": 96
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "coreWebVitals": {
+            "name": "coreWebVitals",
+            "section": "ui",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 1,
+            "answer": "Google is indicating that they do not have 'sufficient real-world speed data for this page' in order to make a Core Web Vitals assessment. This can occur for smaller websites or those that are not crawl-able by Google.",
+            "shortAnswer": "Google is indicating that they do not have 'sufficient real-world speed data for this page' in order to make a Core Web Vitals assessment. This can occur for smaller websites or those that are not crawl-able by Google.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Core Web Vitals are UI Metrics designed by Google that measure the overall quality of user experience on your site. They assess things such as the appearance of content, interactivity of the page and visual stability from the moment of page load. Core Web Vitals are gathered from real world usage data of a website (hence some smaller websites that haven't been well sampled may not return an appropriate result). Google has made Core Web Vitals a ranking factor for pages with increasing importance.",
+            "why": "",
+            "how": "To improve your Core Web Vitals scores, you may need to read Google's documentation on the topic and follow the recommendations provided in the Google's PageSpeed Insights assessment.",
+            "value": "empty",
+            "data": [],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "/blog/core-web-vitals/",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasTapTargetSizing": {
+            "name": "hasTapTargetSizing",
+            "section": "ui",
+            "passed": true,
+            "score": 1,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "The links and buttons on your page appear to be appropriately sized for a user to easily tap on a touchscreen.",
+            "shortAnswer": "The links and buttons on your page appear to be appropriately sized for a user to easily tap on a touchscreen.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Tap Target Sizing refers to the size of buttons, links and other navigational elements on the page. On touch screen devices in particular these elements can't be too small or too close together or they will impede clicking and frustrate users.",
+            "why": "",
+            "how": "We recommend reviewing the Tap Target Sizing of your  of all your text to ensure they're easily clickable including less considered items like footer elements.",
+            "value": "1",
+            "data": [],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        }
+    },
+    "errors": []
+}

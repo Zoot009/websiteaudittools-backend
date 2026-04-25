@@ -1,7 +1,7 @@
-import type { Page, BrowserContext } from 'playwright';
-import { browserPool } from '../crawler/BrowserPool.js';
+import type { Page } from 'playwright';
 import { RateLimiter } from '../crawler/humanBehavior.js';
 import { getSeedUrls } from '../crawler/sitemapParser.js';
+import { fetchInternalLinksWithFallback, type CrawlSource } from './linkGraphPageFetcher.js';
 
 /**
  * Options for URL normalization
@@ -37,6 +37,9 @@ export interface LinkGraphCrawlResult {
     pages_crawled: number;
     edges: number;
     orphan_pages?: number;  // Count of orphan pages (only when seedFromSitemap=true)
+    native_success?: number;
+    fallback_success?: number;
+    fallback_failure?: number;
     truncated: boolean;
     crawl_time_ms: number;
     reason?: string;  // Reason for truncation if applicable
@@ -160,16 +163,6 @@ export async function extractLinksFromPage(
 }
 
 /**
- * Check if response is HTML based on content-type header
- */
-function isHtmlResponse(contentType: string | null): boolean {
-  if (!contentType) return false;
-  
-  const lowerType = contentType.toLowerCase();
-  return lowerType.includes('text/html') || lowerType.includes('application/xhtml+xml');
-}
-
-/**
  * Crawl a website and build an internal link graph using BFS
  * 
  * @param startUrl - Starting URL to crawl
@@ -222,6 +215,10 @@ export async function crawlLinkGraph(
   const startTime = Date.now();
   let truncated = false;
   let truncationReason: string | undefined;
+  let lastVisitedUrl: string | null = null;
+  let nativeSuccessCount = 0;
+  let fallbackSuccessCount = 0;
+  let fallbackFailureCount = 0;
 
   console.log(`🕷️  Starting link graph crawl: ${normalizedStartUrl} (max depth: ${maxDepth})`);
 
@@ -297,90 +294,84 @@ export async function crawlLinkGraph(
 
     console.log(`  📄 [Depth ${currentDepth}] Crawling: ${currentUrl} (${visited.size}/${maxPages})`);
 
-    // Acquire browser from pool
-    const browser = await browserPool.acquire();
-    let context: BrowserContext | null = null;
-    let page: Page | null = null;
+    let crawlSource: CrawlSource = 'native';
 
-    try {
-      // Create browser context
-      context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        viewport: { width: 1920, height: 1080 },
-      });
-
-      page = await context.newPage();
-      page.setDefaultTimeout(timeout);
-
-      // Navigate to page
-      const response = await page.goto(currentUrl, {
-        waitUntil: 'domcontentloaded',
-        timeout: timeout,
-      });
-
-      // Check if response is HTML
-      const contentType = response?.headers()['content-type'] || null;
-      if (!isHtmlResponse(contentType)) {
-        console.log(`  ⚠️  Skipping non-HTML response: ${contentType}`);
-        continue;
-      }
-
-      // Wait briefly for any JS to execute
-      await page.waitForTimeout(500);
-
-      // Extract links from page
-      const extractedLinks = await extractLinksFromPage(page, currentUrl, {
+    const fetchOptions = {
+      currentUrl,
+      timeout,
+      baseHost,
+      normalizeLink: (rawUrl: string, baseUrl: string) => normalizeUrl(rawUrl, baseUrl, {
         stripTracking: options.stripTracking ?? false,
         stripFragment: true,
         lowercaseHost: true,
-      });
+      }),
+      isInternalUrl,
+      ...(lastVisitedUrl ? { referer: lastVisitedUrl } : {}),
+    };
 
-      // Filter to internal links only
-      const internalLinks = extractedLinks.filter(link => isInternalUrl(link, baseHost));
+    const fetchResult = await fetchInternalLinksWithFallback(fetchOptions);
 
-      console.log(`  🔗 Found ${internalLinks.length} internal links`);
-
-      // Add edges for all internal links
-      for (const targetUrl of internalLinks) {
-        const edgeKey = `${currentUrl}→${targetUrl}`;
-        if (!edges.has(edgeKey)) {
-          edges.set(edgeKey, { source: currentUrl, target: targetUrl });
-          
-          // Track inbound count for orphan detection
-          if (seedFromSitemap) {
-            inboundCounts.set(targetUrl, (inboundCounts.get(targetUrl) || 0) + 1);
-          }
-        }
-
-        // Enqueue link if within depth limit and not already visited
-        if (currentDepth < maxDepth && !visited.has(targetUrl)) {
-          // Check if already in queue to avoid duplicates
-          const alreadyQueued = queue.some(item => item.url === targetUrl);
-          if (!alreadyQueued) {
-            queue.push({ url: targetUrl, depth: currentDepth + 1 });
-            
-            // Initialize inbound count for newly discovered URLs
-            if (seedFromSitemap && !inboundCounts.has(targetUrl)) {
-              inboundCounts.set(targetUrl, 0);
-            }
-          }
-        }
-      }
-
-    } catch (error: any) {
-      // Log error but continue crawling
-      console.error(`  ❌ Error crawling ${currentUrl}:`, error.message);
-      // Continue to next URL
-    } finally {
-      // Cleanup
-      if (page && !page.isClosed()) {
-        await page.close().catch(() => {});
-      }
-      if (context) {
-        await context.close().catch(() => {});
-      }
-      browserPool.release(browser);
+    if (fetchResult.error) {
+      fallbackFailureCount++;
+      console.error(`  ❌ Native + fallback failed for ${currentUrl}: ${fetchResult.error}`);
     }
+
+    if (fetchResult.source === 'fallback') {
+      fallbackSuccessCount++;
+      if (fetchResult.nativeError) {
+        console.warn(`  ⚠️  Native crawl failed for ${currentUrl}: ${fetchResult.nativeError}`);
+      } else {
+        console.warn(`  ⚠️  Native crawl failed for ${currentUrl}, using fallback`);
+      }
+      console.log(`  🔁 Fallback success for ${currentUrl}`);
+    } else if (fetchResult.source === 'native' && !fetchResult.skipped) {
+      nativeSuccessCount++;
+    }
+
+    if (fetchResult.skipped) {
+      console.log(`  ⚠️  Skipping URL (${fetchResult.skipReason || 'no crawlable HTML'})`);
+      lastVisitedUrl = currentUrl;
+      continue;
+    }
+
+    const internalLinks = fetchResult.links;
+    crawlSource = fetchResult.source === 'none' ? 'native' : fetchResult.source;
+
+    if (internalLinks.length === 0) {
+      lastVisitedUrl = currentUrl;
+      continue;
+    }
+
+    console.log(`  🔗 Found ${internalLinks.length} internal links (${crawlSource})`);
+
+    // Add edges for all internal links
+    for (const targetUrl of internalLinks) {
+      const edgeKey = `${currentUrl}→${targetUrl}`;
+      if (!edges.has(edgeKey)) {
+        edges.set(edgeKey, { source: currentUrl, target: targetUrl });
+        
+        // Track inbound count for orphan detection
+        if (seedFromSitemap) {
+          inboundCounts.set(targetUrl, (inboundCounts.get(targetUrl) || 0) + 1);
+        }
+      }
+
+      // Enqueue link if within depth limit and not already visited
+      if (currentDepth < maxDepth && !visited.has(targetUrl)) {
+        // Check if already in queue to avoid duplicates
+        const alreadyQueued = queue.some(item => item.url === targetUrl);
+        if (!alreadyQueued) {
+          queue.push({ url: targetUrl, depth: currentDepth + 1 });
+          
+          // Initialize inbound count for newly discovered URLs
+          if (seedFromSitemap && !inboundCounts.has(targetUrl)) {
+            inboundCounts.set(targetUrl, 0);
+          }
+        }
+      }
+    }
+
+    lastVisitedUrl = currentUrl;
   }
 
   const crawlTime = Date.now() - startTime;
@@ -432,6 +423,9 @@ export async function crawlLinkGraph(
       pages_crawled: visited.size,
       edges: validLinks.length,
       ...(seedFromSitemap && { orphan_pages: orphanPages.length }),
+      native_success: nativeSuccessCount,
+      fallback_success: fallbackSuccessCount,
+      fallback_failure: fallbackFailureCount,
       truncated,
       crawl_time_ms: crawlTime,
       ...(truncationReason && { reason: truncationReason }),

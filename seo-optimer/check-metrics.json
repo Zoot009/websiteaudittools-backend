@@ -1,0 +1,1063 @@
+{
+    "endpoint":"https://www.seoptimer.com/check-metrics.inc",
+    "results": {
+        "keywords": {
+            "name": "keywords",
+            "section": "seo",
+            "passed": true,
+            "score": 3,
+            "maxScore": 3,
+            "priority": 2,
+            "answer": "Your page's main keywords are distributed well across the important HTML Tags.",
+            "shortAnswer": "Your page's main keywords are distributed well across the important HTML Tags.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Generally a page should be targeted to rank for particular set of keywords or phrases. These keywords should be used with some consistency in page content (naturally and without stuffing) to maximize ranking potential for those keywords. This means these keywords should be present across the most important HTML Tags of the page, and used with some frequency in the general page text content. The keyword consistency check illustrates the keywords we have identified appearing most frequently in these areas.",
+            "why": "",
+            "how": "If the keywords and phrases identified don't match your intended ranking keywords, and do not show a level of consistency, you should consider amending your core page content to better include these.",
+            "value": "4",
+            "data": {
+                "keywords": [
+                    {
+                        "word": "keyword",
+                        "count": 17,
+                        "grade": 100,
+                        "title": true,
+                        "description": true,
+                        "headers": true
+                    },
+                    {
+                        "word": "free",
+                        "count": 13,
+                        "grade": 76,
+                        "title": true,
+                        "description": true,
+                        "headers": true
+                    },
+                    {
+                        "word": "serp",
+                        "count": 13,
+                        "grade": 76,
+                        "title": true,
+                        "description": true,
+                        "headers": true
+                    },
+                    {
+                        "word": "data",
+                        "count": 11,
+                        "grade": 65,
+                        "title": false,
+                        "description": true,
+                        "headers": true
+                    },
+                    {
+                        "word": "keywords",
+                        "count": 9,
+                        "grade": 53,
+                        "title": false,
+                        "description": true,
+                        "headers": true
+                    },
+                    {
+                        "word": "search",
+                        "count": 9,
+                        "grade": 53,
+                        "title": false,
+                        "description": false,
+                        "headers": true
+                    },
+                    {
+                        "word": "tracking",
+                        "count": 7,
+                        "grade": 41,
+                        "title": false,
+                        "description": false,
+                        "headers": true
+                    },
+                    {
+                        "word": "rank",
+                        "count": 6,
+                        "grade": 35,
+                        "title": true,
+                        "description": true,
+                        "headers": true
+                    }
+                ],
+                "phrases": [
+                    {
+                        "word": "free serp",
+                        "count": 5,
+                        "grade": 100,
+                        "title": true,
+                        "description": true,
+                        "headers": true
+                    },
+                    {
+                        "word": "keyword research",
+                        "count": 5,
+                        "grade": 100,
+                        "title": false,
+                        "description": false,
+                        "headers": true
+                    },
+                    {
+                        "word": "serp tracking",
+                        "count": 4,
+                        "grade": 80,
+                        "title": false,
+                        "description": false,
+                        "headers": false
+                    },
+                    {
+                        "word": "no credit",
+                        "count": 2,
+                        "grade": 40,
+                        "title": false,
+                        "description": false,
+                        "headers": false
+                    },
+                    {
+                        "word": "credit card",
+                        "count": 2,
+                        "grade": 40,
+                        "title": false,
+                        "description": false,
+                        "headers": false
+                    },
+                    {
+                        "word": "seos marketers",
+                        "count": 2,
+                        "grade": 40,
+                        "title": false,
+                        "description": false,
+                        "headers": false
+                    },
+                    {
+                        "word": "50m keywords",
+                        "count": 2,
+                        "grade": 40,
+                        "title": false,
+                        "description": false,
+                        "headers": false
+                    },
+                    {
+                        "word": "search volume",
+                        "count": 2,
+                        "grade": 40,
+                        "title": false,
+                        "description": false,
+                        "headers": false
+                    }
+                ]
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "/blog/keyword-consistency/",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "contentCount": {
+            "name": "contentCount",
+            "section": "seo",
+            "passed": false,
+            "score": 1,
+            "maxScore": 2,
+            "priority": 2,
+            "answer": "Your page has a low volume of text content which search engines can interpret as 'thin content'.<br>\n                    <div class=\"row mt-4\">\n                        <div class=\"col-xl-6\">\n                            <table class=\"table table-row-dashed\">\n                                <tbody>\n                                    <tr>\n                                        <td>Word Count: 555</td>\n                                    </tr>\n                                </tbody>\n                            </table>\n                        </div>\n                    </div>",
+            "shortAnswer": "Page Text Content Too Short",
+            "recommendation": "Increase Page Text Content",
+            "append2": "It has been well researched that higher text content volumes are related to better ranking ability in general.",
+            "what": "Numerous studies have shown that there is a relationship between the amount of content on a page (typically measured in word count) and it's ranking potential - generally longer content will rank higher. Obviously content also needs to be topically relevant, keyword rich and highly readable for the visitor. Note, in our assessment, we look at all selectable text on the page at load time, not hidden content.",
+            "why": "",
+            "how": "As a general guideline, it is recommended to have atleast 500 words of content on a page to give it some ranking potential. However this should be considered on a case by case basis. It may not be relevant for particular pages like 'contact us' pages for example.",
+            "value": "555",
+            "data": null,
+            "icon": "fa-tag",
+            "time": "60 minutes",
+            "link1": "",
+            "link2": "",
+            "more-info": "/blog/content-length/",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "llmReadability": {
+            "name": "llmReadability",
+            "section": "geo",
+            "passed": true,
+            "score": 1,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "Your page has a low level of rendered content which tends to make it more readable for LLMs.<br>\n                    <div class=\"row mt-4\">\n                        <div class=\"col-xl-6\">\n                            <table class=\"table table-row-dashed\">\n                                <tbody>\n                                    <tr>\n                                        <td>Rendering Percentage: 0%</td>\n                                    </tr>\n                                </tbody>\n                            </table>\n                        </div>\n                    </div>",
+            "shortAnswer": "Your page has a low level of rendered content which tends to make it more readable for LLMs.",
+            "recommendation": null,
+            "append2": "",
+            "what": "LLMs and AI Crawlers predominantly read the raw HTML of a website instead of the completed, dynamically rendered HTML produced in a web-browser, that may have been updated by Javascript. This stems from LLMs being naturally optimized to parse static content like documents and files as well as the fact that rendering website Javascript at scale is expensive, slow, and can be less consistent.",
+            "why": "",
+            "how": "You should ensure that important site content is always present in the raw HTML of your site and minimize the usage of plugins and Javascript components known to add content dynamically. This requires a moderate technical understanding to achieve and test.",
+            "value": "0",
+            "data": 0.999583234103357920474763886886648833751678466796875,
+            "icon": "fa-tag",
+            "time": "60 minutes",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasNoindexHeaders": {
+            "name": "hasNoindexHeaders",
+            "section": "seo",
+            "passed": true,
+            "score": 4,
+            "maxScore": 4,
+            "priority": 2,
+            "answer": "Your page is not using the Noindex Header which prevents indexing.",
+            "shortAnswer": "Your page is not using the Noindex Header which prevents indexing.",
+            "recommendation": null,
+            "append2": "",
+            "what": "A critical part of a page's ranking potential is ensuring that it can actually be accessed by Search Engines. The Noindex Header is another Noindexing method that tells Search Engines to ignore a page, and can destroy out it's ranking ability. Sometimes these tags are added intentionally for low value pages, but sometimes they are left over unintentionally from a theme or template that has been used on the site, or forgotten to be removed by a developer when a website moves from design and testing to live usage.",
+            "why": "",
+            "how": "If you want the page to rank and it's using a Noindex Header, you will need to remove the Noindex Header from your page. This may require access to the backend code, and may need to be done by a developer. If you are using a CMS, you may have an option enabled to prevent indexing of the page, which should be turned off.",
+            "value": "",
+            "data": null,
+            "icon": "fa-tag",
+            "time": "15 minutes",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasFacebookPixel": {
+            "name": "hasFacebookPixel",
+            "section": "social",
+            "passed": false,
+            "score": 0,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "We have not detected a Facebook Pixel on your page.",
+            "shortAnswer": "No Facebook Pixel",
+            "recommendation": "Install a Facebook Pixel",
+            "append2": "Facebook's Pixel is a useful piece of analytics code that allows you to retarget visitors if you decide to run Facebook Ads in future.",
+            "what": "Facebook Pixel is a piece of analytics code that allows Facebook to capture and analyse visitor information from your site. This allows you to retarget these visitors with Facebook messaging in future, or build new 'lookalike' audiences similar to your existing visitors. ",
+            "why": "",
+            "how": "In can be a good idea to install a Facebook Pixel if you intend to do any Facebook related marketing in the future in order to prepare audience data.",
+            "value": "",
+            "data": [],
+            "icon": "fa-tag",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "screenshot": {
+            "name": "screenshot",
+            "section": "seo",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 2,
+            "answer": "",
+            "shortAnswer": "",
+            "recommendation": null,
+            "append2": "",
+            "what": "",
+            "why": "",
+            "how": "",
+            "value": "/screenshots/gol541knb2caXGKzFJywCoJuN69NjAet-desktop.jpg",
+            "data": null,
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasDeprecated": {
+            "name": "hasDeprecated",
+            "section": "performance",
+            "passed": true,
+            "score": 1,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "No deprecated HTML tags have been found within your page.",
+            "shortAnswer": "No deprecated HTML tags have been found within your page.",
+            "recommendation": null,
+            "append2": "",
+            "what": "HTML, like most coding languages, has had improvements made over time that has removed older features, either due to them simply being problematic, or more often replaced with something better. If you continue to use these older features in your page, you may at the bare minimum not get the expected functionality in your page, or in the worst case, break some execution. ",
+            "why": "",
+            "how": "It is recommended to identify and remove any old or 'deprecated' tags from your code. This could be done manually if you have HTML or web design skills, or could be done by upgrading the template and library versions on your website.",
+            "value": "",
+            "data": [],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasInlineCss": {
+            "name": "hasInlineCss",
+            "section": "performance",
+            "passed": false,
+            "score": 0,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "Your page appears to be using Inline Styles.",
+            "shortAnswer": "Inline Styles Found",
+            "recommendation": "Remove Inline Styles",
+            "append2": "Inline Styles are an older coding practice and discouraged in favor of using CSS style sheets, due to their ability to degrade page load performance and unnecessarily complicate HTML Code.",
+            "what": "HTML provides the ability to embed UI styling attributes within individual HTML elements. Despite this feature being available, it is modern best practice to completely separate UI styling into separate CSS files. This separates functions and centralises UI styling into one place making it easier for example to upgrade the UI styling of a site independently of the page content and structure. Inline Styles also have some particular problems in that they can degrade the page load performance of a page and unnecessarily complicate HTML code.",
+            "why": "",
+            "how": "Inline Styles should be manually removed from the HTML code of a page and merged into separate CSS files, but may need the help of a designer to carefully consider their purpose and function.",
+            "value": "1",
+            "data": [
+                {
+                    "line": 1,
+                    "style": "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.03;mix-blend-mode:overlay",
+                    "tag": [
+                        "<canvas style=\"position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.03;mix-blend-mode:overlay",
+                        8627
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "perspective:1000px",
+                    "tag": [
+                        "<div class=\"inline-flex gap-[0.08em] items-center cursor-pointer \" aria-label=\"FREE SERP\" style=\"perspective:1000px",
+                        9024
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                    "tag": [
+                        "<div class=\"relative overflow-hidden flex items-center justify-center font-[family-name:var(--font-bebas)]\" style=\"font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                        9141
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"block translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        9650
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"-translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        9868
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                    "tag": [
+                        "<div class=\"absolute inset-x-0 top-0 bottom-1/2 origin-bottom overflow-hidden\" style=\"background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                        9984
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        10282
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                    "tag": [
+                        "<div class=\"relative overflow-hidden flex items-center justify-center font-[family-name:var(--font-bebas)]\" style=\"font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                        10409
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"block translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        10918
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"-translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        11136
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                    "tag": [
+                        "<div class=\"absolute inset-x-0 top-0 bottom-1/2 origin-bottom overflow-hidden\" style=\"background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                        11252
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        11550
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                    "tag": [
+                        "<div class=\"relative overflow-hidden flex items-center justify-center font-[family-name:var(--font-bebas)]\" style=\"font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                        11677
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"block translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        12186
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"-translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        12404
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                    "tag": [
+                        "<div class=\"absolute inset-x-0 top-0 bottom-1/2 origin-bottom overflow-hidden\" style=\"background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                        12520
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        12818
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                    "tag": [
+                        "<div class=\"relative overflow-hidden flex items-center justify-center font-[family-name:var(--font-bebas)]\" style=\"font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                        12945
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"block translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        13454
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"-translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        13672
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                    "tag": [
+                        "<div class=\"absolute inset-x-0 top-0 bottom-1/2 origin-bottom overflow-hidden\" style=\"background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                        13788
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        14086
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "width:0.3em;font-size:clamp(4rem, 15vw, 14rem)",
+                    "tag": [
+                        "<div style=\"width:0.3em;font-size:clamp(4rem, 15vw, 14rem)",
+                        14213
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                    "tag": [
+                        "<div class=\"relative overflow-hidden flex items-center justify-center font-[family-name:var(--font-bebas)]\" style=\"font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                        14279
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"block translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        14788
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"-translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        15006
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                    "tag": [
+                        "<div class=\"absolute inset-x-0 top-0 bottom-1/2 origin-bottom overflow-hidden\" style=\"background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                        15122
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        15420
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                    "tag": [
+                        "<div class=\"relative overflow-hidden flex items-center justify-center font-[family-name:var(--font-bebas)]\" style=\"font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                        15547
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"block translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        16056
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"-translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        16274
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                    "tag": [
+                        "<div class=\"absolute inset-x-0 top-0 bottom-1/2 origin-bottom overflow-hidden\" style=\"background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                        16390
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        16688
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                    "tag": [
+                        "<div class=\"relative overflow-hidden flex items-center justify-center font-[family-name:var(--font-bebas)]\" style=\"font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                        16815
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"block translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        17324
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"-translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        17542
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                    "tag": [
+                        "<div class=\"absolute inset-x-0 top-0 bottom-1/2 origin-bottom overflow-hidden\" style=\"background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                        17658
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        17956
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                    "tag": [
+                        "<div class=\"relative overflow-hidden flex items-center justify-center font-[family-name:var(--font-bebas)]\" style=\"font-size:clamp(4rem, 15vw, 14rem);width:0.65em;height:1.05em;background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;transition:background-color 0.15s ease;opacity:0;transform:translateY(20px)",
+                        18083
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"block translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        18592
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"-translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        18810
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                    "tag": [
+                        "<div class=\"absolute inset-x-0 top-0 bottom-1/2 origin-bottom overflow-hidden\" style=\"background-color:rgba(249, 115, 22, 0.2);transform-style:preserve-3d;backface-visibility:hidden;transition:background-color 0.15s ease;transform:rotateX(-90deg)",
+                        18926
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "color:#f97316",
+                    "tag": [
+                        "<span class=\"translate-y-[0.52em] leading-none transition-colors duration-150\" style=\"color:#f97316",
+                        19224
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "scrollbar-width:none;-ms-overflow-style:none",
+                    "tag": [
+                        "<div class=\"flex gap-8 overflow-x-auto pb-8 pr-12 scrollbar-hide\" style=\"scrollbar-width:none;-ms-overflow-style:none",
+                        21742
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "left:-0.1em;right:-0.1em;top:0.15em;bottom:0.1em;transform:scaleX(0);transform-origin:left center",
+                    "tag": [
+                        "<span class=\"absolute inset-0 bg-accent\" style=\"left:-0.1em;right:-0.1em;top:0.15em;bottom:0.1em;transform:scaleX(0);transform-origin:left center",
+                        35846
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "left:-0.1em;right:-0.1em;top:0.15em;bottom:0.1em;transform:scaleX(0);transform-origin:left center",
+                    "tag": [
+                        "<span class=\"absolute inset-0 bg-accent\" style=\"left:-0.1em;right:-0.1em;top:0.15em;bottom:0.1em;transform:scaleX(0);transform-origin:left center",
+                        36660
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "left:-0.1em;right:-0.1em;top:0.15em;bottom:0.1em;transform:scaleX(0);transform-origin:left center",
+                    "tag": [
+                        "<span class=\"absolute inset-0 bg-accent\" style=\"left:-0.1em;right:-0.1em;top:0.15em;bottom:0.1em;transform:scaleX(0);transform-origin:left center",
+                        37485
+                    ]
+                },
+                {
+                    "line": 1,
+                    "style": "left:-0.1em;right:-0.1em;top:0.15em;bottom:0.1em;transform:scaleX(0);transform-origin:left center",
+                    "tag": [
+                        "<span class=\"absolute inset-0 bg-accent\" style=\"left:-0.1em;right:-0.1em;top:0.15em;bottom:0.1em;transform:scaleX(0);transform-origin:left center",
+                        38311
+                    ]
+                }
+            ],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasGzip": {
+            "name": "hasGzip",
+            "section": "performance",
+            "passed": true,
+            "score": 3,
+            "maxScore": 3,
+            "priority": 2,
+            "answer": "Your website appears to be using a reasonable level of compression.",
+            "shortAnswer": "Your website appears to be using a reasonable level of compression.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Modern web servers allow website files to be compressed as part of their transfer, often dramatically reducing the Download File Size and Page Load Speed of a page. There are several different compression algorithms used such as GZIP, Deflate and Brotli. Enabling compression can often represent a simple and quick win to performance, and most new web servers will have this enabled by default.",
+            "why": "",
+            "how": "You should ensure that compression is enabled and working effectively on your web server. Sometimes compression may only be partially enabled for particular file types, or using an older compression method, so it is important to understand whether your server is configured as efficiently as possible. This may require the help of a developer to investigate.",
+            "value": "71",
+            "data": {
+                "total": 410836,
+                "html": 10886,
+                "css": 27169,
+                "js": 302782,
+                "image": 0,
+                "other": 69999,
+                "rate": {
+                    "total": 33,
+                    "html": 16,
+                    "css": 15,
+                    "js": 32,
+                    "image": 0,
+                    "other": 100
+                }
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "/blog/webpage-size/",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "numberOfResources": {
+            "name": "numberOfResources",
+            "section": "performance",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 2,
+            "answer": "This check displays the total number of files that need to be retrieved from web servers to load your page.",
+            "shortAnswer": "This check displays the total number of files that need to be retrieved from web servers to load your page.",
+            "recommendation": null,
+            "append2": "",
+            "what": "When browsers display a modern website, they have to retrieve a wide variety of files including HTML, CSS, Javascript, Images and other media. As a general rule, every file that needs to be retrieved is another network request that needs to be made by the browser to the server, which can each face some connection overhead and add to Page Load Time.",
+            "why": "",
+            "how": " It is a good idea to remove unnecessary files or consolidate smaller files with similar content like styles and scripts where possible to optimize performance.",
+            "value": "1",
+            "data": {
+                "total": 20,
+                "images": 0,
+                "css": 2,
+                "js": 12,
+                "html": 1,
+                "other": 5
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "pageSize": {
+            "name": "pageSize",
+            "section": "performance",
+            "passed": true,
+            "score": 4,
+            "maxScore": 4,
+            "priority": 2,
+            "answer": "Your page's file size is reasonably low which is good for Page Load Speed and user experience.",
+            "shortAnswer": "Your page's file size is reasonably low which is good for Page Load Speed and user experience.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Download Page Size refers to the total amount of file content that needs to be downloaded by the browser to view a particular webpage. This includes HTML, CSS, Javascript and Images, though can include a number of other file formats. Generally media files like images and videos are significantly larger than text files and make up the bulk of Download File Size, but also represent the largest optimization opportunity. An important distinction here is 'Download' vs 'Raw' file size. Modern web protocols compress files during transfer, meaning files are usually smaller to download than their actual or 'raw' size. So any manual optimizations you perform would be on the 'raw' file. Download Page Size is one of the biggest contributors to Page Load Speed, which can directly affect rankings, user experience and conversions.",
+            "why": "",
+            "how": "It is important to ensure your Download File Size is as small as possible by removing unnecessary files and minifying and optimizing others. 5MB is a good metric to strive for, though modern websites are gradually increasing in size.",
+            "value": "410836",
+            "data": {
+                "total": 410836,
+                "html": 10886,
+                "css": 27169,
+                "js": 302782,
+                "image": 0,
+                "other": 69999,
+                "rate": {
+                    "total": 33,
+                    "html": 16,
+                    "css": 15,
+                    "js": 32,
+                    "image": 0,
+                    "other": 100
+                }
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "/blog/webpage-size/",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "serverResponseTime": {
+            "name": "serverResponseTime",
+            "section": "performance",
+            "passed": true,
+            "score": 3,
+            "maxScore": 3,
+            "priority": 2,
+            "answer": "Your page loads in a reasonable amount of time.",
+            "shortAnswer": "Your page loads in a reasonable amount of time.",
+            "recommendation": null,
+            "append2": "",
+            "what": "Page Load Speed refers to the amount of time it takes to entirely load a webpage in a user's browser. Load speed is complex and  can be impacted by a multitude of factors including network, web server, page size, technology, database or coding problems, and may require the help of a developer or systems administrator to troubleshoot. Page Load Speed impacts a user's experience on a website and can directly impact bounce rate and conversions. Additionally, Search Engines are making Page Load Speed a ranking factor.",
+            "why": "",
+            "how": "Optimize Page Load Speed by examining common problem points such as overall file size, server resources or coding problems.",
+            "value": "15",
+            "data": {
+                "responseTime": 15,
+                "loadTime": 520,
+                "completeTime": 390
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "/blog/page-speed/",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "javascriptErrors": {
+            "name": "javascriptErrors",
+            "section": "performance",
+            "passed": false,
+            "score": 0,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "Your page is reporting JavaScript errors during load.",
+            "shortAnswer": "Your page is reporting JavaScript errors during load.",
+            "recommendation": "Resolve JavaScript errors",
+            "append2": "This could indicate that some required functionality on your page is failing or scripts may have coding problems.",
+            "what": "JavaScript is embedded code on a webpage that can perform any number of functions such as modifying page elements dynamically, or making calls to retrieve information live without refreshing the page. JavaScript is a staple of the modern web and used on almost every modern website. However, with increasing usage and complexity, Javascript can fail on a page due to coding problems, incorrect versions or loading issues. Sometimes failures can interrupt proper execution of a page and break other functions, and so Javascript errors should generally be examined to understand the cause and what it's impacts are .",
+            "why": "",
+            "how": "",
+            "value": "1",
+            "data": [
+                {
+                    "source": "javascript",
+                    "level": "error",
+                    "text": "SyntaxError: Unexpected token '{'",
+                    "timestamp": 1777040463979.903076171875
+                }
+            ],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "http": {
+            "name": "http",
+            "section": "performance",
+            "passed": false,
+            "score": 0,
+            "maxScore": 2,
+            "priority": 2,
+            "answer": "Your website is using an outdated HTTP Protocol.",
+            "shortAnswer": "Outdated HTTP Protocol Used",
+            "recommendation": "Make use of HTTP/2+ Protocol",
+            "append2": "We recommend enabling HTTP/2+ Protocol for your website as it can significantly improve page load speed for users.",
+            "what": "HTTP is a technology protocol used by web browser to communicate with websites and is a cornerstone of the world wide web. HTTP/2 (and above) are newer versions of the HTTP protocol that offer significant performance improvements. Older websites may be set to using an older HTTP protocol despite their web servers having been upgraded to support newer versions.",
+            "why": "",
+            "how": "It is worth reviewing whether your website is configured to use the latest available HTTP protocol as it can provide immediate Page Load Speed improvements.",
+            "value": "1.0",
+            "data": {
+                "http/1.0": "http://freeserp.com/",
+                "h2": "https://freeserp.com/_next/static/chunks/0qxfacqeusssc.js?dpl=dpl_3cDzYgiVXo7RadTHBHepVWiCF7RR"
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasIframe": {
+            "name": "hasIframe",
+            "section": "ui",
+            "passed": true,
+            "score": 1,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "There are no iFrames detected on your page.",
+            "shortAnswer": "There are no iFrames detected on your page.",
+            "recommendation": null,
+            "append2": "",
+            "what": "iFrames are a HTML tag that allow you to embed other webpages inside your page in a small frame. They generally represent an older coding practice and are discouraged as they can complicate navigation, particularly in mobile, and are harder for search engines to index.",
+            "why": "",
+            "how": "We recommend removing any iFrames if they don't serve a critical purpose, or could be replaced with more natural navigation. However, some coding libraries like Google Tag Manager may still rely on iFrames as part of their internal functionality to load external pages and code files, so you may need to evaluate your usage of them on a case by case basis.",
+            "value": "",
+            "data": null,
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "deviceRendering": {
+            "name": "deviceRendering",
+            "section": "ui",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 2,
+            "answer": "This check visually demonstrates how your page renders on different devices. It is important that your page is optimized for mobile and tablet experiences as today the majority of web traffic comes from these sources.",
+            "shortAnswer": "This check visually demonstrates how your page renders on different devices. It is important that your page is optimized for mobile and tablet experiences as today the majority of web traffic comes from these sources.",
+            "recommendation": null,
+            "append2": "",
+            "what": "A website can be viewed in a wide variety of resolutions and formats, some dictated by the size of a desktop display, and others by the specific dimensions of a phone or tablet model. Device rendering provides a preview of how the site looks on some popular device resolutions to help identify obvious issues. Note, our method will load a website and resize it's portlet to several dimensions, as opposed to loading the site multiple times directly in different devices.",
+            "why": "",
+            "how": "In general a website should be designed and tested to be responsive across a large variety of desktop and mobile device resolutions, as well as being able to transition smoothly (for example when resizing a browser or flipping a tablet from vertical to horizontal).",
+            "value": "1",
+            "data": {
+                "mobile": "/screenshots/gol541knb2caXGKzFJywCoJuN69NjAet-mobile.jpg",
+                "tablet": "/screenshots/gol541knb2caXGKzFJywCoJuN69NjAet-tablet.jpg"
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "hasEmail": {
+            "name": "hasEmail",
+            "section": "ui",
+            "passed": false,
+            "score": 0,
+            "maxScore": 1,
+            "priority": 2,
+            "answer": "Email addresses have been found in plain text.",
+            "shortAnswer": "Email Address Found in Plain Text",
+            "recommendation": "Remove Clear Text Email Addresses",
+            "append2": "We recommend removing any plain text email addresses and replacing them with images or contact forms. Plain text email addresses can be susceptible to scrapers and email spammers.",
+            "what": "Email addresses shown in clear text on your website can be easily scraped by bots, leading to inclusion in spam mailing lists.",
+            "why": "",
+            "how": "We recommend removing any plain text email addresses and replacing them with contact forms, images, or less obvious text like 'email at website'.",
+            "value": "1",
+            "data": [
+                {
+                    "email": "support@freeserp.com",
+                    "line": 1
+                },
+                {
+                    "email": "support@freeserp.com",
+                    "line": 1
+                }
+            ],
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        },
+        "technologies": {
+            "name": "technologies",
+            "section": "technology",
+            "passed": null,
+            "score": 0,
+            "maxScore": 0,
+            "priority": 2,
+            "answer": "These software or coding libraries have been identified on your page.",
+            "shortAnswer": "These software or coding libraries have been identified on your page.",
+            "recommendation": null,
+            "append2": "",
+            "what": "",
+            "why": "",
+            "how": "",
+            "value": "1",
+            "data": {
+                "Vercel": {
+                    "name": "Vercel",
+                    "icon": "/img/icons/app/vercel.svg",
+                    "icon_pdf": "/img/icons/app/vercel.svg",
+                    "website": "https://vercel.com",
+                    "version": ""
+                }
+            },
+            "icon": "",
+            "time": "",
+            "link1": "",
+            "link2": "",
+            "more-info": "",
+            "best-practices": "",
+            "how-wordpress": "",
+            "how-shopify": "",
+            "how-wix": ""
+        }
+    },
+    "errors": []
+}

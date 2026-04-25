@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 import { streamChatResponse, sendChatMessage, validateChatMessage, generateSuggestedQuestions, type ChatResponse } from '../services/ai/chatService.js';
 import {
   generateConversationId,
@@ -27,20 +28,16 @@ const router = Router();
  * Start or continue a chat conversation about an audit report
  * Supports streaming responses via Server-Sent Events
  */
-router.post('/reports/:reportId/chat', async (req, res) => {
+router.post('/reports/:reportId/chat', requireAuth, async (req, res) => {
   try {
-    const { reportId } = req.params;
-    const { message, conversationId, userId, stream = true } = req.body;
+    const reportId = req.params['reportId'] as string;
+    const { message, conversationId, stream = true } = req.body;
+    const userId = req.user!.id;
     
     // Validate message
     const validation = validateChatMessage(message);
     if (!validation.valid) {
       return res.status(400).json({ error: validation.error });
-    }
-    
-    // Validate required fields
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
     }
     
     // Load audit report
@@ -66,11 +63,11 @@ router.post('/reports/:reportId/chat', async (req, res) => {
     if (!report) {
       return res.status(404).json({ error: 'Audit report not found' });
     }
-    
-    // Optional: Verify user owns this report
-    // if (report.userId !== userId) {
-    //   return res.status(403).json({ error: 'Access denied' });
-    // }
+
+    // Verify the authenticated user owns this report
+    if (report.userId !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     
     // Get or create conversation ID
     let activeConversationId = conversationId;

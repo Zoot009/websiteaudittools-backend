@@ -1,92 +1,64 @@
-/**
- * Check for Noindex HTTP Header (X-Robots-Tag)
- * CRITICAL: This can block entire site from indexing
- */
-
-import type { PageRule, PageData, SiteContext, RuleResult, Issue, PassingCheck } from '../../types.js';
+import type { PageRule, PageData, SiteContext, RuleResult, CheckDefinition, SEOAuditCheck } from '../../types.js';
 
 export class NoindexHeaderRule implements PageRule {
   code = 'NOINDEX_HEADER';
   category = 'TECHNICAL' as const;
   level = 'page' as const;
 
-  execute(page: PageData, context: SiteContext): RuleResult {
-    const issues: Issue[] = [];
-    const passingChecks: PassingCheck[] = [];
+  readonly checkDefinition: CheckDefinition = {
+    id: 'NOINDEX_HEADER',
+    name: 'Noindex HTTP Header',
+    maxScore: 4,
+    priority: 2,
+    section: 'seo',
+    informational: false,
+    what: 'The X-Robots-Tag HTTP header can instruct search engines not to index a page at the server level, overriding any meta robots tags in the HTML.',
+    why: 'A noindex directive in the X-Robots-Tag header will silently prevent search engines from indexing the page even if the HTML looks correct. This can block entire sections of a site from appearing in search results.',
+    how: 'Check your server or CDN configuration for X-Robots-Tag headers. In Nginx, look for "add_header X-Robots-Tag". In Apache, look for Header directives. Remove any noindex/none directives for pages you want indexed.',
+    time: '30 minutes',
+  };
 
-    // Check if HTTP headers are available
-    if (!page.httpHeaders) {
-      return { issues, passingChecks };
-    }
+  execute(page: PageData, _context: SiteContext): RuleResult {
+    const xRobotsTag = page.httpHeaders?.['x-robots-tag'] ?? null;
+    const value = xRobotsTag?.toLowerCase() ?? '';
+    const isBlocking = value.includes('noindex') || value.includes('none');
+    const passed = !isBlocking;
 
-    // Check for X-Robots-Tag header
-    const xRobotsTag = page.httpHeaders['x-robots-tag'];
-    
-    if (xRobotsTag) {
-      const value = xRobotsTag.toLowerCase();
-      
-      // Check for noindex directive
-      if (value.includes('noindex')) {
-        issues.push({
-          type: 'noindex_http_header',
-          category: 'TECHNICAL',
-          title: 'Page Blocked from Indexing via HTTP Header',
-          description: `The X-Robots-Tag HTTP header contains "noindex" (value: "${xRobotsTag}"). This prevents search engines from indexing this page. If this is unintentional, remove the X-Robots-Tag header from your server configuration.`,
-          severity: 'CRITICAL',
-          impactScore: 100,
-          pageUrl: page.url,
-        });
-      }
+    const check: SEOAuditCheck = {
+      ...this.checkDefinition,
+      category: this.category,
+      passed,
+      score: passed ? this.checkDefinition.maxScore : 0,
+      shortAnswer: passed
+        ? 'No blocking X-Robots-Tag header detected.'
+        : `X-Robots-Tag header is blocking indexing: "${xRobotsTag}".`,
+      answer: passed
+        ? 'No X-Robots-Tag header with noindex or none directive found. Page can be indexed normally.'
+        : `Page has an X-Robots-Tag HTTP header with value "${xRobotsTag}" which prevents search engine indexing.`,
+      recommendation: passed ? null : 'Remove the noindex or none directive from the X-Robots-Tag header in your server configuration.',
+      data: { xRobotsTag },
+      pageUrl: page.url,
+    };
 
-      // Check for nofollow directive
-      if (value.includes('nofollow')) {
-        issues.push({
-          type: 'nofollow_http_header',
-          category: 'TECHNICAL',
-          title: 'Links Blocked from Following via HTTP Header',
-          description: `The X-Robots-Tag HTTP header contains "nofollow" (value: "${xRobotsTag}"). This prevents search engines from following links on this page, limiting crawl coverage and link equity distribution.`,
-          severity: 'HIGH',
-          impactScore: 75,
-          pageUrl: page.url,
-        });
-      }
+    const issues = !passed ? [{
+      category: this.category,
+      type: this.code,
+      title: 'Page Blocked via X-Robots-Tag Header',
+      description: check.answer,
+      severity: 'CRITICAL' as const,
+      impactScore: 50,
+      pageUrl: page.url,
+    }] : [];
 
-      // Check for none directive (equivalent to noindex, nofollow)
-      if (value.includes('none')) {
-        issues.push({
-          type: 'none_http_header',
-          category: 'TECHNICAL',
-          title: 'Page Fully Blocked via HTTP Header',
-          description: `The X-Robots-Tag HTTP header contains "none" (value: "${xRobotsTag}"), which is equivalent to both noindex and nofollow. This completely blocks search engine indexing and link following for this page.`,
-          severity: 'CRITICAL',
-          impactScore: 100,
-          pageUrl: page.url,
-        });
-      }
+    const passingChecks = passed ? [{
+      category: this.category,
+      code: this.code,
+      title: 'No Blocking HTTP Robots Header',
+      description: check.shortAnswer,
+      pageUrl: page.url,
+      goodPractice: 'Keeping the X-Robots-Tag header free of noindex directives ensures search engines can index your pages.',
+    }] : [];
 
-      // If header exists but doesn't contain blocking directives, it's okay
-      if (!value.includes('noindex') && !value.includes('nofollow') && !value.includes('none')) {
-        passingChecks.push({
-          category: 'TECHNICAL',
-          code: 'xrobotstag_allows_indexing',
-          title: 'X-Robots-Tag Allows Indexing',
-          description: `X-Robots-Tag header present but allows indexing (value: "${xRobotsTag}").`,
-          pageUrl: page.url,
-          goodPractice: 'X-Robots-Tag header exists but does not block indexing',
-        });
-      }
-    } else {
-      // No X-Robots-Tag header - this is good (most common case)
-      passingChecks.push({
-        category: 'TECHNICAL',
-        code: 'no_blocking_http_headers',
-        title: 'No Blocking HTTP Headers',
-        description: 'No X-Robots-Tag header found, allowing normal indexing.',
-        pageUrl: page.url,
-        goodPractice: 'Pages are not blocked from indexing at the HTTP level',
-      });
-    }
-
-    return { issues, passingChecks };
+    return { check, issues, passingChecks };
   }
 }

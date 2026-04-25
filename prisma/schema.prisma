@@ -12,24 +12,80 @@ datasource db {
   provider = "postgresql"
 }
 
-// User profiles (synced from Clerk)
+// User profiles - NextAuth.js compatible
 model User {
   id            String    @id @default(cuid())
-  clerkId       String    @unique // Clerk user ID
-  email         String    @unique
-  tier          UserTier  @default(FREE)
-  auditsUsedThisMonth Int @default(0)
-  lastResetDate DateTime  @default(now())
-  
-  // Relations
-  auditReports  AuditReport[]
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // Credentials auth (nullable — OAuth users have no password)
+  passwordHash  String?
+
+  // App-specific fields
+  tier                UserTier @default(FREE)
+  auditsUsedThisMonth Int      @default(0)
+  lastResetDate       DateTime @default(now())
+
+  // NextAuth relations
+  accounts      Account[]
+  sessions      Session[]
+
+  // App relations
+  auditReports    AuditReport[]
   serviceRequests ServiceRequest[]
-  
+
+  // Billing relations
+  creditAccount   CreditAccount?
+  subscription    Subscription?
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  @@index([clerkId])
   @@index([email])
+}
+
+// NextAuth.js - OAuth account links
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// NextAuth.js - Active sessions
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// NextAuth.js - Email verification tokens
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 enum UserTier {
@@ -44,8 +100,7 @@ model AuditReport {
   
   // Audit details
   url           String
-  mode          AuditMode // SINGLE or MULTI
-  pageLimit     Int?      // For MULTI mode
+  mode          AuditMode @default(SINGLE)
   pagesAnalyzed Int       @default(0)
   
   // Scores (0-100)
@@ -57,6 +112,26 @@ model AuditReport {
   linkScore     Float?
   structuredDataScore Float?
   securityScore Float
+  
+  // Grades (A+ to F) - NEW
+  overallGrade  String?
+  technicalGrade String?
+  onPageGrade   String?
+  performanceGrade String?
+  accessibilityGrade String?
+  linkGrade     String?
+  structuredDataGrade String?
+  securityGrade String?
+  
+  // Tiers (Excellent, Good, Fair, Poor) - NEW
+  overallTier   String?
+  technicalTier String?
+  onPageTier    String?
+  performanceTier String?
+  accessibilityTier String?
+  linkTier      String?
+  structuredDataTier String?
+  securityTier  String?
   
   // Positive findings (what's working well)
   passingChecks Json?     // Array of PassingCheck objects
@@ -83,7 +158,6 @@ model AuditReport {
 
 enum AuditMode {
   SINGLE
-  MULTI
 }
 
 enum AuditStatus {
@@ -150,8 +224,16 @@ model SeoIssue {
   type          String    // e.g., "missing_meta_description"
   title         String    // Human-readable title
   description   String    // What's wrong
+  recommendation String?  @db.Text // How to fix
+  what          String?   @db.Text // What this check means
+  why           String?   @db.Text // Why this matters
+  how           String?   @db.Text // How to implement
+  timeEstimate  String?   // Estimated fix time
+  moreInfoUrl   String?   // External docs URL
+  platformGuides Json?    // Platform-specific implementation guides
   severity      Severity
   impactScore   Float     // 0-100, how much it affects SEO
+  data          Json?     // Structured rule metadata/details
   
   // Location
   pageUrl       String?   // Which page has this issue
@@ -303,4 +385,150 @@ enum RequestStatus {
   IN_PROGRESS   // Working on it
   COMPLETED     // Done
   CANCELLED     // User cancelled
+}
+
+// ============================================
+// BILLING
+// ============================================
+
+// Per-user credit balance
+model CreditAccount {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  availableBalance   Int      @default(0) // credits the user can spend
+  reservedBalance    Int      @default(0) // credits held for in-progress jobs
+  lifetimeEarned     Int      @default(0) // total credits ever granted
+  monthlyQuotaBalance Int     @default(0) // sub-balance for current-cycle quota credits (expires at cycle end)
+
+  transactions     CreditTransaction[]
+  reservations     UsageReservation[]
+
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Immutable credit ledger — never update, only insert
+model CreditTransaction {
+  id             String                  @id @default(cuid())
+  userId         String
+  accountId      String
+  account        CreditAccount           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  amount         Int                     // positive = credit, negative = debit
+  type           CreditTransactionType
+
+  idempotencyKey String                  @unique // prevents double-charges
+  referenceType  String?                 // e.g. "audit_job", "payment_event"
+  referenceId    String?                 // e.g. BullMQ jobId or Razorpay event id
+  description    String
+
+  createdAt      DateTime                @default(now())
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([referenceType, referenceId])
+}
+
+enum CreditTransactionType {
+  PURCHASE              // one-off credit top-up
+  MONTHLY_QUOTA_GRANT   // recurring free-tier grant at the start of billing period
+  MONTHLY_QUOTA_EXPIRE  // expiry of unused monthly-quota credits
+  ADMIN_GRANT           // manual grant by admin
+  AUDIT_RESERVE         // credits held when an audit job is queued
+  AUDIT_SETTLE          // final debit when audit job completes
+  AUDIT_REFUND          // credits returned if audit job fails
+  LINKGRAPH_RESERVE     // credits held when a link-graph job is queued
+  LINKGRAPH_SETTLE      // final debit when link-graph job completes
+  LINKGRAPH_REFUND      // credits returned if link-graph job fails
+  CHAT_DEBIT            // per-message AI chat charge
+}
+
+// Tracks in-flight credit holds for BullMQ jobs
+model UsageReservation {
+  id              String             @id @default(cuid())
+  userId          String
+  accountId       String
+  account         CreditAccount      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  jobId           String             @unique // BullMQ job ID
+  jobType         ReservationJobType
+  creditsReserved Int
+  quotaConsumed   Int                @default(0) // portion of creditsReserved paid from monthly quota
+  status          ReservationStatus  @default(PENDING)
+
+  createdAt       DateTime           @default(now())
+  settledAt       DateTime?
+  refundedAt      DateTime?
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([status])
+}
+
+enum ReservationJobType {
+  AUDIT
+  LINK_GRAPH
+}
+
+enum ReservationStatus {
+  PENDING
+  SETTLED
+  REFUNDED
+  EXPIRED
+}
+
+// Razorpay subscription record
+model Subscription {
+  id                    String             @id @default(cuid())
+  userId                String             @unique
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  planId                String             // maps to your plan config (e.g. "free", "pro")
+  status                SubscriptionStatus @default(ACTIVE)
+
+  razorpaySubscriptionId String?           @unique
+  razorpayCustomerId     String?
+
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  cancelAtPeriodEnd     Boolean            @default(false)
+
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([razorpaySubscriptionId])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIALING
+}
+
+// Razorpay webhook event log — idempotent processing
+model PaymentEvent {
+  id                String             @id @default(cuid())
+  userId            String
+
+  razorpayEventId   String             @unique // Razorpay event.id — idempotency key
+  eventType         String             // e.g. "payment.captured", "subscription.charged"
+  amountCents       Int?               // amount in paise (smallest unit)
+  creditGranted     Int?               // credits issued as a result of this event
+  status            PaymentEventStatus
+
+  processedAt       DateTime
+
+  @@index([userId])
+  @@index([razorpayEventId])
+}
+
+enum PaymentEventStatus {
+  PROCESSED
+  FAILED
+  SKIPPED
 }

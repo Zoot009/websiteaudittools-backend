@@ -1,9 +1,4 @@
-/**
- * Check if pages are blocked by robots.txt
- * CRITICAL: Prevents Google from crawling important pages
- */
-
-import type { SiteRule, PageData, SiteContext, RuleResult, Issue, PassingCheck } from '../../types.js';
+import type { SiteRule, PageData, SiteContext, RuleResult, CheckDefinition, SEOAuditCheck } from '../../types.js';
 import { RobotsTxtParser } from '../../../crawler/robotsTxtParser.js';
 
 export class RobotsTxtBlockingRule implements SiteRule {
@@ -11,115 +6,122 @@ export class RobotsTxtBlockingRule implements SiteRule {
   category = 'TECHNICAL' as const;
   level = 'site' as const;
 
+  readonly checkDefinition: CheckDefinition = {
+    id: 'ROBOTS_TXT_BLOCKING',
+    name: 'Robots.txt Blocking',
+    maxScore: 4,
+    priority: 1,
+    section: 'seo',
+    informational: false,
+    what: 'Checks whether your robots.txt file is accidentally blocking important pages or your entire site from search engine crawling.',
+    why: 'A misconfigured robots.txt with "Disallow: /" blocks search engines from crawling your entire site, making it impossible to rank. Even partial blocks on important content can severely damage SEO.',
+    how: 'Review your robots.txt file at yourdomain.com/robots.txt. Remove any unintentional "Disallow: /" or directives blocking important pages. Use Google Search Console\'s robots.txt Tester to validate your configuration.',
+    time: '15 minutes',
+  };
+
   execute(pages: PageData[], context: SiteContext): RuleResult {
-    const issues: Issue[] = [];
-    const passingChecks: PassingCheck[] = [];
-
-    const baseUrl = context.baseUrl;
-
-    // Check if robots.txt exists in context
     if (!context.robotsTxt) {
-      // No robots.txt - this is fine, nothing is blocked
-      passingChecks.push({
-        category: 'TECHNICAL',
-        code: 'no_robots_txt',
-        title: 'No robots.txt File',
-        description: 'No robots.txt file found. All pages are allowed for crawling by default.',
-        pageUrl: baseUrl,
-        goodPractice: 'No robots.txt means no unintentional crawl blocks',
-      });
-      return { issues, passingChecks };
+      const check: SEOAuditCheck = {
+        ...this.checkDefinition,
+        category: this.category,
+        passed: true,
+        score: this.checkDefinition.maxScore,
+        shortAnswer: 'No robots.txt blocking rules found.',
+        answer: 'No robots.txt file means no crawl blocks — all pages are accessible to search engines by default.',
+        recommendation: null,
+        data: { blockedPages: 0, totalPages: pages.length },
+        pageUrl: context.baseUrl,
+      };
+      return {
+        check,
+        issues: [],
+        passingChecks: [{
+          category: this.category,
+          code: this.code,
+          title: 'No Robots.txt Blocking',
+          description: check.shortAnswer,
+          pageUrl: context.baseUrl,
+          goodPractice: 'All pages are accessible to search engine crawlers.',
+        }],
+      };
     }
 
-    // Parse robots.txt
     const parser = new RobotsTxtParser();
     parser.parse(context.robotsTxt);
 
-    // Check if entire site is blocked
     if (parser.blocksEntireSite()) {
-      issues.push({
-        type: 'robots_txt_blocks_entire_site',
-        category: 'TECHNICAL',
-        title: 'Robots.txt Blocks Entire Site',
-        description: 'Your robots.txt file contains "Disallow: /" which blocks search engines from crawling your entire website. This prevents all content from being indexed. Remove this directive unless intentional.',
-        severity: 'CRITICAL',
-        impactScore: 100,
-        pageUrl: baseUrl,
-      });
-      return { issues, passingChecks };
+      const check: SEOAuditCheck = {
+        ...this.checkDefinition,
+        category: this.category,
+        passed: false,
+        score: 0,
+        shortAnswer: 'Robots.txt is blocking the entire site!',
+        answer: 'Your robots.txt file contains "Disallow: /" which blocks search engines from crawling your entire website. This prevents all content from being indexed.',
+        recommendation: 'Remove "Disallow: /" from your robots.txt immediately to restore search engine access.',
+        data: { blocksEntireSite: true, blockedPages: pages.length, totalPages: pages.length },
+        pageUrl: context.baseUrl,
+      };
+      return {
+        check,
+        issues: [{
+          category: this.category,
+          type: this.code,
+          title: 'Robots.txt Blocks Entire Site',
+          description: check.answer,
+          severity: 'CRITICAL' as const,
+          impactScore: 100,
+          pageUrl: context.baseUrl,
+        }],
+        passingChecks: [],
+      };
     }
 
-    // Check each crawled page
-    const blockedPages: string[] = [];
-    const allowedPages: string[] = [];
+    const blockedPages = pages.filter(p => !parser.isAllowed(p.url, 'Googlebot'));
+    const passed = blockedPages.length === 0;
+    const blockedRatio = blockedPages.length / Math.max(pages.length, 1);
+    const score = passed
+      ? this.checkDefinition.maxScore
+      : Math.max(0, Math.round(this.checkDefinition.maxScore * (1 - blockedRatio)));
 
-    for (const page of pages) {
-      const isAllowed = parser.isAllowed(page.url, 'Googlebot');
-      
-      if (!isAllowed) {
-        blockedPages.push(page.url);
-      } else {
-        allowedPages.push(page.url);
-      }
-    }
+    const check: SEOAuditCheck = {
+      ...this.checkDefinition,
+      category: this.category,
+      passed,
+      score,
+      shortAnswer: passed
+        ? `Robots.txt allows crawling of all ${pages.length} pages.`
+        : `Robots.txt is blocking ${blockedPages.length} of ${pages.length} pages.`,
+      answer: passed
+        ? `Your robots.txt file allows search engines to crawl all ${pages.length} discovered pages.`
+        : `Your robots.txt is blocking ${blockedPages.length} of ${pages.length} pages from being indexed: ${blockedPages.slice(0, 3).map(p => p.url).join(', ')}${blockedPages.length > 3 ? '...' : ''}`,
+      recommendation: passed ? null : 'Review your robots.txt file and remove Disallow directives for pages you want indexed.',
+      data: {
+        blockedPages: blockedPages.length,
+        totalPages: pages.length,
+        blockedUrls: blockedPages.slice(0, 10).map(p => p.url),
+      },
+      pageUrl: context.baseUrl,
+    };
 
-    // Report blocked pages
-    if (blockedPages.length > 0) {
-      const pageList = blockedPages
-        .slice(0, 10)
-        .map(url => `• ${url}`)
-        .join('\n');
-      const morePages = blockedPages.length > 10 ? `\n...and ${blockedPages.length - 10} more` : '';
+    const issues = !passed ? [{
+      category: this.category,
+      type: this.code,
+      title: `${blockedPages.length} Page${blockedPages.length === 1 ? '' : 's'} Blocked by Robots.txt`,
+      description: check.answer,
+      severity: (blockedPages.length === pages.length ? 'CRITICAL' : 'HIGH') as const,
+      impactScore: blockedPages.length === pages.length ? 100 : 85,
+      pageUrl: context.baseUrl,
+    }] : [];
 
-      issues.push({
-        type: 'robots_txt_blocks_pages',
-        category: 'TECHNICAL',
-        title: `${blockedPages.length} Page${blockedPages.length === 1 ? '' : 's'} Blocked by robots.txt`,
-        description: `Your robots.txt file is blocking ${blockedPages.length} of ${pages.length} crawled pages from search engines. Blocked pages cannot be indexed and won't appear in search results.\n\nBlocked pages:\n${pageList}${morePages}\n\nReview your robots.txt file to ensure important pages are not accidentally blocked.`,
-        severity: blockedPages.length === pages.length ? 'CRITICAL' : 'HIGH',
-        impactScore: blockedPages.length === pages.length ? 100 : 85,
-        pageUrl: baseUrl,
-      });
-    } else {
-      // All pages allowed
-      passingChecks.push({
-        category: 'TECHNICAL',
-        code: 'robots_txt_allows_crawling',
-        title: 'robots.txt Allows Crawling',
-        description: `robots.txt file exists and allows all ${pages.length} crawled pages to be indexed.`,
-        pageUrl: baseUrl,
-        goodPractice: 'robots.txt is properly configured to allow important pages',
-      });
-    }
+    const passingChecks = passed ? [{
+      category: this.category,
+      code: this.code,
+      title: 'Robots.txt Allows Crawling',
+      description: check.shortAnswer,
+      pageUrl: context.baseUrl,
+      goodPractice: 'Robots.txt is properly configured to allow important pages to be crawled.',
+    }] : [];
 
-    // Check for common problematic patterns
-    const disallowedPatterns = parser.getDisallowedPatterns('Googlebot');
-    const problematicPatterns = [
-      { pattern: '/wp-admin', severity: 'LOW', message: '/wp-admin is blocked (this is normal for WordPress)' },
-      { pattern: '/wp-includes', severity: 'LOW', message: '/wp-includes is blocked (this is normal for WordPress)' },
-      { pattern: '/admin', severity: 'LOW', message: '/admin is blocked (this is normal for admin areas)' },
-      { pattern: '/wp-content/uploads', severity: 'MEDIUM', message: '/wp-content/uploads is blocked - this blocks images from indexing' },
-      { pattern: '/blog', severity: 'HIGH', message: '/blog is blocked - this prevents blog content from being indexed' },
-      { pattern: '/products', severity: 'HIGH', message: '/products is blocked - this prevents product pages from being indexed' },
-      { pattern: '/category', severity: 'MEDIUM', message: '/category is blocked - category pages won\'t be indexed' },
-    ];
-
-    for (const check of problematicPatterns) {
-      if (disallowedPatterns.some(p => p.startsWith(check.pattern))) {
-        if (check.severity === 'HIGH' || check.severity === 'MEDIUM') {
-          issues.push({
-            type: 'robots_txt_blocks_important_content',
-            category: 'TECHNICAL',
-            title: 'robots.txt Blocks Important Content',
-            description: check.message,
-            severity: check.severity as 'HIGH' | 'MEDIUM',
-            impactScore: check.severity === 'HIGH' ? 80 : 60,
-            pageUrl: baseUrl,
-          });
-        }
-      }
-    }
-
-    return { issues, passingChecks };
+    return { check, issues, passingChecks };
   }
 }

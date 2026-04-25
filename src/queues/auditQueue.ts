@@ -5,9 +5,7 @@ import { redisConnection } from '../config/redis.js';
 export interface AuditJobData {
   url: string;
   userId: string;
-  clerkId: string;
-  mode: 'single' | 'multi';
-  pageLimit?: number;
+  mode: 'single';
   options?: {
     timeout?: number;
     forceRecrawl?: boolean; // Force fresh crawl, ignore cache

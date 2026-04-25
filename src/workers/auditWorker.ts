@@ -31,58 +31,35 @@ async function processAudit(job: Job<AuditJobData>) {
     let pagesAnalyzed: number;
 
     // Step 1: Check cache and crawl if needed
-    if (job.data.mode === 'single') {
-      // Single page mode
-      const needsRecrawl = await shouldRecrawl(job.data.url, forceRecrawl);
-      
-      if (needsRecrawl) {
-        console.log(`🕷 Crawling fresh (cache miss or stale)...`);
+    const needsRecrawl = await shouldRecrawl(job.data.url, forceRecrawl);
+
+    if (needsRecrawl) {
+      console.log(`🕷 Crawling fresh (cache miss or stale)...`);
+      const crawler = new SiteAuditCrawler();
+      const crawlResult = await crawler.crawl(job.data.url, {
+        timeout: job.data.options?.timeout,
+      });
+      pageData = crawlResult.pages;
+      baseUrl = crawlResult.baseUrl;
+      pagesAnalyzed = crawlResult.pagesAnalyzed;
+    } else {
+      console.log(`⚡ Using cached data...`);
+      const cached = await loadCachedPageData(job.data.url);
+      if (cached) {
+        pageData = [cached];
+        baseUrl = new URL(job.data.url).origin;
+        pagesAnalyzed = 1;
+      } else {
+        // Fallback to crawl if cache load fails
+        console.log(`⚠️ Cache load failed, crawling fresh...`);
         const crawler = new SiteAuditCrawler();
         const crawlResult = await crawler.crawl(job.data.url, {
-          mode: job.data.mode,
-          pageLimit: job.data.pageLimit,
           timeout: job.data.options?.timeout,
         });
         pageData = crawlResult.pages;
         baseUrl = crawlResult.baseUrl;
         pagesAnalyzed = crawlResult.pagesAnalyzed;
-      } else {
-        console.log(`⚡ Using cached data...`);
-        const cached = await loadCachedPageData(job.data.url);
-        if (cached) {
-          pageData = [cached];
-          baseUrl = new URL(job.data.url).origin;
-          pagesAnalyzed = 1;
-        } else {
-          // Fallback to crawl if cache load fails
-          console.log(`⚠️ Cache load failed, crawling fresh...`);
-          const crawler = new SiteAuditCrawler();
-          const crawlResult = await crawler.crawl(job.data.url, {
-            mode: job.data.mode,
-            pageLimit: job.data.pageLimit,
-            timeout: job.data.options?.timeout,
-          });
-          pageData = crawlResult.pages;
-          baseUrl = crawlResult.baseUrl;
-          pagesAnalyzed = crawlResult.pagesAnalyzed;
-        }
       }
-    } else {
-      // Multi-page mode: always crawl to discover URLs first
-      // (in future, could cache sitemap URL list too)
-      console.log(`🕷 Crawling multi-page site...`);
-      const crawler = new SiteAuditCrawler();
-      const crawlResult = await crawler.crawl(job.data.url, {
-        mode: job.data.mode,
-        pageLimit: job.data.pageLimit,
-        timeout: job.data.options?.timeout,
-      });
-      
-      // For multi-page, we could selectively use cache for individual pages
-      // but for now, just use fresh crawl results
-      pageData = crawlResult.pages;
-      baseUrl = crawlResult.baseUrl;
-      pagesAnalyzed = crawlResult.pagesAnalyzed;
     }
     
     await job.updateProgress(20);
@@ -156,13 +133,28 @@ async function processAudit(job: Job<AuditJobData>) {
     await job.updateProgress(100);
     console.log(`✅ Audit saved to database with ID: ${auditReport.id}`);
 
-    // Return result
+    // Return enhanced result with scoring details
     return {
       success: true,
       auditReportId: auditReport.id,
       overallScore: analysisResult.overallScore,
+      overallGrade: analysisResult.overallGrade,
+      overallTier: analysisResult.overallTier,
       issuesFound: analysisResult.totalIssues,
+      passingChecks: analysisResult.passingChecks?.length || 0,
       pagesAnalyzed: pagesAnalyzed,
+      categoryScores: analysisResult.categoryScores?.map((cs: any) => ({
+        category: cs.category,
+        score: cs.score,
+        grade: cs.grade,
+        tier: cs.tier,
+        issueCount: cs.issueCount,
+        passingCount: cs.passingCount,
+        bonus: cs.bonus,
+      })) || [],
+      sectionScores: analysisResult.sectionScores || [],
+      checks: analysisResult.checks || [],
+      scoreSummary: analysisResult.scoreSummary || null,
     };
 
   } catch (error: any) {
@@ -197,8 +189,7 @@ async function saveToDatabase(
       data: {
         jobId: job.id as string,
         url: job.data.url,
-        mode: (job.data.mode?.toUpperCase() || 'SINGLE') as 'SINGLE' | 'MULTI',
-        pageLimit: job.data.pageLimit ?? null,
+        mode: 'SINGLE' as const,
         pagesAnalyzed: pagesAnalyzed,
         
         // Scores
@@ -210,6 +201,26 @@ async function saveToDatabase(
         linkScore: analysisResult.categoryScores.find((c: any) => c.category === 'LINKS')?.score || null,
         structuredDataScore: analysisResult.categoryScores.find((c: any) => c.category === 'STRUCTURED_DATA')?.score || null,
         securityScore: analysisResult.categoryScores.find((c: any) => c.category === 'SECURITY')?.score || 0,
+        
+        // Grades (A+ to F)
+        overallGrade: analysisResult.overallGrade,
+        technicalGrade: analysisResult.categoryScores.find((c: any) => c.category === 'TECHNICAL')?.grade || null,
+        onPageGrade: analysisResult.categoryScores.find((c: any) => c.category === 'ON_PAGE')?.grade || null,
+        performanceGrade: analysisResult.categoryScores.find((c: any) => c.category === 'PERFORMANCE')?.grade || null,
+        accessibilityGrade: analysisResult.categoryScores.find((c: any) => c.category === 'ACCESSIBILITY')?.grade || null,
+        linkGrade: analysisResult.categoryScores.find((c: any) => c.category === 'LINKS')?.grade || null,
+        structuredDataGrade: analysisResult.categoryScores.find((c: any) => c.category === 'STRUCTURED_DATA')?.grade || null,
+        securityGrade: analysisResult.categoryScores.find((c: any) => c.category === 'SECURITY')?.grade || null,
+        
+        // Tiers (Excellent, Good, Fair, Poor)
+        overallTier: analysisResult.overallTier,
+        technicalTier: analysisResult.categoryScores.find((c: any) => c.category === 'TECHNICAL')?.tier || null,
+        onPageTier: analysisResult.categoryScores.find((c: any) => c.category === 'ON_PAGE')?.tier || null,
+        performanceTier: analysisResult.categoryScores.find((c: any) => c.category === 'PERFORMANCE')?.tier || null,
+        accessibilityTier: analysisResult.categoryScores.find((c: any) => c.category === 'ACCESSIBILITY')?.tier || null,
+        linkTier: analysisResult.categoryScores.find((c: any) => c.category === 'LINKS')?.tier || null,
+        structuredDataTier: analysisResult.categoryScores.find((c: any) => c.category === 'STRUCTURED_DATA')?.tier || null,
+        securityTier: analysisResult.categoryScores.find((c: any) => c.category === 'SECURITY')?.tier || null,
         
         // Passing checks (what's working well) ✨
         passingChecks: analysisResult.passingChecks || [],
@@ -343,8 +354,7 @@ async function saveFailedAudit(job: Job<AuditJobData>, errorMessage: string) {
       create: {
         jobId: job.id as string,
         url: job.data.url,
-        mode: (job.data.mode?.toUpperCase() || 'SINGLE') as 'SINGLE' | 'MULTI',
-        pageLimit: job.data.pageLimit ?? null,
+        mode: 'SINGLE' as const,
         pagesAnalyzed: 0,
         overallScore: 0,
         technicalScore: 0,
