@@ -88,7 +88,7 @@ export class HreflangRule implements PageRule {
       type: issueType,
       title: issueType === 'INVALID_HREFLANG' ? 'Invalid Hreflang Codes' : 'Missing Self-Referencing Hreflang',
       description: answer,
-      severity: issueSeverity as const,
+      severity: issueSeverity,
       impactScore: issueImpact,
       pageUrl: page.url,
       elementSelector: 'link[rel="alternate"][hreflang]',

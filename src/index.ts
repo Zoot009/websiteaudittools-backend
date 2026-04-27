@@ -8,11 +8,13 @@ import { auditWorker } from './workers/auditWorker.js';
 import { linkGraphQueue } from './queues/linkGraphQueue.js';
 import { linkGraphWorker } from './workers/linkGraphWorker.js';
 import { prisma } from './lib/prisma.js';
-import { redis } from './config/redis.js';
+import { redis, redisConnection } from './config/redis.js';
 import { getCacheStats } from './services/crawler/crawlCache.js';
 import { normalizeUrl } from './services/crawler/antibot.js';
 import { captureScreenshots } from './services/screenshots/screenshotService.js';
-import { generateLinkGraph, filterLinkGraphByDepth, exportToDOT, exportToCSV } from './services/linkGraph/linkGraphService.js';
+import { generateLinkGraph, filterLinkGraphByDepth, exportToDOT, exportToCSV, findConnectedPages } from './services/linkGraph/linkGraphService.js';
+import type { LinkGraphCrawlResult } from './services/linkGraph/linkGraphCrawler.js';
+import { QueueEvents } from 'bullmq';
 // TODO: Re-implement analyzer
 // import { buildSiteContext } from './services/analyzer/siteContextBuilder.js';
 import chatRoutes from './routes/chatRoutes.js';
@@ -1225,6 +1227,91 @@ app.get('/api/link-graph/jobs/:jobId/result', async (req, res) => {
       error: 'Failed to get job result', 
       details: error.message 
     });
+  }
+});
+
+// Stream real-time progress for a link graph job via SSE
+app.get('/api/link-graph/jobs/:jobId/stream', async (req, res) => {
+  const { jobId } = req.params;
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const sendEvent = (type: string, data: object) =>
+    res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+
+  // Check current state first so clients joining late get immediate feedback
+  const job = await linkGraphQueue.getJob(jobId);
+  if (!job) {
+    sendEvent('error', { message: 'Job not found' });
+    return res.end();
+  }
+
+  const currentState = await job.getState();
+  sendEvent('state', { state: currentState, progress: job.progress });
+
+  if (currentState === 'completed' || currentState === 'failed') {
+    return res.end();
+  }
+
+  const queueEvents = new QueueEvents('link-graph-crawl', { connection: redisConnection });
+
+  queueEvents.on('progress', ({ jobId: id, data }: { jobId: string; data: unknown }) => {
+    if (id === jobId) sendEvent('progress', { data });
+  });
+
+  queueEvents.on('completed', ({ jobId: id }: { jobId: string }) => {
+    if (id === jobId) {
+      sendEvent('completed', {});
+      res.end();
+      queueEvents.close();
+    }
+  });
+
+  queueEvents.on('failed', ({ jobId: id, failedReason }: { jobId: string; failedReason: string }) => {
+    if (id === jobId) {
+      sendEvent('failed', { reason: failedReason });
+      res.end();
+      queueEvents.close();
+    }
+  });
+
+  req.on('close', () => queueEvents.close());
+});
+
+// Find all pages in a completed link graph crawl that link to a given target URL
+app.get('/api/link-graph/jobs/:jobId/connected-pages', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { targetUrl } = req.query;
+
+    if (!targetUrl || typeof targetUrl !== 'string') {
+      return res.status(400).json({ error: 'targetUrl query param is required' });
+    }
+
+    const job = await linkGraphQueue.getJob(jobId);
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    const state = await job.getState();
+    if (state !== 'completed') {
+      return res.status(400).json({
+        error: 'Job not completed yet',
+        state,
+        message: state === 'failed'
+          ? `Job failed: ${job.failedReason}`
+          : `Job is currently ${state}. Please check status endpoint.`,
+      });
+    }
+
+    const result = job.returnvalue as LinkGraphCrawlResult;
+    const connected = findConnectedPages(result.links, targetUrl);
+    res.json(connected);
+  } catch (error: any) {
+    console.error('Failed to get connected pages:', error);
+    res.status(500).json({ error: 'Failed to get connected pages', details: error.message });
   }
 });
 

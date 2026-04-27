@@ -1,19 +1,13 @@
-/**
- * Check on-page link structure (internal vs external ratio, nofollow detection)
- * Enhanced with link ratios and nofollow percentage tracking
- */
-
-import type { PageRule, PageData, SiteContext, RuleResult, Issue, PassingCheck } from '../../types.js';
-import { getRecommendationContent } from '../../templates/checkContent.js';
+import type { PageRule, PageData, SiteContext, RuleResult, CheckDefinition, SEOAuditCheck } from '../../types.js';
 
 interface LinkAnalysis {
   total: number;
   internal: number;
   external: number;
-  internalRatio: number; // Percentage
-  externalRatio: number; // Percentage
+  internalRatio: number;
+  externalRatio: number;
   nofollow: number;
-  nofollowRatio: number; // Percentage
+  nofollowRatio: number;
 }
 
 export class LinkStructureRule implements PageRule {
@@ -21,126 +15,130 @@ export class LinkStructureRule implements PageRule {
   category = 'LINKS' as const;
   level = 'page' as const;
 
-  execute(page: PageData, context: SiteContext): RuleResult {
-    const issues: Issue[] = [];
-    const passingChecks: PassingCheck[] = [];
+  readonly checkDefinition: CheckDefinition = {
+    id: 'LINK_STRUCTURE',
+    name: 'Link Structure',
+    maxScore: 3,
+    priority: 2,
+    section: 'links',
+    informational: false,
+    what: 'Link structure refers to the balance and quality of internal and external links on your page, including the ratio of internal to external links.',
+    why: 'Proper link structure helps distribute PageRank throughout your site, improves crawlability, enhances user navigation, and signals topical relationships to search engines.',
+    how: 'Aim for at least 70-80% internal links to keep users on your site and distribute PageRank. Use external links sparingly and only to high-quality, relevant sources. Ensure all important pages are linked from multiple locations.',
+    time: '1 hour',
+  };
 
-    const links = page.links || [];
+  execute(page: PageData, _context: SiteContext): RuleResult {
+    const links = page.links ?? [];
 
     if (links.length === 0) {
-      const recommendationContent = getRecommendationContent(this.code);
-      issues.push({
+      const check: SEOAuditCheck = {
+        ...this.checkDefinition,
         category: this.category,
-        type: 'NO_LINKS',
-        title: 'No Links on Page',
-        description: `Page "${page.url}" has no links. Pages should link to related content for better navigation and SEO.`,
-        severity: 'MEDIUM' as const,
-        impactScore: 15,
-        pageUrl: page.url,
+        passed: false,
+        score: 0,
+        shortAnswer: 'No links found on this page.',
+        answer: `Page "${page.url}" has no links. Pages should link to related content for better navigation and SEO.`,
         recommendation: 'Add internal links to related content and external links to authoritative sources.',
-        ...(recommendationContent ? { recommendationContent } : {}),
-        data: { analysis: this.analyzeLinks(links) }
-      });
-      return { issues, passingChecks };
+        data: { analysis: this.analyzeLinks([]) },
+        pageUrl: page.url,
+      };
+      return {
+        check,
+        issues: [{
+          category: this.category,
+          type: 'NO_LINKS',
+          title: 'No Links on Page',
+          description: check.answer,
+          severity: 'MEDIUM' as const,
+          impactScore: 15,
+          pageUrl: page.url,
+        }],
+        passingChecks: [],
+      };
     }
 
     const analysis = this.analyzeLinks(links);
-    const recommendationContent = getRecommendationContent(this.code) ||
-      getRecommendationContent('ON_PAGE_LINKS');
+    let passed: boolean;
+    let score: number;
+    let shortAnswer: string;
+    let answer: string;
+    let recommendation: string | null;
+    let issueType: string | null = null;
+    let issueSeverity: 'MEDIUM' | 'LOW' = 'LOW';
+    let issueImpact = 8;
 
-    // Check for link imbalances
     if (analysis.internal === 0) {
-      issues.push({
-        category: this.category,
-        type: 'NO_INTERNAL_LINKS',
-        title: 'No Internal Links',
-        description: `Page has ${analysis.external} external links but no internal links. Internal linking improves site navigation and SEO.`,
-        severity: 'MEDIUM' as const,
-        impactScore: 15,
-        pageUrl: page.url,
-        recommendation: 'Add internal links to related pages on your site to improve navigation and distribute PageRank.',
-        ...(recommendationContent ? { recommendationContent } : {}),
-        data: { analysis }
-      });
+      passed = false; score = 0;
+      shortAnswer = 'No internal links found.';
+      answer = `Page has ${analysis.external} external link(s) but no internal links. Internal linking improves site navigation and SEO.`;
+      recommendation = 'Add internal links to related pages on your site to improve navigation and distribute PageRank.';
+      issueType = 'NO_INTERNAL_LINKS'; issueSeverity = 'MEDIUM'; issueImpact = 15;
     } else if (analysis.external === 0 && analysis.total > 10) {
-      issues.push({
-        category: this.category,
-        type: 'NO_EXTERNAL_LINKS',
-        title: 'No External Links',
-        description: `Page has ${analysis.internal} internal links but no external links. Linking to authoritative sources can build trust.`,
-        severity: 'LOW' as const,
-        impactScore: 3,
-        pageUrl: page.url,
-        recommendation: 'Consider adding a few external links to high-quality, relevant sources to support your content.',
-        ...(recommendationContent ? { recommendationContent } : {}),
-        data: { analysis }
-      });
+      passed = false; score = 2;
+      shortAnswer = 'No external links found.';
+      answer = `Page has ${analysis.internal} internal link(s) but no external links. Linking to authoritative sources can build trust.`;
+      recommendation = 'Consider adding a few external links to high-quality, relevant sources to support your content.';
+      issueType = 'NO_EXTERNAL_LINKS'; issueSeverity = 'LOW'; issueImpact = 3;
     } else if (analysis.externalRatio > 50) {
-      issues.push({
-        category: this.category,
-        type: 'TOO_MANY_EXTERNAL_LINKS',
-        title: 'High External Link Ratio',
-        description: `Page has ${analysis.externalRatio}% external links (${analysis.external} external, ${analysis.internal} internal). Too many external links can leak PageRank.`,
-        severity: 'LOW' as const,
-        impactScore: 8,
-        pageUrl: page.url,
-        recommendation: 'Aim for at least 70-80% internal links to keep users on your site and distribute PageRank effectively.',
-        ...(recommendationContent ? { recommendationContent } : {}),
-        data: { analysis }
-      });
-    } else if (analysis.nofollowRatio > 30) {
-      issues.push({
-        category: this.category,
-        type: 'EXCESSIVE_NOFOLLOW',
-        title: 'Excessive Nofollow Links',
-        description: `Page has ${analysis.nofollowRatio}% nofollow links (${analysis.nofollow} of ${analysis.total}). Excessive nofollow usage wastes link equity.`,
-        severity: 'LOW' as const,
-        impactScore: 5,
-        pageUrl: page.url,
-        recommendation: 'Use nofollow only for untrusted content, sponsored links, or user-generated content. Let other links pass PageRank.',
-        ...(recommendationContent ? { recommendationContent } : {}),
-        data: { analysis }
-      });
+      passed = false; score = 1;
+      shortAnswer = `High external link ratio (${analysis.externalRatio}% external).`;
+      answer = `Page has ${analysis.externalRatio}% external links (${analysis.external} external, ${analysis.internal} internal). Too many external links can leak PageRank.`;
+      recommendation = 'Aim for at least 70-80% internal links to keep users on your site and distribute PageRank effectively.';
+      issueType = 'TOO_MANY_EXTERNAL_LINKS'; issueSeverity = 'LOW'; issueImpact = 8;
     } else if (analysis.total > 100) {
-      issues.push({
-        category: this.category,
-        type: 'TOO_MANY_LINKS',
-        title: 'Excessive Links',
-        description: `Page has ${analysis.total} links (${analysis.internal} internal, ${analysis.external} external). Consider reducing to <100 links.`,
-        severity: 'LOW' as const,
-        impactScore: 5,
-        pageUrl: page.url,
-        recommendation: 'Reduce total links to under 100 to avoid diluting link equity and improve page quality.',
-        ...(recommendationContent ? { recommendationContent } : {}),
-        data: { analysis }
-      });
+      passed = false; score = 2;
+      shortAnswer = `Excessive links (${analysis.total} total).`;
+      answer = `Page has ${analysis.total} links (${analysis.internal} internal, ${analysis.external} external). Consider reducing to under 100.`;
+      recommendation = 'Reduce total links to under 100 to avoid diluting link equity and improve page quality.';
+      issueType = 'TOO_MANY_LINKS'; issueSeverity = 'LOW'; issueImpact = 5;
     } else {
-      passingChecks.push({
-        category: this.category,
-        code: this.code,
-        title: 'Healthy Link Structure',
-        description: `Page has ${analysis.total} links (${analysis.internalRatio}% internal, ${analysis.externalRatio}% external, ${analysis.nofollowRatio}% nofollow)`,
-        pageUrl: page.url,
-        goodPractice:
-          'Balanced internal and external linking helps with navigation, user experience, and SEO.',
-        ...(recommendationContent ? { recommendationContent } : {}),
-        data: { analysis }
-      });
+      passed = true; score = this.checkDefinition.maxScore;
+      shortAnswer = `Healthy link structure: ${analysis.total} links (${analysis.internalRatio}% internal).`;
+      answer = `Page has ${analysis.total} links with a good balance: ${analysis.internalRatio}% internal (${analysis.internal}) and ${analysis.externalRatio}% external (${analysis.external}).`;
+      recommendation = null;
     }
 
-    return { issues, passingChecks };
+    const check: SEOAuditCheck = {
+      ...this.checkDefinition,
+      category: this.category,
+      passed,
+      score,
+      shortAnswer,
+      answer,
+      recommendation,
+      data: { analysis },
+      pageUrl: page.url,
+    };
+
+    const issues = !passed && issueType ? [{
+      category: this.category,
+      type: issueType,
+      title: shortAnswer,
+      description: answer,
+      severity: issueSeverity,
+      impactScore: issueImpact,
+      pageUrl: page.url,
+    }] : [];
+
+    const passingChecks = passed ? [{
+      category: this.category,
+      code: this.code,
+      title: 'Healthy Link Structure',
+      description: shortAnswer,
+      pageUrl: page.url,
+      goodPractice: 'Balanced internal and external linking helps with navigation, user experience, and SEO.',
+      data: { analysis },
+    }] : [];
+
+    return { check, issues, passingChecks };
   }
 
   private analyzeLinks(links: Array<{ href: string; text: string; isInternal: boolean }>): LinkAnalysis {
     const total = links.length;
     const internal = links.filter(l => l.isInternal).length;
     const external = total - internal;
-    
-    // Count nofollow links (detected by rel="nofollow" in the href or text)
-    const nofollow = links.filter(l => {
-      // This is a simplified check - in real implementation, we'd need the full link HTML
-      return l.text.toLowerCase().includes('nofollow');
-    }).length;
+    const nofollow = links.filter(l => l.text.toLowerCase().includes('nofollow')).length;
 
     return {
       total,
@@ -149,7 +147,7 @@ export class LinkStructureRule implements PageRule {
       internalRatio: total > 0 ? Math.round((internal / total) * 100) : 0,
       externalRatio: total > 0 ? Math.round((external / total) * 100) : 0,
       nofollow,
-      nofollowRatio: total > 0 ? Math.round((nofollow / total) * 100) : 0
+      nofollowRatio: total > 0 ? Math.round((nofollow / total) * 100) : 0,
     };
   }
 }

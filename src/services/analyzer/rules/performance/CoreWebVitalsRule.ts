@@ -1,102 +1,109 @@
-/**
- * Check Core Web Vitals (LCP, CLS, FID)
- */
-
-import type { PageRule, PageData, SiteContext, RuleResult, Issue, PassingCheck, Severity } from '../../types.js';
+import type { PageRule, PageData, SiteContext, RuleResult, CheckDefinition, SEOAuditCheck, Severity } from '../../types.js';
 
 export class CoreWebVitalsRule implements PageRule {
   code = 'CORE_WEB_VITALS';
   category = 'PERFORMANCE' as const;
   level = 'page' as const;
 
-  // Google's thresholds
-  private readonly LCP_GOOD = 2500; // ms
-  private readonly LCP_POOR = 4000; // ms
+  private readonly LCP_GOOD = 2500;
+  private readonly LCP_POOR = 4000;
   private readonly CLS_GOOD = 0.1;
   private readonly CLS_POOR = 0.25;
-  private readonly FID_GOOD = 100; // ms
-  private readonly FID_POOR = 300; // ms
+  private readonly FID_GOOD = 100;
+  private readonly FID_POOR = 300;
 
-  execute(page: PageData, context: SiteContext): RuleResult {
-    const issues: Issue[] = [];
-    const passingChecks: PassingCheck[] = [];
+  readonly checkDefinition: CheckDefinition = {
+    id: 'CORE_WEB_VITALS',
+    name: 'Core Web Vitals',
+    maxScore: 5,
+    priority: 1,
+    section: 'performance',
+    informational: false,
+    what: 'Core Web Vitals are Google\'s user experience metrics: LCP (loading performance), FID/INP (interactivity), and CLS (visual stability). They are confirmed ranking factors.',
+    why: 'Core Web Vitals directly impact rankings and user experience. Pages with poor vitals may rank lower, lose traffic, and experience higher bounce rates.',
+    how: 'Improve LCP by optimizing images, removing render-blocking resources, and using a CDN. Reduce CLS by specifying image/video dimensions. Improve FID by minimizing JavaScript. Use Google PageSpeed Insights to identify specific issues.',
+    time: '4-8 hours',
+  };
 
+  execute(page: PageData, _context: SiteContext): RuleResult {
     let vitalsCount = 0;
     let goodCount = 0;
     const problems: string[] = [];
 
-    // Check LCP (Largest Contentful Paint)
     if (page.lcp !== null && page.lcp !== undefined) {
       vitalsCount++;
-      if (page.lcp <= this.LCP_GOOD) {
-        goodCount++;
-      } else if (page.lcp >= this.LCP_POOR) {
-        problems.push(`LCP is ${Math.round(page.lcp)}ms (should be <2.5s)`);
-      } else {
-        problems.push(`LCP is ${Math.round(page.lcp)}ms (needs improvement)`);
-      }
+      if (page.lcp <= this.LCP_GOOD) goodCount++;
+      else problems.push(`LCP is ${Math.round(page.lcp)}ms (should be <2.5s)`);
     }
 
-    // Check CLS (Cumulative Layout Shift)
     if (page.cls !== null && page.cls !== undefined) {
       vitalsCount++;
-      if (page.cls <= this.CLS_GOOD) {
-        goodCount++;
-      } else if (page.cls >= this.CLS_POOR) {
-        problems.push(`CLS is ${page.cls.toFixed(3)} (should be <0.1)`);
-      } else {
-        problems.push(`CLS is ${page.cls.toFixed(3)} (needs improvement)`);
-      }
+      if (page.cls <= this.CLS_GOOD) goodCount++;
+      else problems.push(`CLS is ${page.cls.toFixed(3)} (should be <0.1)`);
     }
 
-    // Check FID (First Input Delay)
     if (page.fid !== null && page.fid !== undefined) {
       vitalsCount++;
-      if (page.fid <= this.FID_GOOD) {
-        goodCount++;
-      } else if (page.fid >= this.FID_POOR) {
-        problems.push(`FID is ${Math.round(page.fid)}ms (should be <100ms)`);
-      } else {
-        problems.push(`FID is ${Math.round(page.fid)}ms (needs improvement)`);
-      }
+      if (page.fid <= this.FID_GOOD) goodCount++;
+      else problems.push(`FID is ${Math.round(page.fid)}ms (should be <100ms)`);
     }
 
     if (vitalsCount === 0) {
-      // No metrics collected
-      issues.push({
+      const stub: SEOAuditCheck = {
+        ...this.checkDefinition,
+        maxScore: 0,
+        informational: true,
         category: this.category,
-        type: 'MISSING_WEB_VITALS',
-        title: 'Core Web Vitals Not Measured',
-        description: 'No Core Web Vitals metrics were collected for this page.',
-        severity: 'LOW' as const,
-        impactScore: 5,
+        passed: null,
+        score: 0,
+        shortAnswer: 'Core Web Vitals not measured.',
+        answer: 'No Core Web Vitals data was collected for this page.',
+        recommendation: null,
         pageUrl: page.url,
-      });
-    } else if (problems.length > 0) {
-      const severity: Severity = problems.length >= 2 ? 'HIGH' : 'MEDIUM';
-      const impactScore = problems.length * 15;
-
-      issues.push({
-        category: this.category,
-        type: this.code,
-        title: 'Poor Core Web Vitals',
-        description: `Page has Core Web Vitals issues: ${problems.join('; ')}. These are Google ranking factors.`,
-        severity,
-        impactScore,
-        pageUrl: page.url,
-      });
-    } else {
-      passingChecks.push({
-        category: this.category,
-        code: this.code,
-        title: 'Good Core Web Vitals',
-        description: `All ${vitalsCount} Core Web Vitals metrics pass Google's thresholds`,
-        pageUrl: page.url,
-        goodPractice:
-          'Good Core Web Vitals (LCP, CLS, FID) improve user experience and are Google ranking factors.',
-      });
+      };
+      return { check: stub, issues: [], passingChecks: [] };
     }
 
-    return { issues, passingChecks };
+    const passed = problems.length === 0;
+    const score = Math.round((goodCount / vitalsCount) * this.checkDefinition.maxScore);
+
+    const check: SEOAuditCheck = {
+      ...this.checkDefinition,
+      category: this.category,
+      passed,
+      score,
+      shortAnswer: passed
+        ? `All ${vitalsCount} Core Web Vitals pass Google's thresholds.`
+        : `${problems.length} Core Web Vital(s) need improvement.`,
+      answer: passed
+        ? `All ${vitalsCount} measured Core Web Vitals (LCP, CLS, FID) pass Google's thresholds. Good user experience is expected.`
+        : `Core Web Vitals issues: ${problems.join('; ')}. These are Google ranking factors.`,
+      recommendation: passed ? null : 'Address Core Web Vitals issues to improve rankings and user experience. Use Google PageSpeed Insights for detailed recommendations.',
+      data: { lcp: page.lcp, cls: page.cls, fid: page.fid, goodCount, vitalsCount, problems },
+      pageUrl: page.url,
+    };
+
+    const severity: Severity = problems.length >= 2 ? 'HIGH' : 'MEDIUM';
+
+    const issues = !passed ? [{
+      category: this.category,
+      type: this.code,
+      title: 'Poor Core Web Vitals',
+      description: check.answer,
+      severity,
+      impactScore: problems.length * 15,
+      pageUrl: page.url,
+    }] : [];
+
+    const passingChecks = passed ? [{
+      category: this.category,
+      code: this.code,
+      title: 'Good Core Web Vitals',
+      description: check.shortAnswer,
+      pageUrl: page.url,
+      goodPractice: 'Good Core Web Vitals (LCP, CLS, FID) improve user experience and are Google ranking factors.',
+    }] : [];
+
+    return { check, issues, passingChecks };
   }
 }

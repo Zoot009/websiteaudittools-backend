@@ -1,64 +1,51 @@
-/**
- * Check for LocalBusiness schema markup
- * Helps Google display rich results for local businesses (address, hours, phone, etc.)
- */
+import type { SiteRule, PageData, SiteContext, RuleResult, CheckDefinition, SEOAuditCheck, Issue } from '../../types.js';
 
-import type { SiteRule, PageData, SiteContext, RuleResult, Issue, PassingCheck } from '../../types.js';
-
-/**
- * Schema.org LocalBusiness subtypes commonly used.
- * All inherit the LocalBusiness properties.
- */
 const LOCAL_BUSINESS_TYPES = new Set([
   'localbusiness',
-  // Food & drink
   'foodestablishment', 'restaurant', 'caffeorcoffeeshop', 'fastfoodrestaurant',
   'barorpub', 'bakery', 'icecreamshop', 'winery', 'brewery',
-  // Lodging
   'lodgingbusiness', 'hotel', 'motel', 'hostel', 'resort', 'bnb',
-  // Health
   'medicalbusiness', 'dentist', 'physician', 'hospital', 'pharmacy',
   'optician', 'veterinarycare', 'physiotherapist',
-  // Legal & financial
   'legalservice', 'attorney', 'notary', 'financialservice',
   'accountingservice', 'insuranceagency', 'realestatealent',
-  // Retail
   'store', 'grocerystore', 'hardwarestore', 'clothingstore', 'electronicstore',
   'petstore', 'bookstore', 'furniturestore', 'homeandconstructionbusiness',
-  // Services
   'autodealer', 'autorepair', 'beautysalon', 'barbershop', 'hairsalon',
   'spaorhealthclub', 'gymorfitnesscenter', 'movingcompany',
   'drycleaning', 'laundry', 'locksmith', 'electrician', 'plumber', 'roofer',
-  // Entertainment & travel
   'entertainmentbusiness', 'sportsclub', 'travelagency', 'touristinformationcenter',
   'movietheatre', 'nightclub',
-  // Education & government
   'governmentoffice', 'postaloffice', 'policestation', 'library',
   'childcare', 'school',
 ]);
-
-function isLocalBusinessType(type: string): boolean {
-  return LOCAL_BUSINESS_TYPES.has(type.toLowerCase());
-}
 
 export class LocalBusinessSchemaRule implements SiteRule {
   code = 'LOCAL_BUSINESS_SCHEMA';
   category = 'STRUCTURED_DATA' as const;
   level = 'site' as const;
 
-  execute(pages: PageData[], _context: SiteContext): RuleResult {
-    const issues: Issue[] = [];
-    const passingChecks: PassingCheck[] = [];
+  readonly checkDefinition: CheckDefinition = {
+    id: 'LOCAL_BUSINESS_SCHEMA',
+    name: 'Local Business Schema',
+    maxScore: 3,
+    priority: 2,
+    section: 'geo',
+    informational: false,
+    what: 'LocalBusiness schema is JSON-LD markup that provides Google with structured information about your business including address, phone, hours, and type — enabling rich results in Search and Maps.',
+    why: 'LocalBusiness schema enables Google to display your business information directly in search results (address, hours, phone, ratings), significantly increasing visibility and click-through rates for local searches.',
+    how: 'Add a LocalBusiness JSON-LD script to your homepage with: name, address (with streetAddress), telephone, url, and openingHours. Include image and aggregateRating for the richest results.',
+    time: '1-2 hours',
+  };
 
-    let foundSchema: any = null;
+  execute(pages: PageData[], context: SiteContext): RuleResult {
+    let foundSchema: Record<string, unknown> | null = null;
     let foundOnPage: string | null = null;
 
-    // Search all pages for a LocalBusiness schema
     for (const page of pages) {
       if (!page.schemas || page.schemas.length === 0) continue;
-
       for (const schema of page.schemas) {
-        if (isLocalBusinessType(schema.type)) {
+        if (LOCAL_BUSINESS_TYPES.has(schema.type.toLowerCase())) {
           foundSchema = schema.data;
           foundOnPage = page.url;
           break;
@@ -68,134 +55,153 @@ export class LocalBusinessSchemaRule implements SiteRule {
     }
 
     if (!foundSchema) {
-      // Only flag if any page has actual local signals (phone/address) — indicates a local business
       const hasLocalSignals = pages.some(
         (p) => p.localSeo?.phone?.found || p.localSeo?.address?.found
       );
 
-      if (hasLocalSignals) {
-        issues.push({
+      if (!hasLocalSignals) {
+        const stub: SEOAuditCheck = {
+          ...this.checkDefinition,
+          maxScore: 0,
+          informational: true,
+          category: this.category,
+          passed: null,
+          score: 0,
+          shortAnswer: 'LocalBusiness schema check applies to local businesses.',
+          answer: 'No local business signals detected. LocalBusiness schema check skipped for non-local sites.',
+          recommendation: null,
+          pageUrl: context.baseUrl,
+        };
+        return { check: stub, issues: [], passingChecks: [] };
+      }
+
+      const check: SEOAuditCheck = {
+        ...this.checkDefinition,
+        category: this.category,
+        passed: false,
+        score: 0,
+        shortAnswer: 'No LocalBusiness schema found.',
+        answer: 'Site shows local business signals (phone/address) but has no LocalBusiness JSON-LD schema. This misses rich result opportunities in Google Search and Maps.',
+        recommendation: 'Add a LocalBusiness schema with name, address, telephone, url, and openingHours to your homepage.',
+        pageUrl: context.baseUrl,
+      };
+      return {
+        check,
+        issues: [{
           category: this.category,
           type: this.code,
           title: 'Missing LocalBusiness Schema',
-          description:
-            'Your site shows local business signals (phone/address) but has no LocalBusiness JSON-LD schema. ' +
-            'Adding a LocalBusiness schema helps Google display your address, hours, phone, and reviews in Search and Maps.',
+          description: check.answer,
           severity: 'HIGH' as const,
           impactScore: 30,
-        });
-      } else {
-        // No local signals — can't determine if it's a local business, skip
-        return { issues, passingChecks };
-      }
-
-      return { issues, passingChecks };
+        }],
+        passingChecks: [],
+      };
     }
 
-    // Schema found — validate required and recommended fields
     const data = foundSchema;
-    const requiredFields: Array<{ key: string; label: string }> = [
+    const requiredFields = [
       { key: 'name', label: 'name' },
       { key: 'address', label: 'address' },
       { key: 'telephone', label: 'telephone' },
       { key: 'url', label: 'url' },
     ];
-    const recommendedFields: Array<{ key: string; label: string }> = [
-      { key: 'openingHours', label: 'openingHours' },
-      { key: 'openingHoursSpecification', label: 'openingHoursSpecification' },
-      { key: 'geo', label: 'geo (lat/long)' },
-      { key: 'image', label: 'image' },
-      { key: 'priceRange', label: 'priceRange' },
-      { key: 'aggregateRating', label: 'aggregateRating' },
-    ];
 
-    const missingRequired = requiredFields.filter((f) => !data[f.key]);
-    const missingRecommended = recommendedFields.filter(
-      (f) => !data[f.key]
-    );
+    const missingRequired = requiredFields.filter((f) => !data[f.key]).map((f) => f.label);
 
-    // Address must be an object with at least streetAddress
-    let addressIncomplete = false;
-    if (data.address && typeof data.address === 'object') {
-      const addr = data.address;
-      if (!addr.streetAddress && !addr['street-address']) {
-        addressIncomplete = true;
-      }
-    }
+    const addressIncomplete =
+      data.address &&
+      typeof data.address === 'object' &&
+      !(data.address as Record<string, unknown>).streetAddress &&
+      !(data.address as Record<string, unknown>)['street-address'];
 
-    if (missingRequired.length > 0 || addressIncomplete) {
-      const missingList = [
-        ...missingRequired.map((f) => f.label),
-        ...(addressIncomplete ? ['address.streetAddress'] : []),
-      ];
+    if (addressIncomplete) missingRequired.push('address.streetAddress');
+
+    const hasHours = !!data['openingHours'] || !!data['openingHoursSpecification'];
+    const hasRating = !!data['aggregateRating'];
+    const hasGeo = !!data['geo'];
+
+    const passed = missingRequired.length === 0;
+    const score = passed
+      ? this.checkDefinition.maxScore
+      : missingRequired.length <= 1
+        ? 2
+        : 1;
+
+    const check: SEOAuditCheck = {
+      ...this.checkDefinition,
+      category: this.category,
+      passed,
+      score,
+      shortAnswer: passed
+        ? 'LocalBusiness schema is correctly implemented.'
+        : `LocalBusiness schema missing required field(s): ${missingRequired.join(', ')}.`,
+      answer: passed
+        ? 'LocalBusiness schema with required fields (name, address, telephone, url) is correctly implemented, enabling rich results in Google Search and Maps.'
+        : `LocalBusiness schema is present but missing required fields: ${missingRequired.join(', ')}. These are needed for Google to display your business information correctly in rich results.`,
+      recommendation: passed ? null : `Add the missing required fields to your LocalBusiness schema: ${missingRequired.join(', ')}.`,
+      data: { missingRequired, hasHours, hasRating, hasGeo },
+      pageUrl: foundOnPage ?? context.baseUrl,
+    };
+
+    const issues: Issue[] = [];
+
+    if (!passed) {
       issues.push({
         category: this.category,
         type: 'INCOMPLETE_LOCAL_BUSINESS_SCHEMA',
         title: 'Incomplete LocalBusiness Schema',
-        description:
-          `LocalBusiness schema is present but missing required fields: ${missingList.join(', ')}. ` +
-          'These fields are required for Google to display your business information correctly in rich results.',
+        description: check.answer,
         severity: 'MEDIUM' as const,
         impactScore: 20,
-        pageUrl: foundOnPage!,
+        pageUrl: foundOnPage ?? context.baseUrl,
       });
-    } else {
+    }
+
+    if (passed && !hasHours) {
+      issues.push({
+        category: this.category,
+        type: 'MISSING_OPENING_HOURS_SCHEMA',
+        title: 'Opening Hours Missing from LocalBusiness Schema',
+        description: 'Your LocalBusiness schema does not include opening hours. Adding openingHours enables Google to show your business hours in rich results.',
+        severity: 'LOW' as const,
+        impactScore: 8,
+        pageUrl: foundOnPage ?? context.baseUrl,
+      });
+    }
+
+    if (passed && !hasRating) {
+      issues.push({
+        category: this.category,
+        type: 'MISSING_AGGREGATE_RATING_SCHEMA',
+        title: 'No Aggregate Rating in LocalBusiness Schema',
+        description: 'Adding aggregateRating to your LocalBusiness schema enables star ratings in search results, significantly increasing click-through rates.',
+        severity: 'LOW' as const,
+        impactScore: 8,
+        pageUrl: foundOnPage ?? context.baseUrl,
+      });
+    }
+
+    const passingChecks = passed ? [{
+      category: this.category,
+      code: this.code,
+      title: 'LocalBusiness Schema Present',
+      description: check.shortAnswer,
+      pageUrl: foundOnPage ?? context.baseUrl,
+      goodPractice: 'LocalBusiness schema helps Google display your address, hours, phone, and reviews directly in search results.',
+    }] : [];
+
+    if (hasGeo) {
       passingChecks.push({
         category: this.category,
-        code: this.code,
-        title: 'LocalBusiness Schema Present',
-        description:
-          `LocalBusiness schema with required fields (name, address, telephone, url) is correctly implemented.`,
-        pageUrl: foundOnPage!,
-        goodPractice:
-          'LocalBusiness schema helps Google display your address, hours, phone, and reviews directly in search results.',
+        code: 'LOCAL_BUSINESS_GEO',
+        title: 'LocalBusiness Geo Coordinates Present',
+        description: 'Schema includes geo coordinates, enabling precise map placement.',
+        pageUrl: foundOnPage ?? context.baseUrl,
+        goodPractice: 'Geo coordinates improve accuracy in Google Maps results.',
       });
     }
 
-    // Warn about missing recommended fields (low severity)
-    if (missingRecommended.length > 0) {
-      const hasHours =
-        !!data['openingHours'] || !!data['openingHoursSpecification'];
-      if (!hasHours) {
-        issues.push({
-          category: this.category,
-          type: 'MISSING_OPENING_HOURS_SCHEMA',
-          title: 'Opening Hours Missing from LocalBusiness Schema',
-          description:
-            'Your LocalBusiness schema does not include opening hours. ' +
-            'Adding openingHours or openingHoursSpecification enables Google to show your business hours in rich results.',
-          severity: 'LOW' as const,
-          impactScore: 8,
-          pageUrl: foundOnPage!,
-        });
-      }
-
-      if (!data['aggregateRating']) {
-        issues.push({
-          category: this.category,
-          type: 'MISSING_AGGREGATE_RATING_SCHEMA',
-          title: 'No Aggregate Rating in LocalBusiness Schema',
-          description:
-            'Adding aggregateRating to your LocalBusiness schema enables star ratings to appear in search results, ' +
-            'which significantly increases click-through rates.',
-          severity: 'LOW' as const,
-          impactScore: 8,
-          pageUrl: foundOnPage!,
-        });
-      }
-
-      if (data['geo']) {
-        passingChecks.push({
-          category: this.category,
-          code: 'local_business_geo',
-          title: 'LocalBusiness Geo Coordinates Present',
-          description: 'Schema includes geo coordinates, enabling precise map placement.',
-          pageUrl: foundOnPage!,
-          goodPractice: 'Geo coordinates improve accuracy in Google Maps results.',
-        });
-      }
-    }
-
-    return { issues, passingChecks };
+    return { check, issues, passingChecks };
   }
 }

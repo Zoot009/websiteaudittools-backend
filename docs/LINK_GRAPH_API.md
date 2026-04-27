@@ -8,6 +8,8 @@ The Link Graph API provides endpoints for analyzing internal link structures of 
    - `POST /api/link-graph/crawl` - Queue a new crawl job
    - `GET /api/link-graph/jobs/:jobId` - Check job status
    - `GET /api/link-graph/jobs/:jobId/result` - Get completed results
+   - `GET /api/link-graph/jobs/:jobId/stream` - Stream real-time progress via SSE
+   - `GET /api/link-graph/jobs/:jobId/connected-pages` - Find pages linking to a target URL
 2. **Report-Based Graph** - Generate link graphs from stored audit reports
    - `GET /api/reports/:reportId/link-graph` - Generate from existing report
 
@@ -129,7 +131,12 @@ curl http://localhost:3000/api/link-graph/jobs/12345
 {
   "id": "12345",
   "state": "active",
-  "progress": 0,
+  "progress": {
+    "pct": 42,
+    "phase": "crawling",
+    "pagesVisited": 210,
+    "maxPages": 500
+  },
   "data": {
     "url": "https://example.com",
     "depth": 2
@@ -145,6 +152,12 @@ curl http://localhost:3000/api/link-graph/jobs/12345
 - `active` - Currently crawling
 - `completed` - Finished successfully
 - `failed` - Job failed (see `failedReason`)
+
+**Progress object fields:**
+- `pct` (0–100) - Percentage complete
+- `phase` - Current phase: `starting`, `crawling`, or `complete`
+- `pagesVisited` - Pages crawled so far
+- `maxPages` - Total page limit for this job
 
 ---
 
@@ -342,7 +355,7 @@ curl -X POST http://localhost:3000/api/link-graph/crawl \
 
 ### Usage with D3.js
 
-The async API pattern requires queuing a job, polling for completion, and then using the result:
+#### Option A: SSE (recommended for live progress UIs)
 
 ```javascript
 // Step 1: Queue the crawl job
@@ -351,49 +364,253 @@ const queueResponse = await fetch('http://localhost:3000/api/link-graph/crawl', 
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ url: 'https://example.com', depth: 2 })
 });
+const { jobId } = await queueResponse.json();
 
-const { jobId, resultUrl } = await queueResponse.json();
+// Step 2: Stream progress via SSE
+await new Promise((resolve, reject) => {
+  const source = new EventSource(`/api/link-graph/jobs/${jobId}/stream`);
+
+  source.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    if (msg.type === 'progress') {
+      updateProgressBar(msg.data.pct); // update your UI
+    } else if (msg.type === 'completed') {
+      source.close();
+      resolve();
+    } else if (msg.type === 'failed') {
+      source.close();
+      reject(new Error(msg.reason));
+    }
+  };
+});
+
+// Step 3: Fetch result and render D3 graph
+const data = await fetch(`/api/link-graph/jobs/${jobId}/result`).then(r => r.json());
+renderD3Graph(data);
+```
+
+#### Option B: Polling
+
+```javascript
+// Step 1: Queue the crawl job
+const { jobId } = await fetch('http://localhost:3000/api/link-graph/crawl', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ url: 'https://example.com', depth: 2 })
+}).then(r => r.json());
 
 // Step 2: Poll for completion
 async function waitForResult(jobId) {
   while (true) {
-    const statusResponse = await fetch(`http://localhost:3000/api/link-graph/jobs/${jobId}`);
-    const status = await statusResponse.json();
-    
+    const status = await fetch(`http://localhost:3000/api/link-graph/jobs/${jobId}`).then(r => r.json());
+
     if (status.state === 'completed') {
-      // Job finished, fetch result
-      const resultResponse = await fetch(`http://localhost:3000/api/link-graph/jobs/${jobId}/result`);
-      return await resultResponse.json();
+      return fetch(`http://localhost:3000/api/link-graph/jobs/${jobId}/result`).then(r => r.json());
     } else if (status.state === 'failed') {
       throw new Error(`Crawl failed: ${status.failedReason}`);
     }
-    
-    // Wait 2 seconds before polling again
+
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
 }
 
 // Step 3: Get result and create D3 visualization
 const data = await waitForResult(jobId);
-
-// Create D3 force simulation
-const simulation = d3.forceSimulation(data.nodes)
-  .force('link', d3.forceLink(data.links).id(d => d.id))
-  .force('charge', d3.forceManyBody().strength(-100))
-  .force('center', d3.forceCenter(width / 2, height / 2));
-
-// Render graph
-const link = svg.selectAll('.link')
-  .data(data.links)
-  .enter().append('line')
-  .attr('class', 'link');
-
-const node = svg.selectAll('.node')
-  .data(data.nodes)
-  .enter().append('circle')
-  .attr('class', 'node')
-  .attr('r', 5);
+renderD3Graph(data);
 ```
+
+```javascript
+function renderD3Graph(data) {
+  const simulation = d3.forceSimulation(data.nodes)
+    .force('link', d3.forceLink(data.links).id(d => d.id))
+    .force('charge', d3.forceManyBody().strength(-100))
+    .force('center', d3.forceCenter(width / 2, height / 2));
+
+  const link = svg.selectAll('.link')
+    .data(data.links)
+    .enter().append('line')
+    .attr('class', 'link');
+
+  const node = svg.selectAll('.node')
+    .data(data.nodes)
+    .enter().append('circle')
+    .attr('class', 'node')
+    .attr('r', 5);
+}
+```
+
+---
+
+### 4. Stream Real-Time Progress (SSE)
+
+#### Endpoint
+
+```
+GET /api/link-graph/jobs/:jobId/stream
+```
+
+#### Description
+
+Opens a **Server-Sent Events (SSE)** connection and pushes progress updates as the crawl runs. Unlike polling the status endpoint, this stream delivers granular per-page progress in real time and closes automatically when the job finishes or fails.
+
+**When to use SSE vs polling:**
+- Use SSE for dashboards and live progress UIs — fewer round-trips, lower perceived latency
+- Use polling (`GET /api/link-graph/jobs/:jobId`) for simple scripts or when SSE is unavailable
+
+#### Example (curl)
+
+```bash
+curl -N http://localhost:3000/api/link-graph/jobs/12345/stream
+```
+
+#### Event Types
+
+Each event is a JSON line prefixed with `data: `:
+
+| Event type | When emitted | Payload fields |
+|-----------|-------------|----------------|
+| `state` | Immediately on connect | `state`, `progress` |
+| `progress` | After each page is crawled | `data: { pct, phase, pagesVisited, maxPages }` |
+| `completed` | When crawl finishes | _(none)_ |
+| `failed` | When crawl errors | `reason` |
+| `error` | Job not found | `message` |
+
+#### Example Event Stream
+
+```
+data: {"type":"state","state":"active","progress":{"pct":0,"phase":"starting","pagesVisited":0,"maxPages":500}}
+
+data: {"type":"progress","data":{"pct":2,"phase":"crawling","pagesVisited":10,"maxPages":500}}
+
+data: {"type":"progress","data":{"pct":20,"phase":"crawling","pagesVisited":100,"maxPages":500}}
+
+data: {"type":"progress","data":{"pct":99,"phase":"crawling","pagesVisited":495,"maxPages":500}}
+
+data: {"type":"completed"}
+```
+
+#### Example (JavaScript EventSource)
+
+```javascript
+const source = new EventSource(`/api/link-graph/jobs/${jobId}/stream`);
+
+source.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+
+  if (msg.type === 'progress') {
+    console.log(`Progress: ${msg.data.pct}% — ${msg.data.pagesVisited} pages crawled`);
+  } else if (msg.type === 'completed') {
+    console.log('Crawl complete! Fetching result...');
+    source.close();
+    // Fetch the result
+    fetch(`/api/link-graph/jobs/${jobId}/result`)
+      .then(r => r.json())
+      .then(data => renderGraph(data));
+  } else if (msg.type === 'failed') {
+    console.error('Crawl failed:', msg.reason);
+    source.close();
+  }
+};
+
+source.onerror = () => {
+  console.error('SSE connection lost');
+  source.close();
+};
+```
+
+**Notes:**
+- If the job is already `completed` or `failed` when you connect, the stream emits a single `state` event and closes immediately — no hanging connection.
+- The stream connects across multiple workers/instances via Redis pub/sub (BullMQ `QueueEvents`).
+
+---
+
+### 5. Find Connected Pages
+
+#### Endpoint
+
+```
+GET /api/link-graph/jobs/:jobId/connected-pages?targetUrl=<url>
+```
+
+#### Description
+
+Given a completed crawl job and a target URL, returns all pages in that crawl that contain an outbound link pointing to the target. Useful for understanding which pages pass link equity to a specific page, or for planning internal linking improvements.
+
+**Requires:** the crawl job must be in `completed` state.
+
+#### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `targetUrl` | string | Yes | Full URL to search for as a link target |
+
+#### Example Request
+
+```bash
+curl "http://localhost:3000/api/link-graph/jobs/12345/connected-pages?targetUrl=https://example.com/about"
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "targetUrl": "https://example.com/about",
+  "connectedPages": [
+    "https://example.com/",
+    "https://example.com/contact",
+    "https://example.com/team"
+  ],
+  "totalPagesChecked": 47,
+  "pagesContainingTarget": 3,
+  "targetFound": true
+}
+```
+
+**Response fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `targetUrl` | string | The URL you queried |
+| `connectedPages` | string[] | Pages that link to `targetUrl`, sorted alphabetically |
+| `totalPagesChecked` | number | Total unique source pages in the crawl |
+| `pagesContainingTarget` | number | How many pages link to `targetUrl` |
+| `targetFound` | boolean | `false` if no pages link to `targetUrl` |
+
+#### Response when not found
+
+```json
+{
+  "targetUrl": "https://example.com/hidden-page",
+  "connectedPages": [],
+  "totalPagesChecked": 47,
+  "pagesContainingTarget": 0,
+  "targetFound": false
+}
+```
+
+#### Error Responses
+
+**400** — Job not completed:
+```json
+{ "error": "Job not completed yet", "state": "active", "message": "Job is currently active. Please check status endpoint." }
+```
+
+**400** — Missing parameter:
+```json
+{ "error": "targetUrl query param is required" }
+```
+
+**404** — Job not found:
+```json
+{ "error": "Job not found" }
+```
+
+#### Use Cases
+
+- **Link equity analysis** — Which pages pass authority to your most important page?
+- **Broken internal link detection** — After changing a URL, find all pages that still link to the old one
+- **Silo verification** — Confirm that topic clusters link to their pillar page
+- **Orphan resolution** — Once you know a page is an orphan, use this endpoint to identify which existing pages are candidates to add a link
 
 ---
 
@@ -478,6 +695,13 @@ Returns a richer `LinkGraph` object with node classifications:
     "hubPages": 3,
     "authorityPages": 5,
     "averageLinksPerPage": 4.98,
+    "avgInboundLinks": 2.34,
+    "maxInboundLinks": 18,
+    "pagesWithNoInbound": 2,
+    "topLinkedPages": [
+      { "url": "https://example.com/", "title": "Home", "inboundLinks": 18 },
+      { "url": "https://example.com/about", "title": "About Us", "inboundLinks": 12 }
+    ],
     "generatedAt": "2026-04-07T12:34:56.789Z"
   }
 }
@@ -788,17 +1012,19 @@ Approximate times based on site structure:
 | Feature | `POST /api/link-graph/crawl` | `GET /api/reports/:id/link-graph` |
 |---------|------------------------------|-----------------------------------|
 | **Use Case** | Quick on-demand analysis | Full SEO audit integration |
-| **Pattern** | Async (queue + poll) | Synchronous |
+| **Pattern** | Async (queue + poll or SSE) | Synchronous |
 | **Response Time** | <100ms (returns job ID) | <1 sec (immediate result) |
 | **Data Source** | Live crawl (background) | Database (pre-crawled) |
 | **Crawl Time** | 30-60s (background) | N/A (already crawled) |
-| **Node Data** | URL only | SEO metrics, classifications |
+| **Node Data** | URL only | SEO metrics, classifications, top linked pages |
 | **Edge Data** | Source/target only | Includes anchor text |
 | **Persistence** | None (job result cached 1hr) | Stored in database |
 | **Depth Control** | During crawl (BFS) | Post-processing filter |
 | **Customization** | Tracking params, limits | Export formats (JSON/DOT/CSV) |
 | **Best For** | Link audits, quick checks | Comprehensive SEO reports |
 | **Retry Logic** | Automatic (2 retries) | N/A |
+| **Real-time Progress** | SSE stream (`/stream`) | N/A |
+| **Connected Pages** | `?targetUrl=` query | N/A |
 
 ---
 

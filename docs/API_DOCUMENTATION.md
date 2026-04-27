@@ -1,8 +1,35 @@
 # Website Audit Tools - API Documentation
 
 **Base URL:** `http://localhost:3000`  
-**Version:** 2.3.0  
-**Last Updated:** April 24, 2026
+**Version:** 2.5.0  
+**Last Updated:** April 27, 2026
+
+## What's New in v2.5.0 🔗
+
+- **SSE Streaming for Link Graph Jobs**: New `GET /api/link-graph/jobs/:jobId/stream` endpoint delivers real-time per-page progress via Server-Sent Events — no more polling
+- **Connected Pages Query**: New `GET /api/link-graph/jobs/:jobId/connected-pages?targetUrl=X` returns every crawled page that links to a given target URL, enabling link equity analysis and broken-link detection
+- **Granular Job Progress**: Link graph workers now emit structured progress objects `{ pct, phase, pagesVisited, maxPages }` instead of a single 0→100 integer
+- **Enhanced Link Graph Metadata**: The report-based link graph (`GET /api/reports/:reportId/link-graph`) now includes `avgInboundLinks`, `maxInboundLinks`, `pagesWithNoInbound`, and `topLinkedPages` (top 10 by inbound count)
+
+See [LINK_GRAPH_API.md](./LINK_GRAPH_API.md) for full endpoint documentation.
+
+## What's New in v2.4.0 🏗️
+
+- 🧠 **Rule Engine Architecture Refactor**: All 44 SEO rules now own their `checkDefinition` (static metadata) and emit a canonical `SEOAuditCheck` directly — scoring is no longer reconstructed from fragile string matching
+- 📋 **`checks` Array in Results**: Audit responses now include a `checks: SEOAuditCheck[]` array with every evaluated check, including educational content (`what`, `why`, `how`, `time`) for each
+- ℹ️ **Informational Checks**: Rules that cannot evaluate (missing data, wrong page type) emit `passed: null, maxScore: 0` — these are excluded from scoring but still surface to the UI as informational items
+- 📊 **7 Section Scores**: Section scoring expanded to include `social` and `geo` alongside `seo`, `performance`, `ui`, `links`, and `technology`
+- 🎯 **Check-Based Scoring**: Overall score now computed directly from per-check normalized scores (`calculateFinalScoreFromChecks`) rather than just penalty deductions — more accurate category-level differentiation
+- 🔄 **Deduplication**: Async rules (DMARC, SPF, DNS) emit informational stubs synchronously and real results asynchronously — the engine deduplicates, preferring non-informational checks
+
+**Rule Coverage (44 rules):**
+- Technical (16): HTTPS, SSL, Canonical, Noindex, Noindex-Header, Charset, HTTP/2, Server Software, XML Sitemap, Robots.txt, Robots.txt Blocking, Analytics Detection, DMARC, SPF, DNS, IP Address
+- On-Page (11): Title Tag, Meta Description, H1, Heading Hierarchy, Keyword Consistency, Word Count, Image Alt Text, Hreflang, Lang Attribute, SERP Snippet, Friendly URL
+- Performance (13): Core Web Vitals, Load Time, Flash, Page Size, Resource Count, Image Optimization, Minification, PageSpeed Mobile, PageSpeed Desktop, Compression, JS Errors, AMP, LLM Readability
+- Links (1): Link Structure
+- Usability (8): Deprecated Tags, Email Privacy, Favicon, Font Size, IFrame Usage, Inline Styles, Mobile Viewport, Tap Target Size
+- Social (10): Open Graph Tags, Twitter Card Tags, Local SEO, Facebook Link/Pixel, Instagram, LinkedIn, Twitter, YouTube Link/Activity
+- Structured Data (3): Identity Schema, LocalBusiness Schema, Google Business Profile
 
 ## What's New in v2.3.0 🔧
 
@@ -97,6 +124,12 @@
 14. [Health Check](#health-check)
 15. [Error Handling](#error-handling)
 16. [Data Models](#data-models)
+   - [Rule Architecture (New in v2.4.0)](#rule-architecture-new-in-v240)
+   - [CheckDefinition (New in v2.4.0)](#checkdefinition-new-in-v240)
+   - [SEOAuditCheck (New in v2.4.0)](#seoauditcheck-new-in-v240)
+   - [Section Scores (Updated in v2.4.0)](#section-scores-updated-in-v240)
+   - [Enhanced Scoring (v2.2.0)](#enhanced-scoring-new-in-v220)
+   - [Passing Checks](#passing-checks-new-in-v120)
 
 ---
 
@@ -226,12 +259,21 @@ Poll this endpoint to monitor audit progress.
     "success": true,
     "auditReportId": "clyyy789012",
     "overallScore": 87.3,
-    "overallGrade": "B+",              // NEW: Letter grade (A+ to F)
-    "overallTier": "Good",             // NEW: Performance tier
+    "overallGrade": "B+",              // Letter grade (A+ to F)
+    "overallTier": "Good",             // Performance tier
     "issuesFound": 23,
-    "passingChecks": 45,               // NEW: Count of checks passed
+    "passingChecks": 45,               // Count of checks passed
     "pagesAnalyzed": 1,
-    "categoryScores": [                // NEW: Enhanced with grades, tiers, bonuses
+    "sectionScores": [                 // NEW v2.4.0: Per-UI-section scores (7 sections)
+      { "section": "seo",         "score": 82.5, "checks": 12 },
+      { "section": "performance", "score": 71.0, "checks": 8  },
+      { "section": "ui",          "score": 90.0, "checks": 5  },
+      { "section": "links",       "score": 85.0, "checks": 3  },
+      { "section": "technology",  "score": 95.0, "checks": 6  },
+      { "section": "social",      "score": 60.0, "checks": 4  },
+      { "section": "geo",         "score": 0,    "checks": 0  }
+    ],
+    "categoryScores": [                // Enhanced with grades, tiers, bonuses
       {
         "category": "TECHNICAL",
         "score": 95.5,
@@ -460,6 +502,16 @@ Fetch full audit results with enhanced scoring for anonymous audits. This endpoi
     }
   },
   
+  "sectionScores": [                   // NEW v2.4.0: Per-UI-section scores
+    { "section": "seo",         "score": 82.5, "checks": 12 },
+    { "section": "performance", "score": 71.0, "checks": 8  },
+    { "section": "ui",          "score": 90.0, "checks": 5  },
+    { "section": "links",       "score": 85.0, "checks": 3  },
+    { "section": "technology",  "score": 95.0, "checks": 6  },
+    { "section": "social",      "score": 60.0, "checks": 4  },
+    { "section": "geo",         "score": 0,    "checks": 0  }
+  ],
+  
   "categoryDetails": [
     {
       "category": "TECHNICAL",
@@ -471,6 +523,49 @@ Fetch full audit results with enhanced scoring for anonymous audits. This endpoi
       "bonus": 12.3
     }
     // ... other categories
+  ],
+  
+  "checks": [                          // NEW v2.4.0: All evaluated SEO checks with educational content
+    {
+      "id": "TITLE_TAG",
+      "name": "Title Tag",
+      "maxScore": 5,
+      "priority": 1,
+      "section": "seo",
+      "informational": false,
+      "what": "The title tag defines the document's title shown in browser tabs and search results.",
+      "why": "Title tags are one of the most important on-page SEO factors...",
+      "how": "Write a unique, descriptive title of 40-60 characters...",
+      "time": "15 minutes",
+      "category": "ON_PAGE",
+      "passed": true,
+      "score": 5,
+      "shortAnswer": "Title tag is properly optimized (52 chars).",
+      "answer": "Title tag is 52 characters — within the optimal 40-60 character range.",
+      "recommendation": null,
+      "value": 52,
+      "pageUrl": "https://example.com"
+    },
+    {
+      "id": "LLM_READABILITY",
+      "name": "LLM Readability",
+      "maxScore": 0,
+      "priority": 3,
+      "section": "performance",
+      "informational": true,
+      "what": "LLM readability measures how much content is in initial HTML vs JavaScript-rendered.",
+      "why": "AI crawlers typically read static HTML, not JavaScript-rendered content.",
+      "how": "Implement server-side rendering (SSR) or static site generation (SSG).",
+      "time": "4-8 hours",
+      "category": "PERFORMANCE",
+      "passed": null,
+      "score": 0,
+      "shortAnswer": "LLM readability data not available.",
+      "answer": "Render metrics could not be collected for this page.",
+      "recommendation": null,
+      "pageUrl": "https://example.com"
+    }
+    // ... all 44 checks (non-informational ones contribute to scoring)
   ],
   
   "issues": [
@@ -1043,24 +1138,75 @@ Retrieve all SEO issues found in an audit report.
 
 **Endpoint:** `GET /api/repo
 
-**New Issue Types (v1.1.0):**
-- `keyword_consistency_poor` / `keyword_consistency_good` - Keyword distribution analysis
-- `heading_structure_good` / `heading_structure_limited` / `heading_structure_missing` - H1-H6 usage
-- `word_count_good` / `word_count_moderate` - Content length assessment
-- `link_structure_analysis` - Internal/external link ratios
-- `too_many_external_links` - High external link percentage
-- `unfriendly_urls` - Non-human-readable URLs
-- `missing_viewport` / `viewport_correct` / `viewport_misconfigured` - Mobile viewport
-- `robots_txt_found` / `robots_txt_missing` / `blocked_by_robots` - Robots.txt detection
-- `sitemap_found` / `sitemap_unknown` - XML sitemap detection
-- `favicon_present` / `favicon_missing` - Favicon check
-- `http2_likely` / `http2_impossible` - HTTP/2 protocol check
+**Issue Types by Category (v2.4.0):**
 
-**Special Data in elementSelector:**
-For analysis-type issues, `elementSelector` contains JSON data:
-- **Keyword Analysis**: `{"keywords": [{"keyword": "example", "frequency": 10, "inTitle": true, "inMeta": false, "inHeadings": true}]}`
-- **Heading Structure**: `{"h1": 1, "h2": 8, "h3": 6, "h4": 3, "h5": 7, "h6": 36}`
-- **Link Analysis**: `{"total": 287, "internal": 234, "externalFollow": 53, "externalNofollow": 0, "externalPercentage": 18}`rts/:reportId/issues`
+*TECHNICAL:*
+- `HTTPS_CHECK` — Site not served over HTTPS
+- `SSL_CERTIFICATE` — SSL certificate issues
+- `CANONICAL_TAG` — Missing, invalid, or self-referencing canonical
+- `NOINDEX_TAG` — Noindex meta tag blocking indexing
+- `NOINDEX_HEADER` — X-Robots-Tag header blocking indexing
+- `CHARSET` — Missing or non-UTF-8 charset declaration
+- `HTTP2_CHECK` — HTTP/1.1 detected on homepage
+- `XML_SITEMAP` — Missing XML sitemap
+- `ROBOTS_TXT` — Missing robots.txt
+- `ROBOTS_TXT_BLOCKING` — Robots.txt blocking important pages
+- `DMARC_RECORD` — Missing or invalid DMARC DNS record
+- `SPF_RECORD` — Missing or invalid SPF DNS record
+
+*ON_PAGE:*
+- `TITLE_TAG` — Missing, too short, or too long title tag
+- `META_DESCRIPTION` — Missing, too short, or too long meta description
+- `H1_TAG` — Missing, multiple, or too-short H1
+- `HEADING_HIERARCHY` — Heading level violations (e.g., H3 before H2)
+- `KEYWORD_CONSISTENCY` — Keywords in content not reflected in title/meta/headings
+- `WORD_COUNT` — Insufficient word count for page type
+- `IMAGE_ALT` — Images missing alt text
+- `HREFLANG` — Invalid hreflang codes or missing self-reference
+- `LANG_ATTRIBUTE` — Missing or invalid HTML lang attribute
+- `FRIENDLY_URL` — Non-human-readable URL patterns
+
+*PERFORMANCE:*
+- `LOAD_TIME` — Slow page load (>2s Medium, >4s High)
+- `FLASH_USAGE` — Flash content detected (CRITICAL)
+- `PAGE_SIZE` — Excessive page size (>1.5MB)
+- `RESOURCE_COUNT` — Excessive number of external resources
+- `IMAGE_OPTIMIZATION` — Unoptimized or non-modern-format images
+- `MINIFICATION` — Unminified JS/CSS files
+- `PAGESPEED_MOBILE` / `PAGESPEED_DESKTOP` — Low PageSpeed Insights score
+- `COMPRESSION` — No HTTP compression / non-Brotli compression
+- `JAVASCRIPT_ERRORS` — JS runtime errors detected
+- `LLM_READABILITY` — High JavaScript rendering ratio
+
+*LINKS:*
+- `NO_LINKS` — Page has no links at all
+- `NO_INTERNAL_LINKS` — Page has no internal links
+- `NO_EXTERNAL_LINKS` — Page has many links but none external
+- `TOO_MANY_EXTERNAL_LINKS` — >50% external link ratio
+- `TOO_MANY_LINKS` — >100 total links
+
+*ACCESSIBILITY:*
+- `DEPRECATED_TAGS` — Deprecated HTML tags detected
+- `FONT_SIZE_TOO_SMALL` — Text below 12px
+- `IFRAME_USAGE` — Excessive iframe count
+- `INLINE_STYLES` — Excessive inline styles
+- `MOBILE_VIEWPORT` — Missing or misconfigured viewport meta tag
+- `TAP_TARGET_SIZE` — Clickable elements smaller than 48x48px
+
+*STRUCTURED_DATA:*
+- `EMAIL_PRIVACY` — Exposed plain-text email addresses
+- `OPEN_GRAPH_TAGS` — Missing og:title, og:description, or og:image
+- `TWITTER_CARD_TAGS` — Missing twitter:card, title, description, or image
+- `MISSING_LOCAL_SEO` / `INCOMPLETE_LOCAL_SEO` — Missing phone/address on local pages
+- `MISSING_IDENTITY_SCHEMA` / `INCOMPLETE_ORGANIZATION_SCHEMA` — Missing Organization/Person schema
+- `LOCAL_BUSINESS_SCHEMA` / `INCOMPLETE_LOCAL_BUSINESS_SCHEMA` — Missing/incomplete LocalBusiness schema
+- `GOOGLE_BUSINESS_PROFILE` — No GBP link detected for local business
+- `GBP_NOT_IN_SCHEMA_SAMEAS` — GBP link found in HTML but not in schema sameAs
+
+*SECURITY:*
+- `HTTPS_CHECK` — HTTP redirects and mixed content
+
+**`GET /api/reports/:reportId/issues`**
 
 **URL Parameters:**
 | Parameter | Type | Description |
@@ -2396,7 +2542,7 @@ Verify API is running and get endpoint information.
 ```json
 {
   "message": "Website Audit Tools API",
-  "version": "2.1.0",
+  "version": "2.4.0",
   "endpoints": {
     "audits": "/api/audits",
     "anonymousAudits": "/api/audits/anonymous",
@@ -2409,11 +2555,14 @@ Verify API is running and get endpoint information.
 }
 ```
 
-**Analysis Issue Types Note:**
+**v2.4.0 — Informational Checks Note:**
 
-Some issues with severity "LOW" and `impactScore` of 0 are informational/analysis results rather than problems:
-- **Good indicators**: `keyword_consistency_good`, `heading_structure_good`, `word_count_good`, `viewport_correct`, `robots_txt_found`, `sitemap_found`, `favicon_present`, `http2_likely`
-- **Action needed**: All issues with `impactScore > 0` require fixes
+The `checks` array in audit results contains all evaluated checks. Checks with `passed: null` and `maxScore: 0` are **informational** — they report detected data (server software, AMP status, social links, SERP preview) without contributing to the score. All checks include `what`/`why`/`how` educational content for display in the UI.
+
+- **Actionable checks** (`informational: false`): `passed: true/false`, contribute to section and category scores
+- **Informational checks** (`informational: true`): `passed: null`, display-only, score excluded
+- The `issues` array only contains items with `impactScore > 0` that require fixes
+- `passingChecks` lists confirmed good practices
 
 ---
 
@@ -2469,6 +2618,139 @@ All endpoints follow consistent error response patterns.
 ---
 
 ## Data Models
+
+### Rule Architecture (New in v2.4.0)
+
+Every SEO rule now follows a strict three-layer contract:
+
+1. **`checkDefinition`** — static metadata the rule owns: what to display, max score, priority, section, and educational content (`what`/`why`/`how`/`time`). Never changes regardless of input.
+2. **`SEOAuditCheck`** — extends `checkDefinition` with dynamic result fields: `passed`, `score`, `shortAnswer`, `answer`, `recommendation`, `value`, `data`, `pageUrl`.
+3. **`RuleResult`** — what `execute()` returns: `{ check, issues, passingChecks }`. The `check` is the canonical scored item; `issues` are for the DB issue list; `passingChecks` are for the passing checks display.
+
+**Informational Checks:**
+Rules that cannot evaluate (data unavailable, wrong page type, non-local business) return `passed: null, maxScore: 0, informational: true`. These are excluded from the scoring formula but still appear in the `checks` array for display.
+
+**Async Rule Pattern (DMARC, SPF, DNS):**
+The synchronous `execute()` returns an informational stub. `executeAsync()` returns the real evaluated check. `SeoAnalyzer` deduplicates, preferring the non-informational (real) result over the stub.
+
+---
+
+### CheckDefinition (New in v2.4.0)
+
+Static metadata every rule defines. Identical across all pages — never changes.
+
+```typescript
+interface CheckDefinition {
+  id: string;           // Unique check code (e.g., "TITLE_TAG", "HTTPS_CHECK")
+  name: string;         // Human-readable display name (e.g., "Title Tag")
+  maxScore: number;     // Maximum achievable score (0 = informational, excluded from scoring)
+  priority: 1 | 2 | 3; // 1 = Critical, 2 = Important, 3 = Nice-to-have (affects scoring weight)
+  section: AuditSection; // UI section: "seo" | "performance" | "ui" | "links" | "technology" | "social" | "geo"
+  informational: boolean; // true = display only, never affects score
+  what: string;         // Educational: what this check evaluates
+  why: string;          // Educational: why it matters for SEO
+  how: string;          // Educational: how to implement/fix
+  time?: string;        // Estimated fix time (e.g., "15 minutes", "2-4 hours")
+}
+```
+
+**Example:**
+```json
+{
+  "id": "META_DESCRIPTION",
+  "name": "Meta Description",
+  "maxScore": 4,
+  "priority": 1,
+  "section": "seo",
+  "informational": false,
+  "what": "The meta description is the snippet displayed below your page title in search results.",
+  "why": "While not a direct ranking factor, meta descriptions influence click-through rates. A compelling 70-160 character description can increase clicks from search results by 5-10%.",
+  "how": "Write a unique meta description for every page. Keep it between 70-160 characters, include your primary keyword naturally, and write it as a call-to-action that encourages clicks.",
+  "time": "15 minutes"
+}
+```
+
+---
+
+### SEOAuditCheck (New in v2.4.0)
+
+Extends `CheckDefinition` with the dynamic result fields from rule execution.
+
+```typescript
+interface SEOAuditCheck extends CheckDefinition {
+  category: IssueCategory; // Scoring category: "TECHNICAL" | "ON_PAGE" | "PERFORMANCE" | "ACCESSIBILITY" | "LINKS" | "STRUCTURED_DATA" | "SECURITY"
+  passed: boolean | null;  // true = passed, false = failed, null = informational (not evaluated)
+  score: number;           // Achieved score (0 ≤ score ≤ maxScore)
+  shortAnswer: string;     // One-line result summary
+  answer: string;          // Full result message with extracted data details
+  recommendation: string | null; // Actionable fix when failed, null when passed
+  value?: string | number | null; // Raw scalar value (e.g., title length, word count, load time)
+  data?: any;              // Structured data payload for rich UI display
+  pageUrl?: string;        // Page URL where this check was evaluated
+}
+```
+
+**Scoring Behaviour:**
+| `passed` | `maxScore` | `informational` | Scoring |
+|----------|-----------|----------------|---------|
+| `true`   | > 0       | `false`         | `score / maxScore` contributes positively |
+| `false`  | > 0       | `false`         | `score / maxScore` (partial or 0) contributes negatively |
+| `null`   | `0`       | `true`          | Excluded from scoring entirely |
+
+**Range Scoring (checks with intermediate scores):**
+
+Many checks use tiered scoring rather than binary pass/fail:
+
+| Rule | score=0 | score=partial | score=max |
+|------|---------|--------------|-----------|
+| Title Tag (max=5) | Missing | <40 or >60 chars | 40-60 chars |
+| Meta Description (max=4) | Missing | <70 or >160 chars | 70-160 chars |
+| Load Time (max=4) | ≥4000ms | 2000-4000ms | <2000ms |
+| Page Size (max=3) | >3MB | 1.5-3MB | <1.5MB |
+| LLM Readability (max=2) | >50% JS-rendered | 25-50% | <25% |
+
+---
+
+### Section Scores (Updated in v2.4.0)
+
+Audit results include `sectionScores` — a per-UI-section breakdown matching the seoptimer.com-style report sections.
+
+```typescript
+interface SectionScore {
+  section: AuditSection; // "seo" | "performance" | "ui" | "links" | "technology" | "social" | "geo"
+  score: number;         // 0-100 normalized score (0 if no applicable checks)
+  checks: number;        // Count of non-informational checks in this section
+}
+```
+
+**Section Mapping:**
+
+| Section | Description | Example Rules |
+|---------|-------------|---------------|
+| `seo` | Core on-page SEO | Title, Meta Description, H1, Canonical, Sitemap, Robots.txt |
+| `performance` | Page speed & rendering | Core Web Vitals, Load Time, PageSpeed, Compression |
+| `ui` | Usability & accessibility | Mobile Viewport, Font Size, Tap Target Size, IFrames |
+| `links` | Link structure | Link Structure |
+| `technology` | Server & technical | HTTP/2, Server Software, DMARC, SPF, DNS, Analytics |
+| `social` | Social media presence | Open Graph, Twitter Cards, Local SEO, Social Links |
+| `geo` | Local business | LocalBusiness Schema, Google Business Profile |
+
+**Example Response:**
+```json
+"sectionScores": [
+  { "section": "seo",         "score": 82.5, "checks": 12 },
+  { "section": "performance", "score": 71.0, "checks": 8  },
+  { "section": "ui",          "score": 90.0, "checks": 5  },
+  { "section": "links",       "score": 85.0, "checks": 3  },
+  { "section": "technology",  "score": 95.0, "checks": 6  },
+  { "section": "social",      "score": 60.0, "checks": 4  },
+  { "section": "geo",         "score": 0,    "checks": 0  }
+]
+```
+
+> **Note:** Sections with `checks: 0` have no applicable non-informational rules for the audited site (e.g., `geo` for a non-local business site).
+
+---
 
 ### Enhanced Scoring (New in v2.2.0)
 
@@ -2646,13 +2928,16 @@ overallScore = sum(categoryScore × categoryWeight) / sum(weights)
 ```typescript
 {
   category: string;        // IssueCategory (TECHNICAL, ON_PAGE, etc.)
-  code: string;           // Rule code that passed (e.g., "TITLE_MISSING")
-  title: string;          // Human-readable name
-  description: string;    // What was checked
-  pageUrl?: string;       // Which page passed
-  goodPractice: string;   // Explanation of why this is good
+  code: string;            // Rule code that passed (e.g., "TITLE_TAG")
+  title: string;           // Human-readable name
+  description: string;     // What was checked / what passed
+  pageUrl?: string;        // Which page passed
+  goodPractice: string;    // Explanation of why this is a good practice
+  data?: any;              // Optional structured data payload
 }
 ```
+
+> **v2.4.0 note:** `PassingCheck` entries are now also surfaced via the `checks` array (where `passed: true`). Both representations coexist — `passingChecks` for the simple list view, `checks` for the full check with educational content.
 
 ---
 

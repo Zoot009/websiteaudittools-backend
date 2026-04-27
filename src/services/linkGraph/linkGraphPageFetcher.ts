@@ -13,7 +13,7 @@ export type CrawlSource = 'native' | 'fallback' | 'none';
 
 export interface FetchInternalLinksResult {
   source: CrawlSource;
-  links: string[];
+  links: Array<{ href: string; anchorText: string }>;
   skipped: boolean;
   skipReason?: string;
   nativeError?: string;
@@ -37,17 +37,17 @@ function isHtmlResponse(contentType: string | null): boolean {
 }
 
 function normalizeAndFilterLinks(
-  rawLinks: string[],
+  rawLinks: Array<{ href: string; text: string }>,
   currentUrl: string,
   baseHost: string,
   normalizeLink: (rawUrl: string, baseUrl: string) => string,
   isInternalUrl: (url: string, host: string) => boolean
-): string[] {
+): Array<{ href: string; anchorText: string }> {
   const seen = new Set<string>();
-  const filtered: string[] = [];
+  const filtered: Array<{ href: string; anchorText: string }> = [];
 
-  for (const rawLink of rawLinks) {
-    const normalized = normalizeLink(rawLink, currentUrl).trim();
+  for (const { href: rawHref, text } of rawLinks) {
+    const normalized = normalizeLink(rawHref, currentUrl).trim();
 
     if (!normalized) {
       continue;
@@ -66,18 +66,21 @@ function normalizeAndFilterLinks(
     }
 
     seen.add(normalized);
-    filtered.push(normalized);
+    filtered.push({ href: normalized, anchorText: text });
   }
 
   return filtered;
 }
 
-async function extractRawLinksFromPage(page: Page): Promise<string[]> {
+async function extractRawLinksFromPage(page: Page): Promise<Array<{ href: string; text: string }>> {
   const links = await page.evaluate(() => {
     const anchors = Array.from(document.querySelectorAll('a[href]'));
     return anchors
-      .map(a => (a as HTMLAnchorElement).href)
-      .filter(href => href && href.trim() !== '');
+      .filter(a => (a as HTMLAnchorElement).href && (a as HTMLAnchorElement).href.trim() !== '')
+      .map(a => ({
+        href: (a as HTMLAnchorElement).href,
+        text: ((a as HTMLAnchorElement).innerText?.trim() || '').substring(0, 100),
+      }));
   });
 
   return links;
@@ -175,7 +178,7 @@ export async function fetchInternalLinksWithFallback(
 
     try {
       const fallbackResult = await fetchViaScrapeDo(currentUrl);
-      const rawFallbackLinks = fallbackResult.links.map(link => link.href);
+      const rawFallbackLinks = fallbackResult.links.map(link => ({ href: link.href, text: link.text }));
       const internalLinks = normalizeAndFilterLinks(
         rawFallbackLinks,
         currentUrl,

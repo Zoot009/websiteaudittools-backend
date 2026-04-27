@@ -108,7 +108,7 @@ export class RobotsTxtBlockingRule implements SiteRule {
       type: this.code,
       title: `${blockedPages.length} Page${blockedPages.length === 1 ? '' : 's'} Blocked by Robots.txt`,
       description: check.answer,
-      severity: (blockedPages.length === pages.length ? 'CRITICAL' : 'HIGH') as const,
+      severity: blockedPages.length === pages.length ? 'CRITICAL' as const : 'HIGH' as const,
       impactScore: blockedPages.length === pages.length ? 100 : 85,
       pageUrl: context.baseUrl,
     }] : [];

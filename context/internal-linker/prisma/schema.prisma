@@ -1,0 +1,227 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  role      String   @default("user") // 'user', 'premium', 'admin'
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clerkId])
+  @@index([email])
+}
+  
+model Report {
+  id            String   @id @default(cuid())
+  userId        String
+  userEmail     String?
+  toolType      String   // 'local-seo', 'seo-report', 'site-audit'
+  reportData    Json     // Store all report results
+  websiteUrl    String?
+  businessName  String?
+  isPublic      Boolean  @default(false)
+  views         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([toolType])
+  @@index([isPublic])
+}
+
+model Subscription {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  userEmail         String
+  planId            String   // 'starter', 'professional', 'enterprise'
+  planName          String
+  status            String   @default("active") // 'active', 'cancelled', 'expired'
+  amount            Int      // in cents
+  currency          String   @default("INR")
+  razorpaySubscriptionId String? @unique
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  payments Payment[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Payment {
+  id                  String   @id @default(cuid())
+  userId              String
+  userEmail           String
+  subscriptionId      String?
+  razorpayOrderId     String   @unique
+  razorpayPaymentId   String?  @unique
+  razorpaySignature   String?
+  amount              Int      // in cents
+  currency            String   @default("INR")
+  status              String   @default("pending") // 'pending', 'completed', 'failed'
+  planId              String
+  planName            String
+  metadata            Json?    // Store additional payment info
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayOrderId])
+}
+
+model BacklinkProject {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdBy   String   // Clerk user ID
+  createdByEmail String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  backlinks   BacklinkIndex[]
+
+  @@index([createdBy])
+}
+
+model BacklinkIndex {
+  id              String   @id @default(cuid())
+  projectId       String
+  url             String
+  creationDate    DateTime
+  lastCheckDate   DateTime?
+  recheckPeriod   String   @default("weekly") // 'daily', 'weekly', 'monthly'
+  status          String   @default("queue") // 'queue', 'phase 1 completed', 'phase 2 completed', etc.
+  notes           String?
+  phaseNumber     Int      @default(0) // 0 = queue, 1 = phase 1, 2 = phase 2, etc.
+  phaseStartDate  DateTime? // When this link entered its current phase
+  nextPhaseDate   DateTime? // When this link should move to next phase
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project         BacklinkProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
+  @@index([creationDate])
+  @@index([phaseNumber])
+  @@index([nextPhaseDate])
+}
+
+model MapCitationReport {
+  id              String   @id @default(cuid())
+  userId          String
+  userEmail       String
+  clientName      String
+  location        String
+  creationDate    DateTime
+  milesCoverage   Int
+  mapEmbedCode    String   @db.Text
+  citationLink    String
+  totalPointers   Int      @default(25000) // Total pointers to distribute across 30 phases
+  phaseNumber     Int      @default(0) // 0-30, tracks completed phases
+  nextPhaseDate   DateTime? // When to advance to next phase
+  pointersPerPhase Json?   // Array of 30 numbers that sum to totalPointers
+  isPublic        Boolean  @default(true)
+  views           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([phaseNumber])
+  @@index([nextPhaseDate])
+  @@index([isPublic])
+  @@index([createdAt])
+}
+
+// Internal Linking Analysis Models
+
+model CrawlJob {
+  id                    String   @id @default(cuid())
+  jobId                 String   @unique // BullMQ job ID
+  targetUrl             String   // Base URL being analyzed
+  status                String   @default("pending") // 'pending', 'processing', 'completed', 'failed'
+  totalPagesCrawled     Int      @default(0)
+  totalPagesInSitemap   Int      @default(0)
+  maxDepthReached       Int      @default(0)
+  errorsEncountered     Int      @default(0)
+  durationMs            Int?
+  totalCreditsUsed      Int      @default(0)
+  startedAt             DateTime?
+  completedAt           DateTime?
+  errorMessage          String?
+  crawlConfig           Json?    // Store maxPages, maxDepth, rateLimit
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  internalLinks  InternalLink[]
+  orphanPages    OrphanPage[]
+  creditUsages   CreditUsage[]
+
+  @@index([jobId])
+  @@index([targetUrl])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model InternalLink {
+  id             String   @id @default(cuid())
+  crawlJobId     String
+  sourceUrl      String   // The page URL
+  targetUrls     String[] // Array of outgoing internal links
+  inboundCount   Int      @default(0) // Number of pages linking to this URL
+  depth          Int      @default(0) // Depth at which this page was found
+  createdAt      DateTime @default(now())
+
+  crawlJob CrawlJob @relation(fields: [crawlJobId], references: [id], onDelete: Cascade)
+
+  @@index([crawlJobId])
+  @@index([sourceUrl])
+}
+
+model OrphanPage {
+  id            String   @id @default(cuid())
+  crawlJobId    String
+  url           String   // The orphaned page URL
+  source        String   // 'sitemap', 'discovered'
+  discoveredVia String?  // How it was found (e.g., 'sitemap.xml')
+  createdAt     DateTime @default(now())
+
+  crawlJob CrawlJob @relation(fields: [crawlJobId], references: [id], onDelete: Cascade)
+
+  @@index([crawlJobId])
+  @@index([url])
+  @@index([source])
+}
+
+model CreditUsage {
+  id            String   @id @default(cuid())
+  crawlJobId    String?
+  targetUrl     String   // URL that was scraped
+  creditsUsed   Int      // Number of credits consumed
+  requestType   String   // 'datacenter', 'datacenter+render', 'residential', 'residential+render'
+  statusCode    Int?     // HTTP status code
+  successful    Boolean  @default(true)
+  responseTime  Int?     // Response time in ms
+  errorMessage  String?
+  timestamp     DateTime @default(now())
+
+  crawlJob CrawlJob? @relation(fields: [crawlJobId], references: [id], onDelete: SetNull)
+
+  @@index([crawlJobId])
+  @@index([targetUrl])
+  @@index([timestamp])
+}

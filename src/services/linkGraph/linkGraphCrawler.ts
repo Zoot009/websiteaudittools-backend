@@ -22,27 +22,37 @@ export interface CrawlGraphOptions {
   timeout?: number;         // Page navigation timeout (default: 30000)
   respectRobots?: boolean;  // Check robots.txt (not implemented in v1)
   seedFromSitemap?: boolean; // Seed from sitemap for orphan detection (default: false)
+  onProgress?: (pagesVisited: number, maxPages: number) => void; // Progress callback
 }
 
 /**
  * Result from crawling a link graph
  */
+export interface OrphanData {
+  graphOrphans: string[];      // Visited pages with 0 inbound links (excluding start URL)
+  sitemapUnvisited: string[];  // Sitemap pages never visited (empty if no sitemap found)
+  sitemapAvailable: boolean;
+  crawlComplete: boolean;      // false when crawl was truncated by page/time limit
+  confidence: 'high' | 'medium' | 'low';
+}
+
 export interface LinkGraphCrawlResult {
   base_url: string;
   depth: number;
   nodes: Array<{ id: string; orphan?: boolean }>;
-  links: Array<{ source: string; target: string }>;
-  orphans?: string[];  // List of orphan page URLs (only when seedFromSitemap=true)
+  links: Array<{ source: string; target: string; anchorText?: string }>;
+  orphans?: string[];  // Backward-compat: union of graphOrphans (always populated)
+  orphanData: OrphanData;
   stats: {
     pages_crawled: number;
     edges: number;
-    orphan_pages?: number;  // Count of orphan pages (only when seedFromSitemap=true)
+    orphan_pages: number;  // Total orphan count (graphOrphans.length)
     native_success?: number;
     fallback_success?: number;
     fallback_failure?: number;
     truncated: boolean;
     crawl_time_ms: number;
-    reason?: string;  // Reason for truncation if applicable
+    reason?: string;
   };
 }
 
@@ -60,6 +70,7 @@ interface QueueItem {
 interface Edge {
   source: string;
   target: string;
+  anchorText?: string;
 }
 
 // Safety limits
@@ -255,6 +266,7 @@ export async function crawlLinkGraph(
   } else {
     // Start with the provided URL
     queue.push({ url: normalizedStartUrl, depth: 0 });
+    inboundCounts.set(normalizedStartUrl, 0);
   }
 
   // BFS crawl loop
@@ -345,15 +357,11 @@ export async function crawlLinkGraph(
     console.log(`  🔗 Found ${internalLinks.length} internal links (${crawlSource})`);
 
     // Add edges for all internal links
-    for (const targetUrl of internalLinks) {
+    for (const { href: targetUrl, anchorText } of internalLinks) {
       const edgeKey = `${currentUrl}→${targetUrl}`;
       if (!edges.has(edgeKey)) {
-        edges.set(edgeKey, { source: currentUrl, target: targetUrl });
-        
-        // Track inbound count for orphan detection
-        if (seedFromSitemap) {
-          inboundCounts.set(targetUrl, (inboundCounts.get(targetUrl) || 0) + 1);
-        }
+        edges.set(edgeKey, { source: currentUrl, target: targetUrl, anchorText });
+        inboundCounts.set(targetUrl, (inboundCounts.get(targetUrl) || 0) + 1);
       }
 
       // Enqueue link if within depth limit and not already visited
@@ -362,9 +370,7 @@ export async function crawlLinkGraph(
         const alreadyQueued = queue.some(item => item.url === targetUrl);
         if (!alreadyQueued) {
           queue.push({ url: targetUrl, depth: currentDepth + 1 });
-          
-          // Initialize inbound count for newly discovered URLs
-          if (seedFromSitemap && !inboundCounts.has(targetUrl)) {
+          if (!inboundCounts.has(targetUrl)) {
             inboundCounts.set(targetUrl, 0);
           }
         }
@@ -372,31 +378,67 @@ export async function crawlLinkGraph(
     }
 
     lastVisitedUrl = currentUrl;
+    options.onProgress?.(visited.size, maxPages);
   }
 
   const crawlTime = Date.now() - startTime;
   console.log(`✅ Crawl completed: ${visited.size} pages, ${edges.size} edges in ${crawlTime}ms`);
 
-  // Calculate orphan pages if sitemap seeding was used
-  let orphanPages: string[] = [];
+  // Graph-based orphans: pages we visited but no other crawled page links to them
+  const graphOrphans = Array.from(visited).filter(
+    url => url !== normalizedStartUrl && (inboundCounts.get(url) ?? 0) === 0
+  );
+
+  // Sitemap comparison: pages listed in sitemap but never visited
+  // Reuse seededUrls if we already fetched for queue seeding, otherwise fetch now
+  let sitemapFetchedUrls: Set<string>;
+  let sitemapAvailable: boolean;
+
   if (seedFromSitemap) {
-    // Orphans are seeded URLs with 0 inbound links (excluding the start URL itself)
-    orphanPages = Array.from(seededUrls).filter(url => {
-      const inbound = inboundCounts.get(url) || 0;
-      // The start URL is not considered an orphan even with 0 inbound links
-      return inbound === 0 && url !== normalizedStartUrl;
-    });
-    
-    if (orphanPages.length > 0) {
-      console.log(`🔍 Found ${orphanPages.length} orphan pages (no inbound links)`);
+    sitemapFetchedUrls = seededUrls;
+    sitemapAvailable = seededUrls.size > 0;
+  } else {
+    sitemapFetchedUrls = new Set<string>();
+    try {
+      const sitemapUrls = await getSeedUrls(startUrl);
+      const normalizedSitemapUrls = sitemapUrls
+        .map(url => normalizeUrl(url, undefined, { stripTracking: false, stripFragment: true, lowercaseHost: true }))
+        .filter(url => isInternalUrl(url, baseHost));
+      for (const url of normalizedSitemapUrls) {
+        sitemapFetchedUrls.add(url);
+      }
+      sitemapAvailable = sitemapFetchedUrls.size > 0;
+    } catch {
+      sitemapAvailable = false;
     }
   }
 
+  const sitemapUnvisited = sitemapAvailable
+    ? Array.from(sitemapFetchedUrls).filter(url => !visited.has(url) && url !== normalizedStartUrl)
+    : [];
+
+  const crawlComplete = !truncated;
+  const confidence: 'high' | 'medium' | 'low' =
+    sitemapAvailable && crawlComplete ? 'high' :
+    sitemapAvailable || crawlComplete ? 'medium' : 'low';
+
+  const orphanData: OrphanData = {
+    graphOrphans,
+    sitemapUnvisited,
+    sitemapAvailable,
+    crawlComplete,
+    confidence,
+  };
+
+  if (graphOrphans.length > 0 || sitemapUnvisited.length > 0) {
+    console.log(`🔍 Orphan detection (confidence: ${confidence}): ${graphOrphans.length} graph orphans, ${sitemapUnvisited.length} sitemap-unvisited`);
+  }
+
   // Build D3-compatible graph structure
+  const graphOrphansSet = new Set(graphOrphans);
   const nodes = Array.from(visited).map(url => {
     const node: { id: string; orphan?: boolean } = { id: url };
-    // Mark orphan nodes
-    if (seedFromSitemap && orphanPages.includes(url)) {
+    if (graphOrphansSet.has(url)) {
       node.orphan = true;
     }
     return node;
@@ -418,11 +460,12 @@ export async function crawlLinkGraph(
     depth: maxDepth,
     nodes,
     links: validLinks,
-    ...(seedFromSitemap && orphanPages.length > 0 && { orphans: orphanPages }),
+    orphans: graphOrphans,
+    orphanData,
     stats: {
       pages_crawled: visited.size,
       edges: validLinks.length,
-      ...(seedFromSitemap && { orphan_pages: orphanPages.length }),
+      orphan_pages: graphOrphans.length,
       native_success: nativeSuccessCount,
       fallback_success: fallbackSuccessCount,
       fallback_failure: fallbackFailureCount,

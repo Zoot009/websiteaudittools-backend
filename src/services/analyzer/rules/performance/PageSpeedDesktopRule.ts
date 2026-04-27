@@ -1,110 +1,112 @@
-/**
- * PageSpeed Desktop Performance Rule
- * Checks desktop performance score
- */
-
-import type { PageRule, PageData, SiteContext, RuleResult, Issue, PassingCheck } from '../../types.js';
+import type { PageRule, PageData, SiteContext, RuleResult, CheckDefinition, SEOAuditCheck, Issue } from '../../types.js';
 
 export class PageSpeedDesktopRule implements PageRule {
   code = 'PAGESPEED_DESKTOP';
   category = 'PERFORMANCE' as const;
   level = 'page' as const;
 
-  execute(page: PageData, context: SiteContext): RuleResult {
-    const issues: Issue[] = [];
-    const passingChecks: PassingCheck[] = [];
+  readonly checkDefinition: CheckDefinition = {
+    id: 'PAGESPEED_DESKTOP',
+    name: 'Desktop Performance',
+    maxScore: 4,
+    priority: 2,
+    section: 'performance',
+    informational: false,
+    what: 'Desktop performance score from Google PageSpeed Insights measures how well your page performs on desktop browsers, including load times and rendering metrics.',
+    why: 'A fast desktop experience reduces bounce rates, improves conversions, and provides a good user experience for desktop visitors. Desktop performance also contributes to overall performance assessment.',
+    how: 'Optimize images, minify assets, reduce render-blocking resources, enable caching, reduce JavaScript execution time, and remove unused code. Review specific PageSpeed Insights recommendations.',
+    time: '2-4 hours',
+  };
 
+  execute(page: PageData, _context: SiteContext): RuleResult {
     const pageSpeed = page.pageSpeed?.desktop;
 
-    // Check if PageSpeed data is available
     if (!pageSpeed) {
-      return { issues, passingChecks };
+      const stub: SEOAuditCheck = {
+        ...this.checkDefinition,
+        maxScore: 0,
+        informational: true,
+        category: this.category,
+        passed: null,
+        score: 0,
+        shortAnswer: 'PageSpeed desktop data not available.',
+        answer: 'Google PageSpeed Insights desktop data was not collected for this page.',
+        recommendation: null,
+        pageUrl: page.url,
+      };
+      return { check: stub, issues: [], passingChecks: [] };
     }
 
-    // Check performance score
-    const score = pageSpeed.performanceScore;
-    
-    if (score < 50) {
+    const psScore: number = pageSpeed.performanceScore;
+    const passed = psScore >= 90;
+    const score = Math.round((psScore / 100) * this.checkDefinition.maxScore);
+
+    const check: SEOAuditCheck = {
+      ...this.checkDefinition,
+      category: this.category,
+      passed,
+      score,
+      shortAnswer: passed
+        ? `Excellent desktop performance score: ${psScore}/100.`
+        : `Desktop performance score: ${psScore}/100 — needs improvement.`,
+      answer: passed
+        ? `Desktop PageSpeed Insights score is ${psScore}/100 — excellent performance for desktop users.`
+        : psScore < 50
+          ? `Desktop performance score is ${psScore}/100 — poor. Optimize assets, reduce JavaScript execution time, and minimize render-blocking resources.`
+          : `Desktop performance score is ${psScore}/100. Consider implementing optimization suggestions to reach 90+.`,
+      recommendation: passed ? null : 'Review PageSpeed Insights recommendations, optimize images, minify assets, and reduce render-blocking JavaScript.',
+      value: psScore,
+      data: { performanceScore: psScore, labData: pageSpeed.labData },
+      pageUrl: page.url,
+    };
+
+    const issues: Issue[] = [];
+
+    if (!passed) {
       issues.push({
-        type: 'pagespeed_desktop_score_poor',
-        category: 'PERFORMANCE',
-        title: 'Poor Desktop Performance Score',
-        description: `Desktop performance score is ${score}/100, which is in the poor range. Optimize assets, reduce JavaScript execution time, and minimize render-blocking resources.`,
-        severity: 'HIGH' as const,
-        impactScore: 75,
+        category: this.category,
+        type: this.code,
+        title: psScore < 50 ? 'Poor Desktop Performance Score' : 'Desktop Performance Needs Improvement',
+        description: check.answer,
+        severity: psScore < 50 ? 'HIGH' as const : 'MEDIUM' as const,
+        impactScore: psScore < 50 ? 75 : 55,
         pageUrl: page.url,
-      });
-    } else if (score < 90) {
-      issues.push({
-        type: 'pagespeed_desktop_score_needs_improvement',
-        category: 'PERFORMANCE',
-        title: 'Desktop Performance Needs Improvement',
-        description: `Desktop performance score is ${score}/100. Consider implementing the optimization suggestions to reach 90+.`,
-        severity: 'MEDIUM' as const,
-        impactScore: 55,
-        pageUrl: page.url,
-      });
-    } else {
-      passingChecks.push({
-        category: 'PERFORMANCE',
-        code: 'pagespeed_desktop_score_good',
-        title: 'Excellent Desktop Performance Score',
-        description: `Desktop performance score is ${score}/100, indicating excellent performance.`,
-        pageUrl: page.url,
-        goodPractice: 'Meets best practice standards',
       });
     }
 
-    // Check lab data metrics for desktop
     if (pageSpeed.labData) {
       const { fcp, lcp, tbt, cls } = pageSpeed.labData;
 
-      // First Contentful Paint
-      if (fcp > 3000) {
-        issues.push({
-          type: 'pagespeed_desktop_fcp_slow',
-          category: 'PERFORMANCE',
-          title: 'Slow First Contentful Paint',
-          description: `Desktop FCP is ${(fcp / 1000).toFixed(1)}s. Users see content slowly, creating a poor first impression. Optimize server response time and reduce render-blocking resources.`,
-          severity: 'MEDIUM' as const,
-          impactScore: 60,
-          pageUrl: page.url,
-        });
-      }
-
-      // Largest Contentful Paint
       if (lcp > 2500) {
         issues.push({
+          category: this.category,
           type: 'pagespeed_desktop_lcp_slow',
-          category: 'PERFORMANCE',
           title: 'Slow Desktop LCP',
-          description: `Desktop LCP is ${(lcp / 1000).toFixed(1)}s. Main content loads slowly. Optimize images, preload key resources, and improve server response time.`,
+          description: `Desktop LCP is ${(lcp / 1000).toFixed(1)}s (should be <2.5s). Main content loads slowly.`,
           severity: 'HIGH' as const,
           impactScore: 70,
           pageUrl: page.url,
         });
       }
 
-      // Total Blocking Time
       if (tbt > 600) {
         issues.push({
+          category: this.category,
           type: 'pagespeed_desktop_tbt_high',
-          category: 'PERFORMANCE',
           title: 'High Total Blocking Time',
-          description: `Desktop TBT is ${tbt.toFixed(0)}ms. Long JavaScript tasks block user interaction. Break up long tasks, defer unused JavaScript, and minimize third-party scripts.`,
+          description: `Desktop TBT is ${tbt.toFixed(0)}ms. Long JavaScript tasks block user interaction. Break up long tasks and defer unused JavaScript.`,
           severity: 'MEDIUM' as const,
           impactScore: 65,
           pageUrl: page.url,
         });
       }
 
-      // Cumulative Layout Shift
       if (cls > 0.1) {
         issues.push({
+          category: this.category,
           type: 'pagespeed_desktop_cls_poor',
-          category: 'PERFORMANCE',
-          title: 'Desktop Layout Instability',
-          description: `Desktop CLS is ${cls.toFixed(3)}. Elements shift during page load, creating a jarring experience. Reserve space for images, ads, and embeds.`,
+          title: 'Desktop Layout Instability (CLS)',
+          description: `Desktop CLS is ${cls.toFixed(3)} (should be <0.1). Elements shift during page load. Reserve space for images and embeds.`,
           severity: 'MEDIUM' as const,
           impactScore: 55,
           pageUrl: page.url,
@@ -112,6 +114,15 @@ export class PageSpeedDesktopRule implements PageRule {
       }
     }
 
-    return { issues, passingChecks };
+    const passingChecks = passed ? [{
+      category: this.category,
+      code: this.code,
+      title: 'Excellent Desktop Performance',
+      description: check.shortAnswer,
+      pageUrl: page.url,
+      goodPractice: 'High desktop performance scores reduce bounce rates and improve user experience for desktop visitors.',
+    }] : [];
+
+    return { check, issues, passingChecks };
   }
 }

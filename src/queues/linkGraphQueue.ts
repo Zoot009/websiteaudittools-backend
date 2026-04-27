@@ -34,5 +34,8 @@ export const linkGraphQueue = new Queue<LinkGraphJobData>('link-graph-crawl', {
     removeOnFail: {
       age: 7200, // Keep failed jobs for 2 hours
     },
+    // Hard ceiling: kills a job that somehow stalls past 35 minutes
+    // (worker maxTimeMs is 30 min + 5 min buffer for sitemap fetch / post-processing)
+    jobTimeout: 35 * 60 * 1000,
   },
 });

@@ -1,4 +1,5 @@
 import type { PageData } from '../crawler/SiteAuditCrawler';
+import type { LinkGraphCrawlResult } from './linkGraphCrawler.js';
 // TODO: Re-enable when analyzer is reimplemented
 // import type { SiteContext } from '../analyzer/types';
 
@@ -48,6 +49,17 @@ export interface LinkGraphEdge {
 }
 
 /**
+ * Result of a connected pages query
+ */
+export interface ConnectedPagesResult {
+  targetUrl: string;
+  connectedPages: string[];
+  totalPagesChecked: number;
+  pagesContainingTarget: number;
+  targetFound: boolean;
+}
+
+/**
  * Complete link graph structure for visualization
  */
 export interface LinkGraph {
@@ -61,6 +73,10 @@ export interface LinkGraph {
     hubPages: number;
     authorityPages: number;
     averageLinksPerPage: number;
+    avgInboundLinks: number;
+    maxInboundLinks: number;
+    pagesWithNoInbound: number;
+    topLinkedPages: Array<{ url: string; title: string | null; inboundLinks: number }>;
     generatedAt: string;
   };
 }
@@ -233,10 +249,19 @@ export function generateLinkGraph(
   const orphanPages = nodes.filter(n => n.isOrphan).length;
   const hubPages = nodes.filter(n => n.isHub).length;
   const authorityPages = nodes.filter(n => n.isAuthority).length;
-  const averageLinksPerPage = nodes.length > 0 
-    ? Math.round((edges.length / nodes.length) * 10) / 10 
+  const averageLinksPerPage = nodes.length > 0
+    ? Math.round((edges.length / nodes.length) * 10) / 10
     : 0;
-  
+
+  const inboundCounts = nodes.map(n => n.inboundCount);
+  const totalInbound = inboundCounts.reduce((s, c) => s + c, 0);
+  const avgInboundLinks = nodes.length > 0
+    ? Math.round((totalInbound / nodes.length) * 100) / 100
+    : 0;
+  const maxInboundLinks = inboundCounts.length > 0 ? Math.max(...inboundCounts) : 0;
+  const pagesWithNoInbound = inboundCounts.filter(c => c === 0).length;
+  const topLinkedPages = getTopLinkedPages(nodes);
+
   return {
     nodes,
     edges,
@@ -248,6 +273,10 @@ export function generateLinkGraph(
       hubPages,
       authorityPages,
       averageLinksPerPage,
+      avgInboundLinks,
+      maxInboundLinks,
+      pagesWithNoInbound,
+      topLinkedPages,
       generatedAt: new Date().toISOString(),
     },
   };
@@ -306,6 +335,43 @@ export function exportToDOT(graph: LinkGraph): string {
   
   dot += '}\n';
   return dot;
+}
+
+/**
+ * Returns the top N pages sorted by inbound link count (descending)
+ */
+export function getTopLinkedPages(
+  nodes: LinkGraphNode[],
+  limit = 10
+): Array<{ url: string; title: string | null; inboundLinks: number }> {
+  return [...nodes]
+    .sort((a, b) => b.inboundCount - a.inboundCount)
+    .slice(0, limit)
+    .map(n => ({ url: n.url, title: n.title, inboundLinks: n.inboundCount }));
+}
+
+/**
+ * Find all pages in a completed crawl result that link to targetUrl
+ */
+export function findConnectedPages(
+  links: LinkGraphCrawlResult['links'],
+  targetUrl: string
+): ConnectedPagesResult {
+  const connectedPages = links
+    .filter(l => l.target === targetUrl)
+    .map(l => l.source)
+    .filter((v, i, a) => a.indexOf(v) === i) // deduplicate
+    .sort((a, b) => a.localeCompare(b));
+
+  const totalPagesChecked = new Set(links.map(l => l.source)).size;
+
+  return {
+    targetUrl,
+    connectedPages,
+    totalPagesChecked,
+    pagesContainingTarget: connectedPages.length,
+    targetFound: connectedPages.length > 0,
+  };
 }
 
 /**
