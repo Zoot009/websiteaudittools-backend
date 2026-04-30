@@ -1,14 +1,6 @@
 import type { PageData } from '../crawler/SiteAuditCrawler';
 import type { LinkGraphCrawlResult } from './linkGraphCrawler.js';
-// TODO: Re-enable when analyzer is reimplemented
-// import type { SiteContext } from '../analyzer/types';
-
-// Temporary SiteContext type definition
-export interface SiteContext {
-  pages: any[];
-  baseUrl: string;
-  [key: string]: any;
-}
+import type { SiteContext } from '../analyzer/types.js';
 
 /**
  * Node in the internal link graph
@@ -59,12 +51,21 @@ export interface ConnectedPagesResult {
   targetFound: boolean;
 }
 
+export interface LinkGraphOrphanData {
+  graphOrphans: string[];      // Visited pages with 0 inbound links (excluding start URL)
+  sitemapUnvisited: string[];  // Sitemap pages never visited (empty if no sitemap)
+  sitemapAvailable: boolean;
+  crawlComplete: boolean;
+  confidence: 'high' | 'medium' | 'low';
+}
+
 /**
  * Complete link graph structure for visualization
  */
 export interface LinkGraph {
   nodes: LinkGraphNode[];
   edges: LinkGraphEdge[];
+  orphanData: LinkGraphOrphanData;
   metadata: {
     totalPages: number;
     totalLinks: number;
@@ -246,7 +247,8 @@ export function generateLinkGraph(
   });
   
   // Calculate metadata
-  const orphanPages = nodes.filter(n => n.isOrphan).length;
+  const orphanNodes = nodes.filter(n => n.isOrphan);
+  const orphanPages = orphanNodes.length;
   const hubPages = nodes.filter(n => n.isHub).length;
   const authorityPages = nodes.filter(n => n.isAuthority).length;
   const averageLinksPerPage = nodes.length > 0
@@ -262,9 +264,29 @@ export function generateLinkGraph(
   const pagesWithNoInbound = inboundCounts.filter(c => c === 0).length;
   const topLinkedPages = getTopLinkedPages(nodes);
 
+  // Build orphanData from site context
+  const sitemapAvailable = siteContext.hasSitemap && !!siteContext.sitemapUrls && siteContext.sitemapUrls.size > 0;
+  const pageUrlSet = new Set(pages.map(p => p.url));
+  const sitemapUnvisited = sitemapAvailable
+    ? Array.from(siteContext.sitemapUrls!).filter(url => !pageUrlSet.has(url))
+    : [];
+  const crawlComplete = !sitemapAvailable || sitemapUnvisited.length === 0;
+  const confidence: 'high' | 'medium' | 'low' =
+    sitemapAvailable && crawlComplete ? 'high' :
+    sitemapAvailable || crawlComplete ? 'medium' : 'low';
+
+  const orphanData: LinkGraphOrphanData = {
+    graphOrphans: orphanNodes.map(n => n.url),
+    sitemapUnvisited,
+    sitemapAvailable,
+    crawlComplete,
+    confidence,
+  };
+
   return {
     nodes,
     edges,
+    orphanData,
     metadata: {
       totalPages: nodes.length,
       totalLinks: edges.length,
@@ -291,14 +313,18 @@ export function filterLinkGraphByDepth(
 ): LinkGraph {
   const filteredNodes = graph.nodes.filter(node => node.depth <= maxDepth);
   const nodeIds = new Set(filteredNodes.map(n => n.id));
-  
+
   const filteredEdges = graph.edges.filter(
     edge => nodeIds.has(edge.source) && nodeIds.has(edge.target)
   );
-  
+
   return {
     nodes: filteredNodes,
     edges: filteredEdges,
+    orphanData: {
+      ...graph.orphanData,
+      graphOrphans: graph.orphanData.graphOrphans.filter(url => nodeIds.has(url)),
+    },
     metadata: {
       ...graph.metadata,
       totalPages: filteredNodes.length,

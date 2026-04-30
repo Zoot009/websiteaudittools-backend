@@ -26,6 +26,7 @@ export class BotBlockedError extends Error {
 
 export interface CrawlerOptions {
   timeout?: number | undefined; // milliseconds
+  maxPages?: number;            // max pages to crawl (default: 100)
 }
 
 export interface PageData {
@@ -160,7 +161,7 @@ export class SiteAuditCrawler {
     this.reset();
     this.baseUrl = this.normalizeUrl(url);
 
-    const maxPages = 1;
+    const maxPages = options.maxPages ?? 100;
 
     console.log(`🕷 Starting crawl of ${this.baseUrl}`);
 

@@ -15,8 +15,7 @@ import { captureScreenshots } from './services/screenshots/screenshotService.js'
 import { generateLinkGraph, filterLinkGraphByDepth, exportToDOT, exportToCSV, findConnectedPages } from './services/linkGraph/linkGraphService.js';
 import type { LinkGraphCrawlResult } from './services/linkGraph/linkGraphCrawler.js';
 import { QueueEvents } from 'bullmq';
-// TODO: Re-implement analyzer
-// import { buildSiteContext } from './services/analyzer/siteContextBuilder.js';
+import { buildSiteContext } from './services/analyzer/siteContextBuilder.js';
 import chatRoutes from './routes/chatRoutes.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import {
@@ -1041,11 +1040,9 @@ app.get('/api/reports/:reportId/link-graph', async (req, res) => {
       hasSchemaOrg: page.hasSchemaOrg,
     }));
     
-    // Build site context
+    // Build site context (computes internalLinkGraph + inboundLinkCount from stored linksData)
     console.log(`🔗 Building link graph for ${pages.length} pages...`);
-    // TODO: Re-enable when analyzer is reimplemented
-    // const siteContext = await buildSiteContext(pages, report.url);
-    const siteContext = { pages: [], baseUrl: report.url }; // Placeholder
+    const siteContext = await buildSiteContext(pages as any, report.url);
     
     // Generate link graph
     let linkGraph = generateLinkGraph(pages, siteContext);

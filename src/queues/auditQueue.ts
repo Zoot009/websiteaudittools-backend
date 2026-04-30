@@ -9,6 +9,7 @@ export interface AuditJobData {
   options?: {
     timeout?: number;
     forceRecrawl?: boolean; // Force fresh crawl, ignore cache
+    maxPages?: number;      // Max pages to crawl (default: 100)
   };
 }
 

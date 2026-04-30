@@ -37,7 +37,8 @@ async function processAudit(job: Job<AuditJobData>) {
       console.log(`🕷 Crawling fresh (cache miss or stale)...`);
       const crawler = new SiteAuditCrawler();
       const crawlResult = await crawler.crawl(job.data.url, {
-        timeout: job.data.options?.timeout,
+        ...(job.data.options?.timeout !== undefined && { timeout: job.data.options.timeout }),
+        ...(job.data.options?.maxPages !== undefined && { maxPages: job.data.options.maxPages }),
       });
       pageData = crawlResult.pages;
       baseUrl = crawlResult.baseUrl;
